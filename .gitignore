@@ -9,12 +9,14 @@ Visual Studio / MonoDevelop generated
 =====================================
 ExportedObj/
 obj/
+bin/
 *.svd
 *.userprefs
-/*.csproj
 *.pidb
 *.suo
 /*.sln
+
+*/obj
 *.user
 *.unityproj
 *.booproj

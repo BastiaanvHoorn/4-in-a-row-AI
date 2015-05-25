@@ -12,7 +12,7 @@ namespace _4_in_a_row_lib
     public interface IGame
     {
         [OperationContract]
-        byte[,] get_field();
+        byte[][] get_field();
         [OperationContract]
         void add_stone(byte row, bool alice);
         [OperationContract]

@@ -10,7 +10,8 @@ namespace _4_in_a_row_lib
     // NOTE: You can use the "Rename" command on the "Refactor" menu to change the class name "Service1" in both code and config file together.
     public class Game : IGame
     {
-        private byte[,] field = new byte[9,9]; //9 colums with 7 rows
+        private byte[][] field = new byte[9][]; //9 colums with 7 rows
+        private byte height = 9;
         private byte winning { get; set; } //0 for noone, 1 for alice and 2 for bob
         public bool has_won(bool alice)
         {
@@ -23,30 +24,33 @@ namespace _4_in_a_row_lib
                 return false;
             }
         }
-        Game()
+        public Game()
         {
-            for(int i = 0; i <field.GetLength(1); i++)
+            for (int i = 0; i < field.Length; i++)
             {
-                for (int j = 0; i < field.GetLength(2); i++)
+                field[i] = new byte[height];
+                for (int j = 0; j < field[i].Length; j++)
                 {
-                    field[i, j] = 0;
+                    Console.WriteLine("X: " + i + ", Y: " + j);
+                    field[i][j] = (byte)1;
+
                 }
             }
             winning = 0;
         }
 
-        public byte[,] get_field()
+        public byte[][] get_field()
         {
             return field;
         }
 
         public void add_stone(byte row, bool alice)
         {
-            for (byte i = 0; i <= field.GetLength(2); i++)
+            for (byte i = 0; i <= height; i++)
             {
-                if(field[row, i] == 0)
+                if(field[row][i] == 0)
                 {
-                    field[i, row] = alice?(byte)1:(byte)2; //1 for Alice(true), 2 for Bob(false)
+                    field[i][row] = alice?(byte)1:(byte)2; //1 for Alice(true), 2 for Bob(false)
                     check_for_win(row, i, alice);
                 }
             }
@@ -93,7 +97,7 @@ namespace _4_in_a_row_lib
             {
                 _x += dx;
                 _y += dy;
-                if (field[_x, _y] != ab || _x < 0 || _x > field.GetLength(1) || _y < 0 || _y > field.GetLength(2))
+                if (field[_x][_y] != ab || _x < 0 || _x > field.GetLength(1) || _y < 0 || _y > field.GetLength(2))
                 {
                     break;
                 }
