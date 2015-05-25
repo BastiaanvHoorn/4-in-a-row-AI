@@ -13,6 +13,10 @@ namespace _4_in_a_row_lib
         private byte[][] field = new byte[9][]; //9 colums with 7 rows
         private byte height = 9;
         private byte winning { get; set; } //0 for noone, 1 for alice and 2 for bob
+        /// <summary>
+        /// A check if the specified person has won
+        /// </summary>
+        /// <param name="alice">Check if Alice(true) or Bob(false) has won</param>
         public bool has_won(bool alice)
         {
             if (alice && winning == (byte)1 || !alice && winning == (byte)2)
@@ -24,6 +28,9 @@ namespace _4_in_a_row_lib
                 return false;
             }
         }
+        /// <summary>
+        /// Initializes the field on 0;
+        /// </summary>
         public Game()
         {
             for (int i = 0; i < field.Length; i++)
@@ -32,7 +39,7 @@ namespace _4_in_a_row_lib
                 for (int j = 0; j < field[i].Length; j++)
                 {
                     Console.WriteLine("X: " + i + ", Y: " + j);
-                    field[i][j] = (byte)1;
+                    field[i][j] = (byte)0;
 
                 }
             }
@@ -43,17 +50,35 @@ namespace _4_in_a_row_lib
         {
             return field;
         }
-
-        public void add_stone(byte row, bool alice)
+        /// <summary>
+        /// Adds a stone on top of the specified row
+        /// </summary>
+        /// <param name="row">The row that the stone must be added to. Minimum of 0 and Maximum of the height of the field</param>
+        /// <param name="alice">If this stone is for Alice(true) or for Bob(false)</param>
+        /// <returns>If the stone could be placed in that row</returns>
+        public bool add_stone(byte row, bool alice)
         {
-            for (byte i = 0; i <= height; i++)
+            if (row >= field[row].Length)
             {
-                if(field[row][i] == 0)
+                return false;
+            }
+            else
+            {
+
+                for (byte i = 0; i < height; i++)
                 {
-                    field[i][row] = alice?(byte)1:(byte)2; //1 for Alice(true), 2 for Bob(false)
-                    check_for_win(row, i, alice);
+
+                    if (field[row][i] == 0)
+                    {
+                        field[row][i] = alice ? (byte)1 : (byte)2; //1 for Alice(true), 2 for Bob(false)
+                        Console.WriteLine("Dropped a stone for " + (alice ? "alice" : "bob") + " at " + row + ", " + i);
+                        //TODO: clear check_for_win of errors
+                        //check_for_win(row, i, alice);
+                        return true;
+                    }
                 }
             }
+            return false;
         }
 
         private void check_for_win(byte x, byte y, bool alice)

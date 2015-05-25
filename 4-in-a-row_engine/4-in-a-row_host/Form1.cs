@@ -16,10 +16,10 @@ namespace _4_in_a_row_
         Game game = new Game();
         private Label[][] labels;
         private byte[][] field;
-        private int x = 100;
-        private int y = 100;
-        private int dx = 30;
-        private int dy = 30;
+        private int x = 140;
+        private int y = 25;
+        private int dx = 25;
+        private int dy = 25;
         public Form1()
         {
             InitializeComponent();
@@ -36,23 +36,59 @@ namespace _4_in_a_row_
                 {
                     labels[i][j] = new Label();
                     labels[i][j].Location = new Point(x + i * dx, y + j * dy);
-                    labels[i][j].BackColor = Color.Black;
+                    labels[i][j].BackColor = Color.Wheat;
                     labels[i][j].Size = new Size(dx - 2, dy - 2);
                     Controls.Add(labels[i][j]);
                 }
             }
-            //if (field[i][j] == 0)
-            //{
-            //    labels[i][j].BackColor = Color.Wheat;
-            //}
-            //else if (field[i][j] == 1)
-            //{
-            //    labels[i][j].BackColor = Color.Azure;
-            //}
-            //else
-            //{
-            //    labels[i][j].BackColor = Color.Blue;
-            //}
+        }
+        private void update_field()
+        {
+            field = game.get_field();
+            int j_offset = field[0].Length - 1;
+            for (int i = 0; i < labels.Length; i++)
+            {
+                for (int j = 0; j < labels[i].Length; j++)
+                {
+                    int k = j_offset - j;
+                    if (field[i][j] == 0)
+                    {
+                        labels[i][k].BackColor = Color.Wheat;
+                    }
+                    else if (field[i][j] == 1)
+                    {
+                        labels[i][k].BackColor = Color.Red;
+                    }
+                    else
+                    {
+                        labels[i][k].BackColor = Color.Blue;
+                    }
+                }
+            }
+        }
+
+        private void button_Alice_Click(object sender, EventArgs e)
+        {
+            if(!game.add_stone((byte)numeric_Alice.Value, true))
+            {
+                Console.WriteLine("failed to drop a stone (is this row already full?");
+            }
+            else
+            {
+                update_field();
+            }
+        }
+
+        private void button_Bob_Click(object sender, EventArgs e)
+        {
+            if(!game.add_stone((byte)numeric_Bob.Value, false))
+            {
+                Console.WriteLine("faild to drop a stone (is this row already full?)");
+            }
+            else
+            {
+                update_field();
+            }
         }
     }
 }

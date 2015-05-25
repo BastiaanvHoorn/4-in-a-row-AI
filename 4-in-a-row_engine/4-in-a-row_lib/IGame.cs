@@ -14,7 +14,7 @@ namespace _4_in_a_row_lib
         [OperationContract]
         byte[][] get_field();
         [OperationContract]
-        void add_stone(byte row, bool alice);
+        bool add_stone(byte row, bool alice);
         [OperationContract]
         bool has_won(bool alice);
 
