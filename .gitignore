@@ -19,6 +19,11 @@ bin/
 *.unityproj
 *.booproj
 
+===============
+Manual projects
+===============
+!4-in-a-row.sln
+
 ============
 OS generated
 ============
