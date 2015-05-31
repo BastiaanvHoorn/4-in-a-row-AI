@@ -15,8 +15,6 @@ bin/
 *.pidb
 *.suo
 /*.sln
-
-*/obj
 *.user
 *.unityproj
 *.booproj

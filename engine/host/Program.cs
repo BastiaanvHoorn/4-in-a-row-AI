@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using _4_in_a_row_lib;
+using lib;
 
-namespace _4_in_a_row_
+namespace host
 {
     static class Program
     {

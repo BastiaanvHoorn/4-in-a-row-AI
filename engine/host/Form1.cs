@@ -7,9 +7,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using _4_in_a_row_lib;
+using lib;
 
-namespace _4_in_a_row_
+namespace host
 {
     public partial class Form1 : Form
     {

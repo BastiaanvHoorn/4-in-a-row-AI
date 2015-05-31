@@ -80,9 +80,9 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\4-in-a-row_lib\4-in-a-row_lib.csproj">
+    <ProjectReference Include="..\lib\lib.csproj">
       <Project>{4ad30762-0321-4fb9-84e7-fd4e4cf88c69}</Project>
-      <Name>4-in-a-row_lib</Name>
+      <Name>lib</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
