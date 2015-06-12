@@ -73,20 +73,27 @@ namespace lib
                         field[row][i] = alice ? (byte)1 : (byte)2; //1 for Alice(true), 2 for Bob(false)
                         Console.WriteLine("Dropped a stone for " + (alice ? "alice" : "bob") + " at " + row + ", " + i);
                         //TODO: clear check_for_win of errors
-                        //check_for_win(row, i, alice);
+                        check_for_win(row, i, alice);
                         return true;
                     }
                 }
             }
             return false;
         }
-
+        /// <summary>
+        /// Checks if someone has won
+        /// </summary>
+        /// <p>
+        /// Checks in each direction from the given stone if it can make a whole row. If so, the variable winning will be changed
+        /// </p>
+        /// <param name="x">The x of the given stone</param>
+        /// <param name="y">The y of the given stone</param>
+        /// <param name="alice">If the player that laid the stone is alice (false if it was bob)</param>
         private void check_for_win(byte x, byte y, bool alice)
         {
             byte ab = alice ? (byte)1 : (byte)2;
+            //Checks from botleft to topright
             byte counter = 1;
-            int _x = x;
-            int _y = y;
             counter += count_for_win_direction(x, y, -1, 1, ab);
             counter += count_for_win_direction(x, y, 1, -1, ab);
             if (counter >= 4)
@@ -94,18 +101,26 @@ namespace lib
                 winning = ab;
             }
 
+            //checks from topleft to botright
+            counter = 1;
             counter += count_for_win_direction(x, y, 1, 1, ab);
             counter += count_for_win_direction(x, y, -1, -1, ab);
             if (counter >= 4)
             {
                 winning = ab;
             }
+
+            //checks horizontal
+            counter = 1;
             counter += count_for_win_direction(x, y, 0, 1, ab);
             counter += count_for_win_direction(x, y, 0, -1, ab);
             if (counter >= 4)
             {
                 winning = ab;
             }
+
+            //checks vertical
+            counter = 1;
             counter += count_for_win_direction(x, y, -1, 0, ab);
             counter += count_for_win_direction(x, y, 1, 0, ab);
             if (counter >= 4)
@@ -122,7 +137,11 @@ namespace lib
             {
                 _x += dx;
                 _y += dy;
-                if (field[_x][_y] != ab || _x < 0 || _x > field.GetLength(1) || _y < 0 || _y > field.GetLength(2))
+                if (_x < 0 || _x >= field.Length || _y < 0 || _y >= field[0].Length)
+                {
+                    break;
+                }
+                else if(field[_x][_y] != ab)
                 {
                     break;
                 }

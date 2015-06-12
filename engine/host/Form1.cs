@@ -65,6 +65,14 @@ namespace host
                     }
                 }
             }
+            if (game.has_won(true) == true)
+            {
+                Console.WriteLine("Alice has won");
+            }
+            else if (game.has_won(true) == true)
+            {
+                Console.WriteLine("bob has won");
+            }
         }
 
         private void button_Alice_Click(object sender, EventArgs e)
