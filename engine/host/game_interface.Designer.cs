@@ -1,6 +1,6 @@
-﻿namespace host
+﻿namespace _4_in_a_row
 {
-    partial class Form1
+    partial class game_interface
     {
         /// <summary>
         /// Required designer variable.
@@ -49,15 +49,10 @@
             this.numeric_Alice.Name = "numeric_Alice";
             this.numeric_Alice.Size = new System.Drawing.Size(120, 20);
             this.numeric_Alice.TabIndex = 0;
-            this.numeric_Alice.Value = new decimal(new int[] {
-            1,
-            0,
-            0,
-            0});
             // 
             // numeric_Bob
             // 
-            this.numeric_Bob.Location = new System.Drawing.Point(369, 28);
+            this.numeric_Bob.Location = new System.Drawing.Point(12, 132);
             this.numeric_Bob.Maximum = new decimal(new int[] {
             8,
             0,
@@ -66,11 +61,6 @@
             this.numeric_Bob.Name = "numeric_Bob";
             this.numeric_Bob.Size = new System.Drawing.Size(120, 20);
             this.numeric_Bob.TabIndex = 1;
-            this.numeric_Bob.Value = new decimal(new int[] {
-            1,
-            0,
-            0,
-            0});
             // 
             // label1
             // 
@@ -84,7 +74,7 @@
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(454, 9);
+            this.label2.Location = new System.Drawing.Point(16, 116);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(26, 13);
             this.label2.TabIndex = 3;
@@ -102,7 +92,7 @@
             // 
             // button_Bob
             // 
-            this.button_Bob.Location = new System.Drawing.Point(369, 54);
+            this.button_Bob.Location = new System.Drawing.Point(12, 158);
             this.button_Bob.Name = "button_Bob";
             this.button_Bob.Size = new System.Drawing.Size(120, 23);
             this.button_Bob.TabIndex = 5;
@@ -110,7 +100,7 @@
             this.button_Bob.UseVisualStyleBackColor = true;
             this.button_Bob.Click += new System.EventHandler(this.button_Bob_Click);
             // 
-            // Form1
+            // game_interface
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
@@ -121,7 +111,7 @@
             this.Controls.Add(this.label1);
             this.Controls.Add(this.numeric_Bob);
             this.Controls.Add(this.numeric_Alice);
-            this.Name = "Form1";
+            this.Name = "game_interface";
             this.Text = "Form1";
             this.Load += new System.EventHandler(this.Form1_Load);
             ((System.ComponentModel.ISupportInitialize)(this.numeric_Alice)).EndInit();
