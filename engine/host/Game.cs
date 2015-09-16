@@ -1,9 +1,8 @@
 ﻿using System;
-using System.ServiceModel.Channels;
 
-namespace _4_in_a_row
+namespace _4_in_a_row_
 {
-    public enum player {Empty, Alice, Bob}
+    public enum player { Empty, Alice, Bob }
     public class Game
     {
         private static byte height;
@@ -11,8 +10,8 @@ namespace _4_in_a_row
         private readonly byte[][] field;
 
         //0 for noone, 1 for alice and 2 for bob
-        private player next_player { get; set; }
-        private player winning { get; set; } 
+        public player next_player { get; private set; }
+        private player winning { get; set; }
         /// <summary>
         /// A check if the specified person has won
         /// </summary>
@@ -24,7 +23,7 @@ namespace _4_in_a_row
                 return true;
             }
             return false;
-            
+
         }
         /// <summary>
         /// Initializes the field on 0;
@@ -44,6 +43,7 @@ namespace _4_in_a_row
 
                 }
             }
+            next_player = player.Alice;
             winning = 0;
         }
 
@@ -57,11 +57,16 @@ namespace _4_in_a_row
         /// <param name="row">The row that the stone must be added to. Minimum of 0 and Maximum of the height of the field</param>
         /// <param name="player">1 for Alice, 2 for Bob</param>
         /// <returns>If the stone could be placed in that row</returns>
-        public bool add_stone(byte row, player player)
+        public bool add_stone(byte row, player player, ref string info)
         {
-            if (row >= field[row].Length)
+            if (next_player != player)
             {
-                //info = "specified invalid row";
+                info = "It's not this players your turn";
+                return false;
+            }
+            if (row >= field.Length)
+            {
+                info = "specified invalid (" + row + ") row";
                 return false;
             }
             for (byte i = 0; i < height; i++)
@@ -70,12 +75,20 @@ namespace _4_in_a_row
                 if (field[row][i] == 0)
                 {
                     field[row][i] = (byte)player;
-                    Console.WriteLine("Dropped a stone for " + ((int)player == 1 ? "alice" : "bob") + " at " + row + ", " + i);
+                    Console.WriteLine("Dropped a stone for {0} at {1}, {2}", ((int)player == 1 ? "alice" : "bob"), row, i);
                     check_for_win(row, i, player);
+                    if (player == player.Alice)
+                    {
+                        next_player = player.Bob;
+                    }
+                    else
+                    {
+                        next_player = player.Alice;
+                    }
                     return true;
                 }
             }
-            //info = "row was already full";
+            info = "row " + row + " is already full";
             return false;
         }
         #region check_for_win
@@ -148,7 +161,7 @@ namespace _4_in_a_row
                 {
                     break;
                 }
-                if(field[_x][_y] != (byte)player)
+                if (field[_x][_y] != (byte)player)
                 {
                     break;
                 }

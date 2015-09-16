@@ -1,6 +1,6 @@
 ﻿using System.Windows.Forms;
 
-namespace _4_in_a_row
+namespace _4_in_a_row_
 {
     static class Program
     {
@@ -12,7 +12,7 @@ namespace _4_in_a_row
             Game game = new Game(7,6);
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new game_interface(2, game));
+            Application.Run(new game_interface(1, game));
 
         }
     }
