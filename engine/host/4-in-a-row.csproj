@@ -47,6 +47,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Bot.cs" />
+    <Compile Include="Exceptions.cs" />
+    <Compile Include="Field.cs" />
     <Compile Include="game_interface.cs">
       <SubType>Form</SubType>
     </Compile>
