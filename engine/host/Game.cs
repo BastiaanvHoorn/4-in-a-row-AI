@@ -52,31 +52,31 @@ namespace _4_in_a_row_
             return field;
         }
         /// <summary>
-        /// Adds a stone on top of the specified row
+        /// Adds a stone on top of the specified column
         /// </summary>
-        /// <param name="row">The row that the stone must be added to. Minimum of 0 and Maximum of the height of the field</param>
+        /// <param name="column">The column that the stone must be added to. Minimum of 0 and Maximum of the width of the field</param>
         /// <param name="player">1 for Alice, 2 for Bob</param>
-        /// <returns>If the stone could be placed in that row</returns>
-        public bool add_stone(byte row, player player, ref string info)
+        /// <returns>If the stone could be placed in that column</returns>
+        public bool add_stone(byte column, player player, ref string info)
         {
             if (next_player != player)
             {
                 info = "It's not this players your turn";
                 return false;
             }
-            if (row >= field.Length)
+            if (column >= field.Length)
             {
-                info = "specified invalid (" + row + ") row";
+                info = "specified invalid (" + column + ") column";
                 return false;
             }
             for (byte i = 0; i < height; i++)
             {
 
-                if (field[row][i] == 0)
+                if (field[column][i] == 0)
                 {
-                    field[row][i] = (byte)player;
-                    Console.WriteLine("Dropped a stone for {0} at {1}, {2}", ((int)player == 1 ? "alice" : "bob"), row, i);
-                    check_for_win(row, i, player);
+                    field[column][i] = (byte)player;
+                    Console.WriteLine("Dropped a stone for {0} at {1}, {2}", ((int)player == 1 ? "alice" : "bob"), column, i);
+                    check_for_win(column, i, player);
                     if (player == player.Alice)
                     {
                         next_player = player.Bob;
@@ -88,7 +88,7 @@ namespace _4_in_a_row_
                     return true;
                 }
             }
-            info = "row " + row + " is already full";
+            info = "column " + column + " is already full";
             return false;
         }
         #region check_for_win
