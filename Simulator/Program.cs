@@ -4,13 +4,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace _4_in_a_row_
+namespace Simulator
 {
-    public class InvalidMoveException : ApplicationException
+    class Program
     {
-        public InvalidMoveException(string message) : base(message)
+        static void Main(string[] args)
         {
-
         }
     }
 }

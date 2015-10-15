@@ -1,6 +1,6 @@
 ﻿using System;
+using GUI;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using _4_in_a_row_;
 
 namespace UnitTesting
 {

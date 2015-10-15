@@ -54,9 +54,25 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\engine\host\4-in-a-row.csproj">
+    <ProjectReference Include="..\Bot\Bot.csproj">
+      <Project>{fc36aaeb-b455-4fc4-ae1d-fdd8ff873f3a}</Project>
+      <Name>Bot</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\engine\host\GUI.csproj">
       <Project>{2a750f31-5dcb-4a72-b95a-d9ca8ff31505}</Project>
-      <Name>4-in-a-row</Name>
+      <Name>GUI</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Game\Game.csproj">
+      <Project>{f1bb086d-8959-4826-a336-5fb2fd7c9ced}</Project>
+      <Name>Game</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Server\Server.csproj">
+      <Project>{11ba7ab2-5c23-4852-8086-766355cdff9f}</Project>
+      <Name>Server</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Simulator\Simulator.csproj">
+      <Project>{29f23f11-4390-47eb-8355-9ab22ca0b75e}</Project>
+      <Name>Simulator</Name>
     </ProjectReference>
   </ItemGroup>
   <Choose>

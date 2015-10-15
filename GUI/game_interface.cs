@@ -2,7 +2,7 @@
 using System.Drawing;
 using System.Windows.Forms;
 
-namespace _4_in_a_row_
+namespace GUI
 {
     public partial class game_interface : Form
     {

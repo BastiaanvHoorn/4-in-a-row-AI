@@ -1,6 +1,6 @@
 ﻿using System.Windows.Forms;
 
-namespace _4_in_a_row_
+namespace GUI
 {
     static class Program
     {

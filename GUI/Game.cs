@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace _4_in_a_row_
+namespace GUI
 {
     public enum player { Empty, Alice, Bob }
     public class Game

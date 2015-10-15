@@ -1,4 +1,4 @@
-﻿namespace _4_in_a_row_
+﻿namespace GUI
 {
     partial class game_interface
     {
