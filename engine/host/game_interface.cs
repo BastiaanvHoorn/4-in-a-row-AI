@@ -7,7 +7,7 @@ namespace _4_in_a_row_
     public partial class game_interface : Form
     {
         readonly Game game;
-        private readonly int players;
+        private readonly int players; //All non-bot players 
         private Label[][] labels;
         private byte[][] field;
         private const int x = 140;
