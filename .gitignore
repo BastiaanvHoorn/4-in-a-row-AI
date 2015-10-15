@@ -1,12 +1,6 @@
-=============== 
-Unity generated
-===============
-Temp/
-Library/
-
-=====================================
-Visual Studio / MonoDevelop generated
-=====================================
+=============
+Visual Studio
+=============
 ExportedObj/
 obj/
 bin/
@@ -14,15 +8,8 @@ bin/
 *.userprefs
 *.pidb
 *.suo
-/*.sln
 *.user
-*.unityproj
 *.booproj
-
-===============
-Manual projects
-===============
-!4-in-a-row.sln
 
 ============
 OS generated
