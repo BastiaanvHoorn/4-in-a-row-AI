@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Drawing;
 using System.Windows.Forms;
+using Botclient;
+using Engine;
 
 namespace GUI
 {
@@ -14,7 +16,7 @@ namespace GUI
         private const int y = 25;
         private const int dx = 25;
         private const int dy = 25;
-        private Bot bot_bob;
+        private Botclient.Bot bot_bob;
 
         /// <summary>
         /// Constructor for the game

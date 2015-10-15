@@ -1,11 +1,11 @@
 ﻿using System;
-using GUI;
+using Engine;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace UnitTesting
 {
     [TestClass]
-    public class UnitTest1
+    public class Field_test
     {
         [TestMethod]
         public void TestMethod1_getCell()

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace GUI
+namespace Engine
 {
     public enum player { Empty, Alice, Bob }
     public class Game
@@ -54,7 +54,7 @@ namespace GUI
         /// <summary>
         /// Adds a stone on top of the specified column
         /// </summary>
-        /// <param name="column">The column that the stone must be added to. Minimum of 0 and Maximum of the width of the field</param>
+        /// <param name="column">The column that the stone must be added to. Minimum of 0 and Maximum of the width of the field minus 1</param>
         /// <param name="player">1 for Alice, 2 for Bob</param>
         /// <returns>If the stone could be placed in that column</returns>
         public bool add_stone(byte column, player player, ref string info)

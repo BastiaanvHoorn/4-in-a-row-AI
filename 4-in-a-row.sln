@@ -9,9 +9,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTesting", "UnitTesting\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Server", "Server\Server.csproj", "{11BA7AB2-5C23-4852-8086-766355CDFF9F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Game", "Game\Game.csproj", "{F1BB086D-8959-4826-A336-5FB2FD7C9CED}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine", "Engine\Engine.csproj", "{F1BB086D-8959-4826-A336-5FB2FD7C9CED}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bot", "Bot\Bot.csproj", "{FC36AAEB-B455-4FC4-AE1D-FDD8FF873F3A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Botclient", "Botclient\Botclient.csproj", "{FC36AAEB-B455-4FC4-AE1D-FDD8FF873F3A}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Simulator", "Simulator\Simulator.csproj", "{29F23F11-4390-47EB-8355-9AB22CA0B75E}"
 EndProject

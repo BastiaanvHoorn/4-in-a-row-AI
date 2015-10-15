@@ -50,19 +50,20 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
-    <Compile Include="UnitTest1.cs" />
+    <Compile Include="Bot_test.cs" />
+    <Compile Include="Engine\Field_test.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Bot\Bot.csproj">
+    <ProjectReference Include="..\Botclient\Botclient.csproj">
       <Project>{fc36aaeb-b455-4fc4-ae1d-fdd8ff873f3a}</Project>
-      <Name>Bot</Name>
+      <Name>Botclient</Name>
     </ProjectReference>
-    <ProjectReference Include="..\engine\host\GUI.csproj">
+    <ProjectReference Include="..\GUI\GUI.csproj">
       <Project>{2a750f31-5dcb-4a72-b95a-d9ca8ff31505}</Project>
       <Name>GUI</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Game\Game.csproj">
+    <ProjectReference Include="..\Engine\Engine.csproj">
       <Project>{f1bb086d-8959-4826-a336-5fb2fd7c9ced}</Project>
       <Name>Game</Name>
     </ProjectReference>

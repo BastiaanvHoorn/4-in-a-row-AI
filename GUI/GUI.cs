@@ -1,8 +1,8 @@
 ﻿using System.Windows.Forms;
-
+using Engine;
 namespace GUI
 {
-    static class Program
+    static class GUI
     {
         /// <summary>
         /// The main entry point for the application.
@@ -12,7 +12,7 @@ namespace GUI
             Game game = new Game(7,6);
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new game_interface(2, game));
+            Application.Run(new game_interface(1, game));
 
         }
     }

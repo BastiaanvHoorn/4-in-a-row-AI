@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace GUI
+namespace Engine
 {
     public class InvalidMoveException : ApplicationException
     {
