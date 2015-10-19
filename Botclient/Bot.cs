@@ -15,7 +15,7 @@ namespace Botclient
             this.player = player;
         }
 
-        public byte get_next_move(byte[][] field)
+        public byte get_next_move(Field field)
         {
             byte column = get_column_from_server();
             Console.WriteLine("Tried to drop a stone in colmun {0}", column.ToString());

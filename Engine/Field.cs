@@ -9,8 +9,8 @@ namespace Engine
         private static byte[] Bitmask3 = new byte[] { 3, 15, 63, 255 }; //Same as Bitmask2. Binary values: 11111111, 00111111, 00001111, 00000011
 
         internal byte[] Storage; //The actual array that stores the field.
-        byte Width;
-        byte Height;
+        readonly public byte Width;
+        readonly public byte Height;
         
 		public Field(byte[] input, byte width = 7, byte height = 6)
 		{
@@ -102,7 +102,7 @@ namespace Engine
         /// <param name="x">X-coordinate</param>
         /// <param name="y">Y-coordinate</param>
         /// <param name="player">The player that needs to be stored in the cell</param>
-		internal void setCell(int x, int y, player player)
+		private void setCell(int x, int y, player player) //k heb dit naar private gezet omdat de game class deze functie anders kon gebruiken
 		{
             int cellIndex = Height * x + y;
             int byteNumber = cellIndex >> 2;

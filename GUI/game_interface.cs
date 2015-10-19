@@ -11,12 +11,12 @@ namespace GUI
         readonly Game game;
         private readonly int players; //All non-bot players 
         private Label[][] labels;
-        private byte[][] field;
+        private Field field;
         private const int x = 140;
         private const int y = 25;
         private const int dx = 25;
         private const int dy = 25;
-        private Botclient.Bot bot_bob;
+        private Bot bot_bob;
 
         /// <summary>
         /// Constructor for the game
@@ -47,10 +47,10 @@ namespace GUI
             }
             field = game.get_field();
             //Display the field
-            labels = new Label[field.Length][];
+            labels = new Label[field.Width][];
             for (int i = 0; i < labels.Length; i++)
             {
-                labels[i] = new Label[field[i].Length];
+                labels[i] = new Label[field.Height];
                 for (int j = 0; j < labels[i].Length; j++)
                 {
                     labels[i][j] = new Label
@@ -72,18 +72,18 @@ namespace GUI
             while (true)
             {
                 field = game.get_field();
-                int j_offset = field[0].Length - 1;
+                int j_offset = field.Height - 1;
                 for (int i = 0; i < labels.Length; i++)
                 {
                     for (int j = 0; j < labels[i].Length; j++)
                     {
                         int k = j_offset - j;
-                        switch (field[i][j])
+                        switch (field.getCell(i,j))
                         {
-                            case 0:
+                            case player.Empty:
                                 labels[i][k].BackColor = Color.Wheat;
                                 break;
-                            case 1:
+                            case player.Alice:
                                 labels[i][k].BackColor = Color.Red;
                                 break;
                             default:

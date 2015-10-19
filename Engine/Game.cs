@@ -7,7 +7,7 @@ namespace Engine
     {
         private static byte height;
         private static byte width;
-        private readonly byte[][] field;
+        private readonly Field field;
 
         //0 for noone, 1 for alice and 2 for bob
         public player next_player { get; private set; }
@@ -32,30 +32,22 @@ namespace Engine
         {
             height = _height;
             width = _width;
-            field = new byte[_width][];
-            for (int i = 0; i < field.Length; i++)
-            {
-                field[i] = new byte[height];
-                for (int j = 0; j < field[i].Length; j++)
-                {
-                    //Console.WriteLine("X: " + i + ", Y: " + j);
-                    field[i][j] = (byte)0;
-
-                }
-            }
+            field = new Field(_width, _height);
             next_player = player.Alice;
             winning = 0;
         }
 
-        public byte[][] get_field()
+        public Field get_field()
         {
             return field;
         }
+
         /// <summary>
         /// Adds a stone on top of the specified column
         /// </summary>
         /// <param name="column">The column that the stone must be added to. Minimum of 0 and Maximum of the width of the field minus 1</param>
         /// <param name="player">1 for Alice, 2 for Bob</param>
+        /// <param name="info"></param>
         /// <returns>If the stone could be placed in that column</returns>
         public bool add_stone(byte column, player player, ref string info)
         {
@@ -64,30 +56,21 @@ namespace Engine
                 info = "It's not this players your turn";
                 return false;
             }
-            if (column >= field.Length)
+            if (column >= field.Width)
             {
                 info = "specified invalid (" + column + ") column";
                 return false;
             }
-            for (byte i = 0; i < height; i++)
+            byte empty_cell = (byte)field.getEmptyCell(column); //Get the x-coordinate for the first empty cell in the given column
+            if (empty_cell < 6) //If there is still room in this column, place a stone
             {
-
-                if (field[column][i] == 0)
-                {
-                    field[column][i] = (byte)player;
-                    Console.WriteLine("Dropped a stone for {0} at {1}, {2}", ((int)player == 1 ? "alice" : "bob"), column, i);
-                    check_for_win(column, i, player);
-                    if (player == player.Alice)
-                    {
-                        next_player = player.Bob;
-                    }
-                    else
-                    {
-                        next_player = player.Alice;
-                    }
-                    return true;
-                }
+                field.doMove(column,player);
+                next_player = (player == player.Alice ? player.Bob : player.Alice);
+                Console.WriteLine("Dropped a stone for {0} at {1}, {2}", (player == player.Alice ? "alice" : "bob"), column, empty_cell);
+                check_for_win(column, empty_cell, player);
+                return true;
             }
+
             info = "column " + column + " is already full";
             return false;
         }
@@ -157,11 +140,11 @@ namespace Engine
             {
                 _x += dx;
                 _y += dy;
-                if (_x < 0 || _x >= field.Length || _y < 0 || _y >= field[0].Length)
+                if (_x < 0 || _x >= field.Width || _y < 0 || _y >= field.Height)
                 {
                     break;
                 }
-                if (field[_x][_y] != (byte)player)
+                if (field.getCell(_x, _y) != player)
                 {
                     break;
                 }
