@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 
 namespace Engine
 {
@@ -45,25 +46,36 @@ namespace Engine
         }
 
         /// <summary>
+        /// Gets the value of the cell at the specified coordinates
+        /// </summary>
+        /// <param name="x">X-coordinate (row)</param>
+        /// <param name="y">Y-coordinate (column)</param>
+        /// <returns>Cell value</returns>
+		public int getCellValue(int x, int y)
+        {
+            int cellIndex = Height * x + y;             //The cell position represented as an index in a one-dimensional row instead of a coordinate representation (two-dimensional)
+            int byteNumber = cellIndex >> 2;            //cellIndex / 4     Each byte can store 4 cells (two bits per cell). With this operation we determine which byte contains the needed information.
+            int bitNumber = cellIndex & 3;              //cellIndex % 4     The position of the bit (and with that the position of the cell) within the selected byte.
+            int value = Storage[byteNumber] & Bitmask[bitNumber];   //Gets the bits that represent the wanted cell.
+            return value >> (2 * bitNumber);       //value / 4^bitNumber     Returns value. This requires a bitshift like this: 00110000 -> 00000011 or: 11000000 -> 00000011 to make sure that we return a value of 0 (00), 1 (01) or 2 (10).
+        }
+
+        /// <summary>
         /// Gets which player owns the cell at the specified coordinates
         /// </summary>
         /// <param name="x">X-coordinate (row)</param>
         /// <param name="y">Y-coordinate (column)</param>
         /// <returns>The player who owns the specified cell</returns>
-		public player getCell(int x, int y)
+		public player getCellPlayer(int x, int y)
 		{
-			int cellIndex = Height * x + y;             //The cell position represented as an index in a one-dimensional row instead of a coordinate representation (two-dimensional)
-			int byteNumber = cellIndex >> 2;		    //cellIndex / 4     Each byte can store 4 cells (two bits per cell). With this operation we determine which byte contains the needed information.
-			int bitNumber = cellIndex & 3;			    //cellIndex % 4     The position of the bit (and with that the position of the cell) within the selected byte.
-			int bits = Storage[byteNumber] & Bitmask[bitNumber];    //Gets the bits that represent the wanted cell.
-			return (player)(bits >> (2 * bitNumber));		//bits / 4^bitNumber    Returns the player by converting int ´bits´ to enum ´player´. This requires a bitshift like this: 00110000 -> 00000011 or: 11000000 -> 00000011 to make sure that we return a value of 0 (00), 1 (01) or 2 (10).
+            return (player)(getCellValue(x, y));    //Converts the cellValue directly into the player enum.
 		}
 
         /// <summary>
         /// Gets the first empty cell from the bottom of the given column.
         /// </summary>
         /// <param name="column"></param>
-        /// <returns></returns>
+        /// <returns>Returns the Y-coord of the empty cell</returns>
         public int getEmptyCell(int column)
         {
             if (Height == 6)
@@ -102,7 +114,7 @@ namespace Engine
         /// <param name="x">X-coordinate</param>
         /// <param name="y">Y-coordinate</param>
         /// <param name="player">The player that needs to be stored in the cell</param>
-		private void setCell(int x, int y, player player) //k heb dit naar private gezet omdat de game class deze functie anders kon gebruiken
+		internal void setCell(int x, int y, player player)
 		{
             int cellIndex = Height * x + y;
             int byteNumber = cellIndex >> 2;
@@ -161,16 +173,41 @@ namespace Engine
             }
         }
 
-		//public void foo(int value, int bit)
-		//{
-		//	//Get
-		//	bool b = ((value & Bitmask[bit]) != 0);
+        /// <summary>
+        /// Returns byte array Storage. IMPORTANT: Only use this function to GET Storage. Don't use it to manipulate the array by yourself.
+        /// </summary>
+        /// <returns>Storage that contains the field data</returns>
+        public byte[] getStorage()
+        {
+            return Storage;
+        }
 
-		//	//Turn on bit
-		//	value |= Bitmask[bit];
+        /// <summary>
+        /// Returns a concatenation of the hexadecimal presentations of the bytes in byte[] Storage.
+        /// </summary>
+        /// <returns>String representation of Storage</returns>
+        public override string ToString()
+        {
+            StringBuilder sb = new StringBuilder();
 
-		//	//Turn off bit
-		//	value |= ~Bitmask[bit];
-		//}
-	}
+            foreach (byte b in Storage)
+            {
+                sb.AppendFormat("X2", b);   //Appends byte b to StringBuilder sb. Format: X -> Hexadecimal representation, 2 -> Consists of at least two digits. Example: 5 -> 05, 20 -> 14
+            }
+
+            return sb.ToString();
+        }
+
+        //public void foo(int value, int bit)
+        //{
+        //	//Get
+        //	bool b = ((value & Bitmask[bit]) != 0);
+
+        //	//Turn on bit
+        //	value |= Bitmask[bit];
+
+        //	//Turn off bit
+        //	value |= ~Bitmask[bit];
+        //}
+    }
 }

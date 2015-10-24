@@ -11,7 +11,7 @@ namespace UnitTesting
         public void TestMethod1_getCell()
         {
             Field f = new Field(new byte[] { 0, 64, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
-            player actual = f.getCell(1, 1);
+            player actual = f.getCellPlayer(1, 1);
 
             player expected = player.Alice;
             Assert.AreEqual(expected, actual);

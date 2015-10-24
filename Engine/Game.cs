@@ -144,7 +144,7 @@ namespace Engine
                 {
                     break;
                 }
-                if (field.getCell(_x, _y) != player)
+                if (field.getCellPlayer(_x, _y) != player)
                 {
                     break;
                 }
