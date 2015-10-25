@@ -78,7 +78,7 @@ namespace GUI
                     for (int j = 0; j < labels[i].Length; j++)
                     {
                         int k = j_offset - j;
-                        switch (field.getCell(i,j))
+                        switch (field.getCellPlayer(i,j))
                         {
                             case player.Empty:
                                 labels[i][k].BackColor = Color.Wheat;

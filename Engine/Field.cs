@@ -192,11 +192,15 @@ namespace Engine
 
             foreach (byte b in Storage)
             {
-                sb.AppendFormat("X2", b);   //Appends byte b to StringBuilder sb. Format: X -> Hexadecimal representation, 2 -> Consists of at least two digits. Example: 5 -> 05, 20 -> 14
+                for (byte i = 0; i < 4; i++)
+                {
+                    sb.AppendFormat("{0:x2}", (b & Bitmask[i]) >> (i << 1));   //Appends byte b to StringBuilder sb. Format: x -> Hexadecimal representation, 2 -> Consists of at least two digits. Example: 5 -> 05, 20 -> 14
+                    sb.Append(" ");
+                }
             }
 
             return sb.ToString();
-        }
+    }
 
         //public void foo(int value, int bit)
         //{
