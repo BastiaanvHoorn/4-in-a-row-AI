@@ -1,0 +1,12 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="Server.Properties" GeneratedClassName="Settings">
+  <Profiles />
+  <Settings>
+    <Setting Name="FieldsDBPath" Type="System.String" Scope="User">
+      <Value Profile="(Default)">C:\Connect Four\Fields.db</Value>
+    </Setting>
+    <Setting Name="FieldDataDBPath" Type="System.String" Scope="User">
+      <Value Profile="(Default)">C:\Connect Four\FieldData.db</Value>
+    </Setting>
+  </Settings>
+</SettingsFile>

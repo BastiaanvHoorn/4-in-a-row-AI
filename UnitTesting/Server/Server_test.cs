@@ -2,6 +2,8 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Engine;
 using Server;
+using System.IO;
+using System.Collections.Generic;
 
 namespace UnitTesting.Server
 {
@@ -20,7 +22,7 @@ namespace UnitTesting.Server
 
             byte[] actual = DatabaseHandler.compressField(f);
 
-            byte[] expected = new byte[] { 1 + 2 + 8 + 16 + 64 + 128, 1 + 8 };
+            byte[] expected = new byte[] { 1 + 2 + 8 + 16 + 64 + 128, 1 + 8, 0 };
 
             CollectionAssert.AreEqual(expected, actual);
         }
@@ -46,7 +48,7 @@ namespace UnitTesting.Server
 
             byte[] actual = DatabaseHandler.compressField(f);
 
-            byte[] expected = new byte[] { 2 + 4 + 16 + 64 + 128, 1 + 4 + 8 + 16 + 64 + 128, 1 + 4 + 8 + 32 + 64 + 128, 4 + 8 + 16 + 64 };
+            byte[] expected = new byte[] { 2 + 4 + 16 + 64 + 128, 1 + 4 + 8 + 16 + 64 + 128, 1 + 4 + 8 + 32 + 64 + 128, 4 + 8 + 16 + 64, 0 };
 
             CollectionAssert.AreEqual(expected, actual);
         }
@@ -75,6 +77,117 @@ namespace UnitTesting.Server
             expected[10] = 1 + 4 + 8;
 
             CollectionAssert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void equalFields_Test_1()
+        {
+            byte[] f1 = new byte[] { 3, 5, 3, 2 };
+            byte[] f2 = new byte[] { 3, 5, 3, 2 };
+
+            bool actual = DatabaseHandler.equalFields(f1, f2);
+            bool expected = true;
+            Assert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void equalFields_Test_2()
+        {
+            byte[] f1 = new byte[] { 3, 5, 3 };
+            byte[] f2 = new byte[] { 3, 5, 3, 2 };
+
+            bool actual = DatabaseHandler.equalFields(f1, f2);
+            bool expected = false;
+            Assert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void equalFields_Test_3()
+        {
+            byte[] f1 = new byte[] { 3, 5, 1, 2 };
+            byte[] f2 = new byte[] { 3, 5, 3, 2 };
+
+            bool actual = DatabaseHandler.equalFields(f1, f2);
+            bool expected = false;
+            Assert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void findField_Test_1()
+        {
+            using (var ms = new MemoryStream(new byte[] { 0 }))
+            {
+                Field f = new Field(new byte[11]);
+                long actual = DatabaseHandler.findField(f, ms);
+                long expected = 0;
+                Assert.AreEqual(expected, actual);
+            }
+        }
+
+        [TestMethod]
+        public void findField_Test_2()
+        {
+            Field f0 = new Field(new byte[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
+            Field f1 = new Field(new byte[] { 5, 80, 5, 21, 80, 0, 0, 0, 0, 0, 0 });
+            Field f2 = new Field(new byte[] { 5, 16, 0, 21, 80, 85, 1, 80, 1, 1, 0 });
+            Field f3 = new Field(new byte[] { 85, 80, 5, 85, 80, 5, 85, 80, 5, 85, 0 });
+
+            List<byte> memory = new List<byte>();
+            memory.AddRange(f0.compressField());
+            memory.AddRange(f1.compressField());
+            memory.AddRange(f2.compressField());
+            memory.AddRange(f3.compressField());
+            
+            using (var ms = new MemoryStream(memory.ToArray()))
+            {
+                long actual = DatabaseHandler.findField(f1, ms);
+                long expected = 1;
+                Assert.AreEqual(expected, actual);
+            }
+        }
+
+        [TestMethod]
+        public void findField_Test_3()
+        {
+            Field f0 = new Field(new byte[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
+            Field f1 = new Field(new byte[] { 5, 80, 5, 21, 80, 0, 0, 0, 0, 0, 0 });
+            Field f2 = new Field(new byte[] { 5, 16, 0, 21, 80, 85, 1, 80, 1, 1, 0 });
+            Field f3 = new Field(new byte[] { 85, 80, 5, 85, 80, 5, 85, 80, 5, 85, 0 });
+
+            List<byte> memory = new List<byte>();
+            memory.AddRange(f0.compressField());
+            memory.AddRange(f1.compressField());
+            memory.AddRange(f2.compressField());
+            memory.AddRange(f3.compressField());
+
+            using (var ms = new MemoryStream(memory.ToArray()))
+            {
+                long actual = DatabaseHandler.findField(f2, ms);
+                long expected = 2;
+                Assert.AreEqual(expected, actual);
+            }
+        }
+
+        [TestMethod]
+        public void findField_Test_4()
+        {
+            Field f0 = new Field(new byte[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
+            Field f1 = new Field(new byte[] { 5, 80, 5, 21, 80, 0, 0, 0, 0, 0, 0 });
+            Field f2 = new Field(new byte[] { 5, 16, 0, 21, 80, 85, 1, 80, 1, 1, 0 });
+            Field f3 = new Field(new byte[] { 85, 80, 5, 85, 80, 5, 85, 80, 5, 85, 0 });
+
+            List<byte> memory = new List<byte>();
+            memory.AddRange(f0.compressField());
+            memory.AddRange(f1.compressField());
+            memory.AddRange(f2.compressField());
+            memory.AddRange(f3.compressField());
+
+            using (var ms = new MemoryStream(memory.ToArray()))
+            {
+                long actual = DatabaseHandler.findField(f3, ms);
+                long expected = 3;
+                Assert.AreEqual(expected, actual);
+            }
         }
     }
 }

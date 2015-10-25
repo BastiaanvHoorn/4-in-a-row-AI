@@ -48,11 +48,7 @@ namespace Server
         /// <returns>Storage</returns>
         public byte[] getStorage()
         {
-            byte[] result = new byte[Storage.Length];
-            Storage.CopyTo(result, 0);
-            Array.Resize(ref result, Storage.Length - (Storage.Last() > 0 ? 0 : 1));
-
-            return result;
+            return Storage;
         }
     }
 }
