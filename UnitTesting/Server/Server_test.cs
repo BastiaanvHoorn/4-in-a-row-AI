@@ -124,14 +124,14 @@ namespace UnitTesting.Server
             }
         }
 
+        private static Field f0 = new Field(new byte[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
+        private static Field f1 = new Field(new byte[] { 5, 80, 5, 21, 80, 0, 0, 0, 0, 0, 0 });
+        private static Field f2 = new Field(new byte[] { 5, 16, 0, 21, 80, 85, 1, 80, 1, 1, 0 });
+        private static Field f3 = new Field(new byte[] { 85, 80, 5, 85, 80, 5, 85, 80, 5, 85, 0 });
+
         [TestMethod]
         public void findField_Test_2()
         {
-            Field f0 = new Field(new byte[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
-            Field f1 = new Field(new byte[] { 5, 80, 5, 21, 80, 0, 0, 0, 0, 0, 0 });
-            Field f2 = new Field(new byte[] { 5, 16, 0, 21, 80, 85, 1, 80, 1, 1, 0 });
-            Field f3 = new Field(new byte[] { 85, 80, 5, 85, 80, 5, 85, 80, 5, 85, 0 });
-
             List<byte> memory = new List<byte>();
             memory.AddRange(f0.compressField());
             memory.AddRange(f1.compressField());
@@ -149,11 +149,6 @@ namespace UnitTesting.Server
         [TestMethod]
         public void findField_Test_3()
         {
-            Field f0 = new Field(new byte[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
-            Field f1 = new Field(new byte[] { 5, 80, 5, 21, 80, 0, 0, 0, 0, 0, 0 });
-            Field f2 = new Field(new byte[] { 5, 16, 0, 21, 80, 85, 1, 80, 1, 1, 0 });
-            Field f3 = new Field(new byte[] { 85, 80, 5, 85, 80, 5, 85, 80, 5, 85, 0 });
-
             List<byte> memory = new List<byte>();
             memory.AddRange(f0.compressField());
             memory.AddRange(f1.compressField());
@@ -171,11 +166,6 @@ namespace UnitTesting.Server
         [TestMethod]
         public void findField_Test_4()
         {
-            Field f0 = new Field(new byte[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
-            Field f1 = new Field(new byte[] { 5, 80, 5, 21, 80, 0, 0, 0, 0, 0, 0 });
-            Field f2 = new Field(new byte[] { 5, 16, 0, 21, 80, 85, 1, 80, 1, 1, 0 });
-            Field f3 = new Field(new byte[] { 85, 80, 5, 85, 80, 5, 85, 80, 5, 85, 0 });
-
             List<byte> memory = new List<byte>();
             memory.AddRange(f0.compressField());
             memory.AddRange(f1.compressField());
@@ -186,6 +176,46 @@ namespace UnitTesting.Server
             {
                 long actual = DatabaseHandler.findField(f3, ms);
                 long expected = 3;
+                Assert.AreEqual(expected, actual);
+            }
+        }
+
+        [TestMethod]
+        public void canAddField_Test_1()
+        {
+            Field newField = new Field(new byte[] { 0, 80, 0, 1, 0, 0, 21, 16, 0, 0, 0 });
+
+            List<byte> memory = new List<byte>();
+            memory.AddRange(f0.compressField());
+            memory.AddRange(f1.compressField());
+            memory.AddRange(f2.compressField());
+            memory.AddRange(f3.compressField());
+
+            using (var ms = new MemoryStream(memory.ToArray()))
+            {
+                bool actual = DatabaseHandler.fieldExists(newField, ms);
+                bool expected = true;
+
+                Assert.AreEqual(expected, actual);
+            }
+        }
+
+        [TestMethod]
+        public void canAddField_Test_2()
+        {
+            Field newField = new Field(f1);
+
+            List<byte> memory = new List<byte>();
+            memory.AddRange(f0.compressField());
+            memory.AddRange(f1.compressField());
+            memory.AddRange(f2.compressField());
+            memory.AddRange(f3.compressField());
+
+            using (var ms = new MemoryStream(memory.ToArray()))
+            {
+                bool actual = DatabaseHandler.fieldExists(newField, ms);
+                bool expected = false;
+
                 Assert.AreEqual(expected, actual);
             }
         }

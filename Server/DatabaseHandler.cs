@@ -10,43 +10,105 @@ using Server.Properties;
 namespace Server
 {
     /// <summary>
-    /// This class makes it easier to do operations related to the database
+    /// This class makes it easier to do operations related to the database.
     /// </summary>
     public static class DatabaseHandler
     {
         /// <summary>
-        /// Adds the given field to the database.
+        /// Handles incoming fields by either adding them to the database or changing its corresponing field data, depending on what's in the database.
         /// </summary>
-        /// <param name="field">Field to be added</param>
-        public static void addField(Field field)
+        /// <param name="field"></param>
+        public static void handleField(Field field, byte moveColumn, bool winning)
         {
             Settings.Default.Reload();
-            using (FileStream fs = new FileStream(Settings.Default.FieldsDBPath, FileMode.OpenOrCreate, FileAccess.ReadWrite)) //  Gets the stream from the database file in read mode.
+
+            string filePath = Settings.Default.FieldsDBPath;
+
+            if (!Directory.GetParent(filePath).Exists)
             {
-                addField(field, fs);
+                Directory.CreateDirectory(Directory.GetParent(filePath).FullName);
+            }
+
+            using (FileStream fieldFs = new FileStream(filePath, FileMode.OpenOrCreate, FileAccess.ReadWrite)) //  Gets the stream from the database file in read mode.
+            {
+                long fieldLocation = findField(field, fieldFs);
+
+                if (fieldLocation == -1)    // Means that field doesn't exist
+                {
+                    FieldData fieldData = new FieldData();
+                    fieldData.totalCounts[moveColumn] = 1;
+                    if (winning)
+                        fieldData.winningCounts[moveColumn] = 1;
+
+                    addDatabaseItem(field, fieldData, fieldFs);
+                }
+                else
+                {
+                    
+                    //editDatabaseItem()location * 56, SeekOrigin.Begin);   // location * 14 (each item consists of 14 uints) * 4 (each uint consists of 4 bytes)
+                }
             }
         }
 
         /// <summary>
-        /// Adds the given field to the database.
+        /// Edits the databaseitems field data at the specified location (fieldLocation).
         /// </summary>
-        /// <param name="field">Field to be added</param>
-        public static void addField(Field field, Stream s)
+        /// <param name="fieldData">Data to be written in database</param>
+        /// <param name="location">Field location</param>
+        /// <param name="fs">Database filestream</param>
+        public static void editDatabaseItem(FieldData fieldData, int location, FileStream fs)   //<-- Parameter FieldData has to be changed!!!
         {
-            long fieldLocation = findField(field, s);  // Gets the location of field in database.
-
-            if (fieldLocation > -1) // Means field is not found in database and we can add it to the database.
+            uint[] fdStorage = fieldData.getStorage();      // Retrieves the uint storage array from the given FieldData object.
+            using (BinaryWriter bw = new BinaryWriter(fs))  // We use a BinaryWriter to be able to write uints directly to the stream.
             {
-                //byte[] compressed = compressField(field);
-            }
-            else                    // Means field already exists and can't be added again.
-            {
-                throw new DatabaseException("Can't add field to database, because it already exists. Field content: " + field.ToString());
+                bw.Seek(location * 56, SeekOrigin.Begin);   // location * 14 (each item consists of 14 uints) * 4 (each uint consists of 4 bytes)).
+                for (byte i = 0; i < 14; i++)               // We write each uint of the storage to the database stream.
+                {
+                    bw.Write(fdStorage[i]);
+                }
             }
         }
 
+        /// <summary>
+        /// Adds the given field to the database. WARNING: It's your own responsibility to check for the existance of a field in the database. Always AVOID adding fields that are already included in the database.
+        /// </summary>
+        /// <param name="field">Field to be added</param>
+        public static void addDatabaseItem(Field field, FieldData fieldData, FileStream fs)
+        {
+            byte[] compressed = field.compressField();
+            fs.Seek(0, SeekOrigin.End);
+            fs.Write(compressed, 0, compressed.Length);
+
+            Settings.Default.Reload();
+            string fieldDataPath = Settings.Default.FieldDataDBPath;
+            using (FileStream fieldDataFs = new FileStream(fieldDataPath, FileMode.OpenOrCreate, FileAccess.ReadWrite))
+            {
+                using (BinaryWriter bw = new BinaryWriter(fieldDataFs))
+                {
+                    bw.Seek(0, SeekOrigin.End);
+
+                    uint[] storage = fieldData.getStorage();
+
+                    for (byte i = 0; i < 14; i++)
+                    {
+                        bw.Write(storage[i]);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Returns whether it's possible to add the given field to the stream.
+        /// </summary>
+        /// <param name="field">Field to check</param>
+        /// <param name="s">Stream to get the data from</param>
+        public static bool fieldExists(Field field, Stream s)
+        {
+            return findField(field, s) == -1;   // findField returns -1 when the field is not included in the database. That's the value we want to be returned if we want to add the given field.
+        }
+
         /*/// <summary>
-        /// Returns where the given field is located in the database. Return value -1 means the specified field is not present in the database.
+        /// Returns where the given field is located in the database. Return value -1 means the specified field is not included in the database.
         /// </summary>
         /// <param name="field"></param>
         /// <returns>Field position (zero-based) in database</returns>
@@ -60,15 +122,15 @@ namespace Server
         }*/
 
         /// <summary>
-        /// Returns where the given field is located in the specified stream. Return value -1 means the specified field is not present in the stream.
+        /// Returns where the given field is located in the specified stream. Return value -1 means the specified field is not included in the stream.
         /// </summary>
         /// <param name="field"></param>
         /// <param name="s"></param>
         /// <returns></returns>
-        internal static long findField(Field field, Stream s)
+        internal static int findField(Field field, Stream s)
         {
             byte[] compressed = compressField(field);   // Gets the compressed version of the given field to compare it with database items.
-            long fieldCounter = 0;                      // Counts how many fields we have found. Used as return value.
+            int fieldCounter = 0;                      // Counts how many fields we have found. Used as return value.
 
             int b = 0;                              // The byte we're reading.
             int column = 0;                         // Current column
