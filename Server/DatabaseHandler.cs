@@ -21,7 +21,6 @@ namespace Server
         public static void handleField(Field field, byte moveColumn, bool winning)
         {
             Settings.Default.Reload();  // Gets the settings from the settings file so we can ask for database paths.
-
             string fieldFilePath = Settings.Default.FieldsDBPath;
 
             if (!Directory.GetParent(fieldFilePath).Exists) // If the directory of the database doesn't exist we create it.
@@ -29,11 +28,7 @@ namespace Server
                 Directory.CreateDirectory(Directory.GetParent(fieldFilePath).FullName);
             }
 
-            int fieldLocation = 0;
-            using (FileStream fieldFs = new FileStream(fieldFilePath, FileMode.OpenOrCreate, FileAccess.Read)) //  Gets the stream from the database file in read mode.
-            {
-                fieldLocation = findField(field, fieldFs);  // Gets the location of the field in the field database. (You could also call it the field index)
-            }
+            int fieldLocation = findField(field);  // Gets the location of the field in the field database. (You could also call it the field index)
 
             if (fieldLocation == -1)    // Means that field doesn't exist and has to be added to the database.
             {
@@ -44,7 +39,22 @@ namespace Server
         }
 
         /// <summary>
-        /// Reads the field data from the database at specified (field)location. (Not the location in bytes)
+        /// Reads the field data from of the given field the database.
+        /// </summary>
+        /// <param name="field">Field to read the data from</param>
+        /// <returns></returns>
+        public static FieldData readFieldData(this Field field)
+        {
+            string fieldFilePath = Settings.Default.FieldsDBPath;
+            using (FileStream fieldDataFs = new FileStream(fieldFilePath, FileMode.OpenOrCreate, FileAccess.Read))
+            {
+                int location = findField(field, fieldDataFs);
+                return readFieldData(location);
+            }
+        }
+
+        /// <summary>
+        /// Reads the field data from the database at the specified (field)location. (Not the location in bytes)
         /// </summary>
         /// <param name="location">Field location</param>
         /// <returns></returns>
@@ -160,6 +170,21 @@ namespace Server
         public static bool fieldExists(Field field, Stream s)
         {
             return findField(field, s) == -1;   // findField returns -1 when the field is not included in the database. That's the value we want to be returned if we want to add the given field.
+        }
+
+        /// <summary>
+        /// Returns where the given field is located in the field database. Return value -1 means the specified field is not included in the stream.
+        /// </summary>
+        /// <param name="field"></param>
+        /// <returns></returns>
+        public static int findField(Field field)
+        {
+            string fieldFilePath = Settings.Default.FieldsDBPath;
+
+            using (FileStream fieldFs = new FileStream(fieldFilePath, FileMode.OpenOrCreate, FileAccess.Read)) //  Gets the stream from the database file in read mode.
+            {
+                return findField(field, fieldFs);
+            }
         }
 
         /// <summary>
