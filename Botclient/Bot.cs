@@ -6,24 +6,15 @@ using System.Text;
 
 namespace Botclient
 {
-    public class Bot
+    public class Bot : IPlayer
     {
         public readonly player player;
-        private Random r = new Random();
         public Bot(player player)
         {
             this.player = player;
         }
 
-        public byte get_next_move(Field field)
-        {
-            byte column = get_column_from_server();
-            Console.WriteLine("Tried to drop a stone in colmun {0}", column.ToString());
-            return column;
-            //return StartClient();
-        }
-
-        public byte get_column_from_server()
+        private byte get_column_from_server(Field field)
         {
             // Data buffer for incoming data.
             byte[] bytes = new byte[1024];
@@ -46,36 +37,42 @@ namespace Botclient
                 {
                     sender.Connect(remoteEP);
 
-                    Console.WriteLine("Socket connected to {0}",
-                        sender.RemoteEndPoint.ToString());
+                    Console.WriteLine($"Socket connected to {sender.RemoteEndPoint.ToString()}");
 
                     // Encode the data string into a byte array.
-                    byte[] msg = Encoding.ASCII.GetBytes("This is a test<EOF>");
+                    byte[] _field = field.getStorage(); //Get the byte-array for the field
+                    byte[] ending = Encoding.ASCII.GetBytes("<EOF>"); //Get the byte-array for the ending of the message
+                    int length = _field.Length + ending.Length; //Get the total length of the message array
+                    byte[] msg = new byte[length]; //Initialize the message array
+                    Array.Copy(_field, msg, _field.Length);
+                    Array.Copy(ending, 0, msg, _field.Length, ending.Length);
+
+
 
                     // Send the data through the socket.
                     int bytesSent = sender.Send(msg);
-
                     // Receive the response from the remote device.
                     int bytesRec = sender.Receive(bytes);
-                    Console.WriteLine("Echoed test = {0}",
-                        Encoding.ASCII.GetString(bytes, 0, bytesRec));
+                    Console.WriteLine($"Recieved from server = {Encoding.ASCII.GetString(bytes, 0, bytesRec)}");
 
                     // Release the socket.
                     sender.Shutdown(SocketShutdown.Both);
                     sender.Close();
 
+                    return byte.Parse(Encoding.ASCII.GetString(bytes, 0, bytesRec));
+
                 }
                 catch (ArgumentNullException ane)
                 {
-                    Console.WriteLine("ArgumentNullException : {0}", ane.ToString());
+                    Console.WriteLine($"ArgumentNullException : {ane}");
                 }
                 catch (SocketException se)
                 {
-                    Console.WriteLine("SocketException : {0}", se.ToString());
+                    Console.WriteLine($"SocketException : {se}");
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine("Unexpected exception : {0}", e.ToString());
+                    Console.WriteLine($"Unexpected exception : {e}");
                 }
 
             }
@@ -83,7 +80,14 @@ namespace Botclient
             {
                 Console.WriteLine(e.ToString());
             }
-            return (byte)(r.Next(8) - 1);
+            return 1;
+        }
+
+        public byte get_turn(Field field)
+        {
+            byte column = get_column_from_server(field);
+            Console.WriteLine($"Tried to drop a stone in colmun {column}");
+            return column;
         }
     }
 }

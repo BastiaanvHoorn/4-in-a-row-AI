@@ -12,7 +12,7 @@ namespace GUI
             Game game = new Game(7,6);
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new game_interface(2, game));
+            Application.Run(new game_interface(1, game));
 
         }
     }
