@@ -152,11 +152,11 @@ namespace Server
                 // Retrieve the socket from the state object.
                 Socket handler = (Socket) ar.AsyncState;
 
+                int bytesSent = handler.EndSend(ar);
                 // Complete sending the data to the remote device.
                 handler.Shutdown(SocketShutdown.Both);
                 handler.Close();
 
-                int bytesSent = handler.EndSend(ar);
                 Console.WriteLine("Sent {0} bytes to client.", bytesSent);
 
 
