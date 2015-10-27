@@ -17,6 +17,12 @@ namespace Server
             winningCounts = new uint[7];
         }
 
+        public FieldData(uint[] storage) : this()
+        {
+            Array.Copy(storage, 0, totalCounts, 0, 7);
+            Array.Copy(storage, 7, winningCounts, 0, 7);
+        }
+
         public uint[] getStorage()
         {
             uint[] result = new uint[14];
