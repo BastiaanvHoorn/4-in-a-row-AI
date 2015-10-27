@@ -6,7 +6,8 @@ using System.Threading.Tasks;
 
 namespace Engine
 {
-    interface IPlayer
+    public interface IPlayer
     {
+        byte get_turn(Field field);
     }
 }
