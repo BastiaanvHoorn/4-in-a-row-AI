@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Engine;
 
 namespace Server
 {
@@ -27,10 +28,6 @@ namespace Server
     {
         // Thread signal.
         public static ManualResetEvent allDone = new ManualResetEvent(false);
-
-        public AsynchronousSocketListener()
-        {
-        }
 
         public static void StartListening()
         {
@@ -98,7 +95,7 @@ namespace Server
 
         public static void ReadCallback(IAsyncResult ar)
         {
-            String content = String.Empty;
+            string content = String.Empty;
 
             // Retrieve the state object and the handler socket
             // from the asynchronous state object.
@@ -121,13 +118,12 @@ namespace Server
                 {
                     // All the data has been read from the 
                     // client. Display it on the console.
-                    Console.WriteLine("Read {0} bytes from socket. \n Data : {1} \n",
-                        content.Length, content);
+                    //Console.WriteLine($"Read {content.Length} bytes from socket. \n Data : {content} \n");
 
-                    //THE MAGIC HAPPENS HERE!!!
                     // Echo the data back to the client.
-                    Send(handler, get_column().ToString());
-                    //THE MAGIC ENDS HERE!!!
+                    byte[] _field = Encoding.ASCII.GetBytes(content.Remove(content.Length - 5, 5));
+                    Field field = new Field(_field);
+                    Send(handler, get_column(field).ToString());
                 }
                 else
                 {
@@ -144,7 +140,7 @@ namespace Server
             byte[] byteData = Encoding.ASCII.GetBytes(data);
 
             // Begin sending the data to the remote device.
-            Console.WriteLine("Returned column {0}", data);
+            Console.WriteLine($"Send column {data}");
             handler.BeginSend(byteData, 0, byteData.Length, 0,
                 new AsyncCallback(SendCallback), handler);
         }
@@ -156,12 +152,13 @@ namespace Server
                 // Retrieve the socket from the state object.
                 Socket handler = (Socket) ar.AsyncState;
 
-                // Complete sending the data to the remote device.
                 int bytesSent = handler.EndSend(ar);
-                Console.WriteLine("Sent {0} bytes to client.", bytesSent);
-
+                // Complete sending the data to the remote device.
                 handler.Shutdown(SocketShutdown.Both);
                 handler.Close();
+
+                Console.WriteLine("Sent {0} bytes to client.", bytesSent);
+
 
             }
             catch (Exception e)
@@ -170,11 +167,12 @@ namespace Server
             }
         }
 
-        public static byte get_column()
+        public static byte get_column(Field field)
         {
             Random r = new Random();
             return (byte)(r.Next(6));
         }
+
         public static int Main(String[] args)
         {
             StartListening();

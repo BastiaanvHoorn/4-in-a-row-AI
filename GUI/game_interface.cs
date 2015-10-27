@@ -124,7 +124,7 @@ namespace GUI
                                 {
                                     Console.WriteLine(s);
                                 }
-                                row = bot_bob.get_next_move(field);
+                                row = bot_bob.get_turn(field);
                             } while (!game.add_stone(row, player.Bob, ref s));
                             continue;
                         }
