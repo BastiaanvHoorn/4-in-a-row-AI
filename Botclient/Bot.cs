@@ -3,12 +3,13 @@ using System.Net;
 using System.Net.Sockets;
 using Engine;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Botclient
 {
     public class Bot : IPlayer
     {
-        public readonly player player;
+        public player player { get; }
         public Bot(player player)
         {
             this.player = player;
@@ -83,11 +84,12 @@ namespace Botclient
             return 1;
         }
 
-        public byte get_turn(Field field)
+        public Task<byte> get_turn(Field field)
         {
-            byte column = get_column_from_server(field);
-            Console.WriteLine($"Tried to drop a stone in colmun {column}");
-            return column;
+            var task = Task.Factory.StartNew(() => get_column_from_server(field));
+            Console.WriteLine($"Tried to drop a stone in colmun {task.Result}");
+            return task;
         }
+
     }
 }

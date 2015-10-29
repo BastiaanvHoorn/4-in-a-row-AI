@@ -62,13 +62,13 @@
       <Project>{fc36aaeb-b455-4fc4-ae1d-fdd8ff873f3a}</Project>
       <Name>Botclient</Name>
     </ProjectReference>
-    <ProjectReference Include="..\GUI\GUI.csproj">
+    <ProjectReference Include="..\GUI\Connect4.csproj">
       <Project>{2a750f31-5dcb-4a72-b95a-d9ca8ff31505}</Project>
-      <Name>GUI</Name>
+      <Name>Connect4</Name>
     </ProjectReference>
     <ProjectReference Include="..\Engine\Engine.csproj">
       <Project>{f1bb086d-8959-4826-a336-5fb2fd7c9ced}</Project>
-      <Name>Game</Name>
+      <Name>Engine</Name>
     </ProjectReference>
     <ProjectReference Include="..\Server\Server.csproj">
       <Project>{11ba7ab2-5c23-4852-8086-766355cdff9f}</Project>

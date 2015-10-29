@@ -2,7 +2,6 @@
 
 namespace Engine
 {
-    public enum player { Empty, Alice, Bob }
     public class Game
     {
         private static byte height;
