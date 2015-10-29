@@ -10,7 +10,6 @@ using Engine;
 
 namespace Server
 {
-
     // State object for reading client data asynchronously
     public class StateObject
     {
@@ -26,6 +25,7 @@ namespace Server
 
     public class AsynchronousSocketListener
     {
+        static Random r = new Random();
         // Thread signal.
         public static ManualResetEvent allDone = new ManualResetEvent(false);
 
@@ -169,8 +169,8 @@ namespace Server
 
         public static byte get_column(Field field)
         {
-            Random r = new Random();
-            return (byte)(r.Next(6));
+            var val = (byte)(r.Next(6));
+            return val;
         }
 
         public static int Main(String[] args)

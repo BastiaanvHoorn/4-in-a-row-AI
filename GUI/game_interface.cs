@@ -9,7 +9,7 @@ namespace GUI
     public partial class game_interface : Form
     {
         readonly Game game;
-        private readonly int players; //All non-bot players 
+        private readonly int players; //All non-bot player 
         private Label[][] labels;
         private Field field;
         private const int x = 140;
@@ -21,7 +21,7 @@ namespace GUI
         /// <summary>
         /// Constructor for the game
         /// </summary>
-        /// <param name="players">The amount of players that is gonna play, 0 for bot vs bot, 1 for player vs bot and 2 for player vs player</param>
+        /// <param name="players">The amount of player that is gonna play, 0 for bot vs bot, 1 for player vs bot and 2 for player vs player</param>
         public game_interface(int players, Game game)
         {
             if (players < 1)
@@ -30,7 +30,7 @@ namespace GUI
             }
             if (players > 2)
             {
-                throw new NotImplementedException("You can only play with a maximum of 2 players");
+                throw new NotImplementedException("You can only play with a maximum of 2 player");
             }
             InitializeComponent();
             this.game = game;
@@ -43,7 +43,7 @@ namespace GUI
             {
                 numeric_Bob.Visible = false;
                 button_Bob.Visible = false;
-                bot_bob = new Bot(player.Bob);
+                bot_bob = new Bot(Engine.players.Bob);
             }
             field = game.get_field();
             //Display the field
@@ -80,10 +80,10 @@ namespace GUI
                         int k = j_offset - j;
                         switch (field.getCellPlayer(i,j))
                         {
-                            case player.Empty:
+                            case Engine.players.Empty:
                                 labels[i][k].BackColor = Color.Wheat;
                                 break;
-                            case player.Alice:
+                            case Engine.players.Alice:
                                 labels[i][k].BackColor = Color.Red;
                                 break;
                             default:
@@ -92,28 +92,28 @@ namespace GUI
                         }
                     }
                 }
-                if (game.has_won(player.Alice))
+                if (game.has_won(Engine.players.Alice))
                 {
                     Console.WriteLine("Alice has won");
-                    disable_ui(player.Alice);
-                    disable_ui(player.Bob);
+                    disable_ui(Engine.players.Alice);
+                    disable_ui(Engine.players.Bob);
                 }
-                else if (game.has_won(player.Bob))
+                else if (game.has_won(Engine.players.Bob))
                 {
                     Console.WriteLine("bob has won");
-                    disable_ui(player.Alice);
-                    disable_ui(player.Bob);
+                    disable_ui(Engine.players.Alice);
+                    disable_ui(Engine.players.Bob);
                 }
                 else
                 {
-                    if (game.next_player == player.Alice)
+                    if (game.next_players == Engine.players.Alice)
                     {
-                        disable_ui(player.Bob, true);
+                        disable_ui(Engine.players.Bob, true);
                     }
                     else
                     {
-                        disable_ui(player.Alice, true);
-                        //If there are less then 2 real players, bob is played by a bot
+                        disable_ui(Engine.players.Alice, true);
+                        //If there are less then 2 real player, bob is played by a bot
                         if (players < 2)
                         {
                             byte row;
@@ -125,7 +125,7 @@ namespace GUI
                                     Console.WriteLine(s);
                                 }
                                 row = bot_bob.get_turn(field);
-                            } while (!game.add_stone(row, player.Bob, ref s));
+                            } while (!game.add_stone(row, Engine.players.Bob, ref s));
                             continue;
                         }
                     }
@@ -134,9 +134,9 @@ namespace GUI
             }
         }
 
-        private void disable_ui(player player, bool enable_other = false)
+        private void disable_ui(players player, bool enable_other = false)
         {
-            if (player == player.Alice)
+            if (player == Engine.players.Alice)
             {
                 button_Alice.Enabled = false;
                 numeric_Alice.Enabled = false;
@@ -158,7 +158,7 @@ namespace GUI
         private void button_Alice_Click(object sender, EventArgs e)
         {
             string s = "";
-            if (!game.add_stone((byte)numeric_Alice.Value, player.Alice, ref s))
+            if (!game.add_stone((byte)numeric_Alice.Value, Engine.players.Alice, ref s))
             {
                 Console.WriteLine(s);
             }
@@ -170,7 +170,7 @@ namespace GUI
         private void button_Bob_Click(object sender, EventArgs e)
         {
             string s = "";
-            if (!game.add_stone((byte)numeric_Bob.Value, player.Bob, ref s))
+            if (!game.add_stone((byte)numeric_Bob.Value, Engine.players.Bob, ref s))
             {
                 Console.WriteLine(s);
             }

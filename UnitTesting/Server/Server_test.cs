@@ -14,11 +14,11 @@ namespace UnitTesting.Server
         public void Compression_Test_1()
         {
             Field f = new Field();
-            f.setCell(0, 0, player.Bob);
-            f.setCell(1, 0, player.Bob);
-            f.setCell(2, 0, player.Bob);
-            f.setCell(2, 1, player.Alice);
-            f.setCell(3, 0, player.Alice);
+            f.setCell(0, 0, players.Bob);
+            f.setCell(1, 0, players.Bob);
+            f.setCell(2, 0, players.Bob);
+            f.setCell(2, 1, players.Alice);
+            f.setCell(3, 0, players.Alice);
 
             byte[] actual = DatabaseHandler.compressField(f);
 
@@ -34,17 +34,17 @@ namespace UnitTesting.Server
 
             for (int i = 0; i < 6; i++)
             {
-                f.setCell(2, i, (player)(i % 2 + 1));    //Column 3 (zero-based 2) with content (A = Alice, B = Bob): ABABAB
+                f.setCell(2, i, (players)(i % 2 + 1));    //Column 3 (zero-based 2) with content (A = Alice, B = Bob): ABABAB
             }
 
-            f.setCell(1, 0, player.Bob);
-            f.setCell(3, 0, player.Alice);
-            f.setCell(3, 1, player.Bob);
-            f.setCell(4, 0, player.Bob);
-            f.setCell(4, 1, player.Alice);
-            f.setCell(5, 0, player.Bob);
-            f.setCell(5, 1, player.Alice);
-            f.setCell(5, 2, player.Alice);
+            f.setCell(1, 0, players.Bob);
+            f.setCell(3, 0, players.Alice);
+            f.setCell(3, 1, players.Bob);
+            f.setCell(4, 0, players.Bob);
+            f.setCell(4, 1, players.Alice);
+            f.setCell(5, 0, players.Bob);
+            f.setCell(5, 1, players.Alice);
+            f.setCell(5, 2, players.Alice);
 
             byte[] actual = DatabaseHandler.compressField(f);
 
@@ -62,7 +62,7 @@ namespace UnitTesting.Server
             {
                 for (int y = 0; y < 6; y++)
                 {
-                    f.setCell(x, y, (player)(y % 2 + 1));
+                    f.setCell(x, y, (players)(y % 2 + 1));
                 }
             }
 

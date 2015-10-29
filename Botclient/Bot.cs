@@ -8,8 +8,8 @@ namespace Botclient
 {
     public class Bot : IPlayer
     {
-        public readonly player player;
-        public Bot(player player)
+        public players player { get; }
+        public Bot(players player)
         {
             this.player = player;
         }
