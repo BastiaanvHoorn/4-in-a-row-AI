@@ -15,17 +15,39 @@ namespace Server
     public static class DatabaseHandler
     {
         /// <summary>
+        /// Returns whether the given location is an existing (valid to use) location, depending on the field data database filestream. WARNING: Do NOT use the field database filestream (Fields.db), only the field DATA database filestream (Fielddata.db).
+        /// </summary>
+        /// <param name="location">The location to check</param>
+        /// <param name="fieldDataFs">The field data database filestream</param>
+        /// <returns></returns>
+        public static bool locationExists(int location, FileStream fieldDataFs)
+        {
+            int length = getDatabaseLength(fieldDataFs);
+            return location >= 0 && location < length;
+        }
+
+        /// <summary>
+        /// Returns the database length according to the length of the field data filestream. WARNING: Do NOT use the field database filestream (Fields.db), only the field DATA database filestream (Fielddata.db).
+        /// </summary>
+        /// <param name="fs">Field data database filestream</param>
+        /// <returns></returns>
+        public static int getDatabaseLength(FileStream fieldDataFs)
+        {
+            return (int)fieldDataFs.Length / 56;
+        }
+
+        /// <summary>
         /// Returns the position (in bytes) in the field data database where the data corresponding to the given field location is stored.
         /// </summary>
         /// <param name="fieldLocation">The location of the field</param>
-        /// <param name="fs">The field data database stream</param>
+        /// <param name="fieldDataFs">The field data database stream</param>
         /// <returns></returns>
-        public static int getSeekPosition(int fieldLocation, FileStream fs)
+        public static int getSeekPosition(int location, FileStream fieldDataFs)
         {
-            if (fieldLocation == -1)
-                return (int)fs.Length - 56; // At the last element in the field data database.
-            else
-                return fieldLocation * 56;           // At the specified location. (56 bytes per 'field data' -> 14 uints = 56 bytes)
+            if (!locationExists(location, fieldDataFs))
+                throw new DatabaseException("Can't calculate seek position for field location -1, because this location doesn't exist");
+
+            return location * 56;         // 56 bytes per 'field data' -> 14 uints = 56 bytes
         }
 
         /// <summary>
@@ -54,6 +76,9 @@ namespace Server
 
             using (FileStream fieldDataFs = new FileStream(fieldDataFilePath, FileMode.OpenOrCreate, FileAccess.Read)) // Opens the field data database filestream in read mode.
             {
+                if (!locationExists(location, fieldDataFs))
+                    throw new DatabaseException("Can't read field data at field location -1, because this location doesn't exist.");
+
                 int seekPosition = getSeekPosition(location, fieldDataFs);
 
                 uint[] storage = new uint[14];
@@ -97,6 +122,9 @@ namespace Server
 
             using (FileStream fieldDataFs = new FileStream(fieldDataFilePath, FileMode.OpenOrCreate, FileAccess.Write)) // Opens the field data database filestream in write mode.
             {
+                if (!locationExists(location, fieldDataFs))
+                    throw new DatabaseException("Can't write field data at field location -1, because this location doesn't exist.");
+
                 int seekPosition = getSeekPosition(location, fieldDataFs);
 
                 using (BinaryWriter bw = new BinaryWriter(fieldDataFs))  // We use a BinaryWriter to be able to write uints directly to the stream.
@@ -146,31 +174,26 @@ namespace Server
             int fieldLength;
             int location = field.findField(out byteIndex, out fieldLength);
 
-            if (location != -1)
+            string fieldDataFilePath = Settings.Default.FieldDataDBPath;
+            using (FileStream fieldDataFs = new FileStream(fieldDataFilePath, FileMode.OpenOrCreate, FileAccess.Write)) // Opens the field data database filestream in write mode.
             {
-                string fieldFilePath = Settings.Default.FieldsDBPath;
-                using (FileStream fieldFs = new FileStream(fieldFilePath, FileMode.OpenOrCreate, FileAccess.Write))
-                {
-                    fieldFs.Seek(byteIndex, SeekOrigin.Begin);
-                    fieldFs.Write(new byte[fieldLength], 0, fieldLength);
-                }
+                if (!locationExists(location, fieldDataFs))
+                    throw new DatabaseException("Can't clear database item at field location -1, because this location doesn't exist.");
 
-                string fieldDataFilePath = Settings.Default.FieldDataDBPath;
-                using (FileStream fieldDataFs = new FileStream(fieldDataFilePath, FileMode.OpenOrCreate, FileAccess.Write)) // Opens the field data database filestream in write mode.
-                {
-                    fieldDataFs.Seek(getSeekPosition(location, fieldDataFs), SeekOrigin.Begin);
-                    fieldDataFs.Write(new byte[56], 0, 56);
-                }
-            }
-            else
-            {
-                throw new DatabaseException("Can't clear database item, because the field doesn't exist in the database");
+                fieldDataFs.Seek(getSeekPosition(location, fieldDataFs), SeekOrigin.Begin);
+                fieldDataFs.Write(new byte[56], 0, 56);
             }
 
+            string fieldFilePath = Settings.Default.FieldsDBPath;
+            using (FileStream fieldFs = new FileStream(fieldFilePath, FileMode.OpenOrCreate, FileAccess.Write))
+            {
+                fieldFs.Seek(byteIndex, SeekOrigin.Begin);
+                fieldFs.Write(new byte[fieldLength], 0, fieldLength);
+            }
         }
 
         /// <summary>
-        /// Returns whether it's possible to add the given field to the stream.
+        /// Returns whether it's possible to add the given field to the stream. WARNING: In most cases it's better to do this check yourself, because the findField function could be quite expensive as the database grows.
         /// </summary>
         /// <param name="field">Field to check</param>
         /// <param name="s">Stream to get the data from</param>
