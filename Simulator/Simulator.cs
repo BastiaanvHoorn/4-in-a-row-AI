@@ -24,7 +24,6 @@ namespace Simulator
         {
             while (true)
             {
-
                 game = new Game(7, 6);
                 Console.WriteLine($"Created new game of {game.get_field().Width} by {game.get_field().Height}");
                 List<IPlayer> players = new List<IPlayer>()
@@ -35,7 +34,7 @@ namespace Simulator
 
                 do
                 {
-                    do_turn(players.Find(player => player.player == game.next_players));
+                    do_turn(players.Find(player => player.player == game.next_players)); //Execute the turn the player who's turn it is
                 } while (!(check_for_win() || tie));
                 if (tie)
                 {
@@ -56,8 +55,6 @@ namespace Simulator
         /// <summary>
         /// Tries to execute the given turn from the given player.
         /// If the given turn is not possible for whatever reason, the player is asked again.
-        /// This continues forever;
-        /// TODO: prevent infinite loop
         /// </summary>
         /// <param name="player"></param>
         static void do_turn(IPlayer player)
@@ -70,7 +67,7 @@ namespace Simulator
                 {
                     counter++;
                     Console.WriteLine($"{s} ({counter} tries)");
-                    if (counter > 100)
+                    if (counter > 100) //Lazy way to prevent the simulator from locking itself if it can't add any new stones
                     {
                         tie = true;
                         break;
