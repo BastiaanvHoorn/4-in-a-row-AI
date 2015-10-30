@@ -11,6 +11,7 @@ namespace Server
 {
     public static class RequestHandler
     {
+        static Random rnd = new Random();
         /// <summary>
         /// Returns the move (column) that suits best with the given field (given situation). If the field is not included in the database a random column is returned.
         /// </summary>
@@ -40,8 +41,7 @@ namespace Server
             }
             else
             {
-                Random rnd = new Random();
-                return (byte)rnd.Next(6);
+                return (byte)rnd.Next(7); //Returns a value between 0 and 6
             }
         }
 
