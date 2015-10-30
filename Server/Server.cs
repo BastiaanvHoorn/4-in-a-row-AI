@@ -169,7 +169,7 @@ namespace Server
 
         public static byte get_column(Field field)
         {
-            var val = (byte)(r.Next(6));
+            var val = (byte)(r.Next(8));
             return val;
         }
 

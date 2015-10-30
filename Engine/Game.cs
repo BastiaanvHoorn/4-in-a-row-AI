@@ -3,14 +3,13 @@ using System.CodeDom;
 
 namespace Engine
 {
-    public enum players { Empty, Alice, Bob }
+    public enum players { Empty, Alice, Bob } //0 for noone, 1 for alice and 2 for bob
     public class Game
     {
-        private static byte height;
-        private static byte width;
+        public byte height;
+        public byte width;
+        public byte stones_count { get; private set; } //If this is equal to the width times the height, then it is a tie
         private readonly Field field;
-
-        //0 for noone, 1 for alice and 2 for bob
         public players next_players { get; private set; }
         private players winning { get; set; }
         /// <summary>
@@ -31,6 +30,7 @@ namespace Engine
         /// </summary>
         public Game(byte _width, byte _height)
         {
+            stones_count = 0;
             height = _height;
             width = _width;
             field = new Field(_width, _height);
@@ -52,6 +52,10 @@ namespace Engine
         /// <returns>If the stone could be placed in that column</returns>
         public bool add_stone(byte column, players player, ref string info)
         {
+            if (stones_count == width*height)
+            {
+                info = "The field is full, check for a tie";
+            }
             string player_name = Enum.GetName(typeof(players), player);
             if (next_players != player)
             {
@@ -70,6 +74,8 @@ namespace Engine
                 next_players = (player == players.Alice ? players.Bob : players.Alice);
                 Console.WriteLine($"{player_name} dropped a stone at {column}, {empty_cell}");
                 check_for_win(column, empty_cell, player);
+
+                stones_count++;
                 return true;
             }
 
