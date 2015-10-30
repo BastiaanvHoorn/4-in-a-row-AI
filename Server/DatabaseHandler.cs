@@ -193,13 +193,45 @@ namespace Server
         }
 
         /// <summary>
+        /// fieldExists function for a specific stream, instead of a database filestream. (For unittesting)
+        /// </summary>
+        /// <param name="field">The field</param>
+        /// <param name="s">The stream to read from</param>
+        /// <returns></returns>
+        internal static bool fieldExists(this Field field, Stream s)
+        {
+            int location = field.findField(s);
+            return location >= 0;
+        }
+
+        /// <summary>
         /// Returns whether it's possible to add the given field to the stream. WARNING: In most cases it's better to do this check yourself, because the findField function could be quite expensive as the database grows.
         /// </summary>
         /// <param name="field">Field to check</param>
         /// <param name="s">Stream to get the data from</param>
-        public static bool fieldExists(this Field field, Stream s)
+        public static bool fieldExists(this Field field)
         {
-            return findField(field, s) == -1;   // findField returns -1 when the field is not included in the database. That's the value we want to be returned if we want to add the given field.
+            string fieldFilePath = Settings.Default.FieldsDBPath;
+            using (FileStream fieldFs = new FileStream(fieldFilePath, FileMode.OpenOrCreate, FileAccess.Read))
+            {
+                int location = field.findField(fieldFs);
+                return location >= 0;
+            }
+        }
+
+        /// <summary>
+        /// Returns whether the given field exists in the field database stream. Also stores the (field)location of specified field within the database in location. 
+        /// </summary>
+        /// <param name="field">Field to check</param>
+        /// <param name="s">Stream to get the data from</param>
+        public static bool fieldExists(this Field field, out int location)
+        {
+            string fieldFilePath = Settings.Default.FieldsDBPath;
+            using (FileStream fieldFs = new FileStream(fieldFilePath, FileMode.OpenOrCreate, FileAccess.Read))
+            {
+                location = findField(field, fieldFs);
+                return location >= 0;
+            }
         }
 
         /// <summary>

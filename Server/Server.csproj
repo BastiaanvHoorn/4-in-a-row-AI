@@ -45,6 +45,7 @@
     <Compile Include="BitReader.cs" />
     <Compile Include="BitWriter.cs" />
     <Compile Include="DatabaseHandler.cs" />
+    <Compile Include="Exceptions.cs" />
     <Compile Include="FieldData.cs" />
     <Compile Include="Properties\Settings.Designer.cs">
       <AutoGen>True</AutoGen>
