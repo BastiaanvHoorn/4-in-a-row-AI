@@ -15,36 +15,58 @@ namespace Server
     public static class DatabaseHandler
     {
         /// <summary>
-        /// Handles incoming fields by either adding them to the database or changing its corresponing field data, depending on what's in the database.
+        /// Returns whether the given location is an existing (valid to use) location, depending on the field data database filestream. WARNING: Do NOT use the field database filestream (Fields.db), only the field DATA database filestream (Fielddata.db).
         /// </summary>
-        /// <param name="field"></param>
-        public static void handleField(Field field, byte moveColumn, bool winning)
+        /// <param name="location">The location to check</param>
+        /// <param name="fieldDataFs">The field data database filestream</param>
+        /// <returns></returns>
+        public static bool locationExists(int location, FileStream fieldDataFs)
         {
-            Settings.Default.Reload();  // Gets the settings from the settings file so we can ask for database paths.
-
-            string fieldFilePath = Settings.Default.FieldsDBPath;
-
-            if (!Directory.GetParent(fieldFilePath).Exists) // If the directory of the database doesn't exist we create it.
-            {
-                Directory.CreateDirectory(Directory.GetParent(fieldFilePath).FullName);
-            }
-
-            int fieldLocation = 0;
-            using (FileStream fieldFs = new FileStream(fieldFilePath, FileMode.OpenOrCreate, FileAccess.Read)) //  Gets the stream from the database file in read mode.
-            {
-                fieldLocation = findField(field, fieldFs);  // Gets the location of the field in the field database. (You could also call it the field index)
-            }
-
-            if (fieldLocation == -1)    // Means that field doesn't exist and has to be added to the database.
-            {
-                addDatabaseItem(field);
-            }
-
-            updateFieldData(fieldLocation, moveColumn, winning);    // Applies the new data to the field data database.
+            int length = getDatabaseLength(fieldDataFs);
+            return location >= 0 && location < length;
         }
 
         /// <summary>
-        /// Reads the field data from the database at specified (field)location. (Not the location in bytes)
+        /// Returns the database length according to the length of the field data filestream. WARNING: Do NOT use the field database filestream (Fields.db), only the field DATA database filestream (Fielddata.db).
+        /// </summary>
+        /// <param name="fs">Field data database filestream</param>
+        /// <returns></returns>
+        public static int getDatabaseLength(FileStream fieldDataFs)
+        {
+            return (int)fieldDataFs.Length / 56;
+        }
+
+        /// <summary>
+        /// Returns the position (in bytes) in the field data database where the data corresponding to the given field location is stored.
+        /// </summary>
+        /// <param name="fieldLocation">The location of the field</param>
+        /// <param name="fieldDataFs">The field data database stream</param>
+        /// <returns></returns>
+        public static int getSeekPosition(int location, FileStream fieldDataFs)
+        {
+            if (!locationExists(location, fieldDataFs))
+                throw new DatabaseException("Can't calculate seek position for field location -1, because this location doesn't exist");
+
+            return location * 56;         // 56 bytes per 'field data' -> 14 uints = 56 bytes
+        }
+
+        /// <summary>
+        /// Reads the field data from of the given field the database.
+        /// </summary>
+        /// <param name="field">Field to read the data from</param>
+        /// <returns></returns>
+        public static FieldData readFieldData(this Field field)
+        {
+            string fieldFilePath = Settings.Default.FieldsDBPath;
+            using (FileStream fieldDataFs = new FileStream(fieldFilePath, FileMode.OpenOrCreate, FileAccess.Read))
+            {
+                int location = findField(field, fieldDataFs);
+                return readFieldData(location);
+            }
+        }
+
+        /// <summary>
+        /// Reads the field data from the database at the specified (field)location. (Not the location in bytes)
         /// </summary>
         /// <param name="location">Field location</param>
         /// <returns></returns>
@@ -54,12 +76,10 @@ namespace Server
 
             using (FileStream fieldDataFs = new FileStream(fieldDataFilePath, FileMode.OpenOrCreate, FileAccess.Read)) // Opens the field data database filestream in read mode.
             {
-                long seekPosition = 0;      // We determine a seek position to know where to start writing.
+                if (!locationExists(location, fieldDataFs))
+                    throw new DatabaseException("Can't read field data at field location -1, because this location doesn't exist.");
 
-                if (location == -1)
-                    seekPosition = fieldDataFs.Length - 56; // At the last element in the field data database.
-                else
-                    seekPosition = location * 56;           // At the specified location. (56 bytes per 'field data' -> 14 uints = 56 bytes)
+                int seekPosition = getSeekPosition(location, fieldDataFs);
 
                 uint[] storage = new uint[14];
                 using (BinaryReader br = new BinaryReader(fieldDataFs))
@@ -77,22 +97,35 @@ namespace Server
         }
 
         /// <summary>
+        /// Writes the given field data to the database for the specified field.
+        /// </summary>
+        /// <param name="field">The field to save the data for</param>
+        /// <param name="fieldData">The field data to write</param>
+        public static void writeFieldData(this Field field, FieldData fieldData)
+        {
+            string fieldFilePath = Settings.Default.FieldsDBPath;
+            using (FileStream fieldDataFs = new FileStream(fieldFilePath, FileMode.OpenOrCreate, FileAccess.Read))
+            {
+                int location = findField(field, fieldDataFs);
+                writeFieldData(location, fieldData);
+            }
+        }
+
+        /// <summary>
         /// Writes the given field data to the database at the specified (field)location. (Not the location in bytes)
         /// </summary>
         /// <param name="location">Field location</param>
         /// <param name="fieldData">Data to be written</param>
-        private static void writeFieldData(int location, FieldData fieldData)
+        public static void writeFieldData(int location, FieldData fieldData)
         {
             string fieldDataFilePath = Settings.Default.FieldDataDBPath;
 
             using (FileStream fieldDataFs = new FileStream(fieldDataFilePath, FileMode.OpenOrCreate, FileAccess.Write)) // Opens the field data database filestream in write mode.
             {
-                long seekPosition = 0;      // We determine a seek position to know where to start writing.
+                if (!locationExists(location, fieldDataFs))
+                    throw new DatabaseException("Can't write field data at field location -1, because this location doesn't exist.");
 
-                if (location == -1)
-                    seekPosition = fieldDataFs.Length - 56; // At the last element in the field data database.
-                else
-                    seekPosition = location * 56;           // At the specified location. (56 bytes per 'field data' -> 14 uints = 56 bytes)
+                int seekPosition = getSeekPosition(location, fieldDataFs);
 
                 using (BinaryWriter bw = new BinaryWriter(fieldDataFs))  // We use a BinaryWriter to be able to write uints directly to the stream.
                 {
@@ -106,30 +139,12 @@ namespace Server
                 }
             }
         }
-
-        /// <summary>
-        /// Edits the databaseitems field data at the specified location (fieldLocation).
-        /// </summary>
-        /// <param name="fieldData">Data to be written in database</param>
-        /// <param name="location">Field location (-1 means at the end)</param>
-        /// <param name="fs">Database filestream</param>
-        public static void updateFieldData(int location, byte moveColumn, bool winning)
-        {
-            FieldData fieldData = readFieldData(location);  // Reads the old field data from the database.
-
-            // Edits the field data to the wanted values.
-            fieldData.totalCounts[moveColumn]++;
-            if (winning)
-                fieldData.winningCounts[moveColumn]++;
-
-            writeFieldData(location, fieldData);    // Writes the field data to the database.
-        }
-
+        
         /// <summary>
         /// Adds the given field to the database. WARNING: It's your own responsibility to check for the existance of a field in the database. Always AVOID adding fields that are already included in the database.
         /// </summary>
         /// <param name="field">Field to be added</param>
-        public static void addDatabaseItem(Field field)
+        public static void addDatabaseItem(this Field field)
         {
             string fieldFilePath = Settings.Default.FieldsDBPath;
 
@@ -144,22 +159,110 @@ namespace Server
 
             using (FileStream fieldDataFs = new FileStream(fieldDataPath, FileMode.OpenOrCreate, FileAccess.Write)) // Opens the field data database filestream in write mode.
             {
-                using (BinaryWriter bw = new BinaryWriter(fieldDataFs))
-                {
-                    bw.Seek(0, SeekOrigin.End); // Sets the writing position to the end of the database.
-                    bw.Write(new byte[56]);     // 56 bytes is equal to 14 uints (or ints). 7 for totalCounts and 7 for winningCounts
-                }
+                fieldDataFs.Seek(0, SeekOrigin.End);
+                fieldDataFs.Write(new byte[56], 0, 56);
             }
         }
 
         /// <summary>
-        /// Returns whether it's possible to add the given field to the stream.
+        /// Clears the database item (the field and its corresponding data) of the specified field from the database(s). This function doesn't delete the item, but sets all its values to zero.
+        /// </summary>
+        /// <param name="field">The field to be cleared</param>
+        public static void clearDataBaseItem(this Field field)
+        {
+            int byteIndex;
+            int fieldLength;
+            int location = field.findField(out byteIndex, out fieldLength);
+
+            string fieldDataFilePath = Settings.Default.FieldDataDBPath;
+            using (FileStream fieldDataFs = new FileStream(fieldDataFilePath, FileMode.OpenOrCreate, FileAccess.Write)) // Opens the field data database filestream in write mode.
+            {
+                if (!locationExists(location, fieldDataFs))
+                    throw new DatabaseException("Can't clear database item at field location -1, because this location doesn't exist.");
+
+                fieldDataFs.Seek(getSeekPosition(location, fieldDataFs), SeekOrigin.Begin);
+                fieldDataFs.Write(new byte[56], 0, 56);
+            }
+
+            string fieldFilePath = Settings.Default.FieldsDBPath;
+            using (FileStream fieldFs = new FileStream(fieldFilePath, FileMode.OpenOrCreate, FileAccess.Write))
+            {
+                fieldFs.Seek(byteIndex, SeekOrigin.Begin);
+                fieldFs.Write(new byte[fieldLength], 0, fieldLength);
+            }
+        }
+
+        /// <summary>
+        /// fieldExists function for a specific stream, instead of a database filestream. (For unittesting)
+        /// </summary>
+        /// <param name="field">The field</param>
+        /// <param name="s">The stream to read from</param>
+        /// <returns></returns>
+        internal static bool fieldExists(this Field field, Stream s)
+        {
+            int location = field.findField(s);
+            return location >= 0;
+        }
+
+        /// <summary>
+        /// Returns whether it's possible to add the given field to the stream. WARNING: In most cases it's better to do this check yourself, because the findField function could be quite expensive as the database grows.
         /// </summary>
         /// <param name="field">Field to check</param>
         /// <param name="s">Stream to get the data from</param>
-        public static bool fieldExists(Field field, Stream s)
+        public static bool fieldExists(this Field field)
         {
-            return findField(field, s) == -1;   // findField returns -1 when the field is not included in the database. That's the value we want to be returned if we want to add the given field.
+            string fieldFilePath = Settings.Default.FieldsDBPath;
+            using (FileStream fieldFs = new FileStream(fieldFilePath, FileMode.OpenOrCreate, FileAccess.Read))
+            {
+                int location = field.findField(fieldFs);
+                return location >= 0;
+            }
+        }
+
+        /// <summary>
+        /// Returns whether the given field exists in the field database stream. Also stores the (field)location of specified field within the database in location. 
+        /// </summary>
+        /// <param name="field">Field to check</param>
+        /// <param name="s">Stream to get the data from</param>
+        public static bool fieldExists(this Field field, out int location)
+        {
+            string fieldFilePath = Settings.Default.FieldsDBPath;
+            using (FileStream fieldFs = new FileStream(fieldFilePath, FileMode.OpenOrCreate, FileAccess.Read))
+            {
+                location = findField(field, fieldFs);
+                return location >= 0;
+            }
+        }
+
+        /// <summary>
+        /// Returns where the given field is located in the field database. Return value -1 means the specified field is not included in the database.
+        /// </summary>
+        /// <param name="field"></param>
+        /// <returns></returns>
+        public static int findField(this Field field)
+        {
+            string fieldFilePath = Settings.Default.FieldsDBPath;
+
+            using (FileStream fieldFs = new FileStream(fieldFilePath, FileMode.OpenOrCreate, FileAccess.Read)) //  Gets the stream from the database file in read mode.
+            {
+                return findField(field, fieldFs);
+            }
+        }
+
+        /// <summary>
+        /// Returns where the given field is located in the field database. Return value -1 means the specified field is not included the database. out byteIndex represents the byte where the field storage starts.
+        /// </summary>
+        /// <param name="field"></param>
+        /// <param name="s"></param>
+        /// <returns></returns>
+        public static int findField(this Field field, out int byteIndex, out int fieldLength)
+        {
+            string fieldFilePath = Settings.Default.FieldsDBPath;
+
+            using (FileStream fieldFs = new FileStream(fieldFilePath, FileMode.OpenOrCreate, FileAccess.Read)) //  Gets the stream from the database file in read mode.
+            {
+                return findField(field, fieldFs, out byteIndex, out fieldLength);
+            }
         }
 
         /// <summary>
@@ -168,20 +271,34 @@ namespace Server
         /// <param name="field"></param>
         /// <param name="s"></param>
         /// <returns></returns>
-        internal static int findField(Field field, Stream s)
+        public static int findField(this Field field, Stream s)
+        {
+            int byteIndex;
+            int fieldLength;
+            return findField(field, s, out byteIndex, out fieldLength);
+        }
+
+        /// <summary>
+        /// Returns where the given field is located in the specified stream. Return value -1 means the specified field is not included in the stream. out byteIndex represents the byte where the field storage starts.
+        /// </summary>
+        /// <param name="field"></param>
+        /// <param name="s"></param>
+        /// <returns></returns>
+        internal static int findField(this Field field, Stream s, out int byteIndex, out int fieldLength)
         {
             byte[] compressed = compressField(field);   // Gets the compressed version of the given field to compare it with database items.
-            int fieldCounter = 0;                      // Counts how many fields we have found. Used as return value.
+            int fieldCounter = 0;                       // Counts how many fields we have found. Used as return value.
+            int byteCounter = 0;
 
-            int b = 0;                              // The byte we're reading.
-            int column = 0;                         // Current column
-            int row = 0;                            // Current row
-            byte bitPos = 0;                        // The bit we are reading from the current byte.
-            byte storageCount = 0;                  // The amount of bytes needed for the current field.
-            byte[] fieldStorage = new byte[11];     // Array to store the field in we're currently reading.
+            int b = 0;                                  // The byte we're reading.
+            int column = 0;                             // Current column
+            int row = 0;                                // Current row
+            byte bitPos = 0;                            // The bit we are reading from the current byte.
+            byte storageCount = 0;                      // The amount of bytes needed for the current field.
+            byte[] fieldStorage = new byte[11];         // Array to store the field in we're currently reading.
 
             #region Read bytes one by one
-            while (s.Position != s.Length)                  // Checks whether we've finished searching the database. If (b == -1) we know we've reached the end of the database.
+            while (s.Position != s.Length)              // Checks whether we've finished searching the database. If (b == -1) we know we've reached the end of the database.
             {
                 #region Here we read one byte
                 b = s.ReadByte();                           // Read the next byte from the stream
@@ -213,6 +330,7 @@ namespace Server
 
                 fieldStorage[storageCount] = (byte)b;   // Stores the current byte in the current fieldStorage.
                 storageCount++;                         // This counter is used to know how many bytes the current field consists till now.
+                byteCounter++;
                 #endregion
 
                 #region Here we check whether we've reached the end of a field
@@ -226,6 +344,8 @@ namespace Server
 
                     if (equalFields(compressed, fieldStorage))      // Checks whether the given field and the field we've just found are equal.
                     {
+                        fieldLength = compressed.Length;
+                        byteIndex = byteCounter - fieldLength;
                         return fieldCounter;                // If we find the specified field we return the fields zero-based location in the database.
                     }
 
@@ -243,6 +363,8 @@ namespace Server
             }
             #endregion
 
+            byteIndex = (int)s.Length;
+            fieldLength = compressed.Length;
             return -1;          //This return statement is only used when the field is not present in the database. So -1 means not found.
         }
 

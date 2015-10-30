@@ -6,9 +6,4 @@ namespace Engine
     {
         public InvalidMoveException(string message) : base(message) { }
     }
-
-    public class DatabaseException : ApplicationException
-    {
-        public DatabaseException(string message) : base(message) { }
-    }
 }

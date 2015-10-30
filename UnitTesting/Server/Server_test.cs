@@ -193,7 +193,7 @@ namespace UnitTesting.Server
 
             using (var ms = new MemoryStream(memory.ToArray()))
             {
-                bool actual = DatabaseHandler.fieldExists(newField, ms);
+                bool actual = !newField.fieldExists(ms);
                 bool expected = true;
 
                 Assert.AreEqual(expected, actual);
@@ -213,7 +213,7 @@ namespace UnitTesting.Server
 
             using (var ms = new MemoryStream(memory.ToArray()))
             {
-                bool actual = DatabaseHandler.fieldExists(newField, ms);
+                bool actual = !newField.fieldExists(ms);
                 bool expected = false;
 
                 Assert.AreEqual(expected, actual);
