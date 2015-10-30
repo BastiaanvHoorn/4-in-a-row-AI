@@ -40,6 +40,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Enums.cs" />
     <Compile Include="Exceptions.cs" />
     <Compile Include="Field.cs" />
     <Compile Include="Game.cs" />

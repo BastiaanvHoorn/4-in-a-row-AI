@@ -9,9 +9,11 @@ namespace Botclient
     public class Bot : IPlayer
     {
         public players player { get; }
-        public Bot(players player)
+        public log_modes log_mode { get; }
+        public Bot(players player, log_modes log_mode)
         {
             this.player = player;
+            this.log_mode = log_mode;
         }
 
         private byte get_column_from_server(Field field)
@@ -36,8 +38,8 @@ namespace Botclient
                 try
                 {
                     sender.Connect(remoteEP);
-
-                    Console.WriteLine($"Socket connected to {sender.RemoteEndPoint.ToString()}");
+                    if(log_mode >= log_modes.debug)
+                        Console.WriteLine($"Socket connected to {sender.RemoteEndPoint.ToString()}");
 
                     // Encode the data string into a byte array.
                     byte[] _field = field.getStorage(); //Get the byte-array for the field
@@ -53,7 +55,8 @@ namespace Botclient
                     int bytesSent = sender.Send(msg);
                     // Receive the response from the remote device.
                     int bytesRec = sender.Receive(bytes);
-                    Console.WriteLine($"Recieved from server = {Encoding.ASCII.GetString(bytes, 0, bytesRec)}");
+                    if(log_mode >= log_modes.debug)
+                        Console.WriteLine($"Recieved from server = {Encoding.ASCII.GetString(bytes, 0, bytesRec)}");
 
                     // Release the socket.
                     sender.Shutdown(SocketShutdown.Both);
@@ -64,15 +67,18 @@ namespace Botclient
                 }
                 catch (ArgumentNullException ane)
                 {
-                    Console.WriteLine($"ArgumentNullException : {ane}");
+                    if(log_mode >= log_modes.only_errors)
+                        Console.WriteLine($"ArgumentNullException : {ane}");
                 }
                 catch (SocketException se)
                 {
-                    Console.WriteLine($"SocketException : {se}");
+                    if(log_mode >= log_modes.only_errors)
+                        Console.WriteLine($"SocketException : {se}");
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine($"Unexpected exception : {e}");
+                    if (log_mode >= log_modes.only_errors)
+                      Console.WriteLine($"Unexpected exception : {e}");
                 }
 
             }
@@ -86,7 +92,8 @@ namespace Botclient
         public byte get_turn(Field field)
         {
             byte column = get_column_from_server(field);
-            Console.WriteLine($"Tried to drop a stone in colmun {column}");
+            if (log_mode >= log_modes.debug)
+                Console.WriteLine($"Tried to drop a stone in colmun {column}");
             return column;
         }
     }

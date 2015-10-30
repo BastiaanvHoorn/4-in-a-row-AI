@@ -8,6 +8,7 @@ namespace Engine
 {
     public interface IPlayer
     {
+        log_modes log_mode { get; }
         players player { get; }
         byte get_turn(Field field);
     }

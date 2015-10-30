@@ -3,7 +3,6 @@ using System.CodeDom;
 
 namespace Engine
 {
-    public enum players { Empty, Alice, Bob } //0 for noone, 1 for alice and 2 for bob
     public class Game
     {
         public byte height;
@@ -72,14 +71,14 @@ namespace Engine
             {
                 field.doMove(column,player);
                 next_players = (player == players.Alice ? players.Bob : players.Alice);
-                Console.WriteLine($"{player_name} dropped a stone at {column}, {empty_cell}");
+                info = $"{player_name} dropped a stone at {column}, {empty_cell}";
                 check_for_win(column, empty_cell, player);
 
                 stones_count++;
                 return true;
             }
 
-            info = "column " + column + " is already full";
+            info = $"column {column} is already full";
             return false;
         }
         #region check_for_win

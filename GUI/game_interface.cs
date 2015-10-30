@@ -43,7 +43,7 @@ namespace GUI
             {
                 numeric_Bob.Visible = false;
                 button_Bob.Visible = false;
-                bot_bob = new Bot(Engine.players.Bob);
+                bot_bob = new Bot(Engine.players.Bob, log_modes.essential);
             }
             field = game.get_field();
             //Display the field
