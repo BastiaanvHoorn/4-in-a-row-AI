@@ -219,5 +219,53 @@ namespace UnitTesting.Server
                 Assert.AreEqual(expected, actual);
             }
         }
+
+        [TestMethod]
+        public void database_addDatabaseItem_speedTest_1()
+        {
+            var dbProps = new DatabaseProperties(@"C:\Connect Four\db speed test 1", 7, 6);
+            var db = new Database(dbProps);
+
+            for (int i = 0; i < 1000; i++)
+                db.addDatabaseItem(f3);
+
+            db.addDatabaseItem(f2);
+        }
+
+        [TestMethod]
+        public void database_findField_speedTest_1()
+        {
+            var db = new Database(@"C:\Connect Four\db speed test 1");
+            int actual;
+            int fieldLength;
+            db.findField(f2, out actual, out fieldLength);
+
+            int expected = 8001;
+            Assert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void database_addDatabaseItem_speedTest_2()  // ========== Run test finished: 1 run (0:01:52,7662723) ==========
+        {
+            var dbProps = new DatabaseProperties(@"C:\Connect Four\db speed test 2", 7, 6);
+            var db = new Database(dbProps);
+
+            for (int i = 0; i < 100000; i++)
+                db.addDatabaseItem(f3);
+
+            db.addDatabaseItem(f2);
+        }
+
+        [TestMethod]
+        public void database_findField_speedTest_2()
+        {
+            var db = new Database(@"C:\Connect Four\db speed test 2");
+            int actual;
+            int fieldLength;
+            db.findField(f2, out actual, out fieldLength);
+
+            int expected = 800001;
+            Assert.AreEqual(expected, actual);
+        }
     }
 }

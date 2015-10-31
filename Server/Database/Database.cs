@@ -24,17 +24,32 @@ namespace Server
             if (!Directory.Exists(path))
                 throw new DatabaseException($"Database doesn't exist. The given database directory doesn´t exist ({path})");
 
-            if (!File.Exists(FieldDataPath) || !File.Exists(FieldDataPath))
-                throw new DatabaseException("Database incomplete. Fields.db and/or FieldData.db not found");
+            FieldPath = path + "\\Fields.db";
+            FieldDataPath = path + "\\FieldData.db";
 
             string propertiesPath = path + "\\Properties";
 
             if (!File.Exists(propertiesPath))
                 throw new DatabaseException("Database incomplete. Properties file not found.");
 
-            DbProperties = new DatabaseProperties(propertiesPath);
-            FieldPath = path + "\\Fields.db";
-            FieldDataPath = path + "\\FieldData.db";
+            DbProperties = new DatabaseProperties(path);
+        }
+
+        /// <summary>
+        /// Creates a new database at the given path and creates an instance of this new database.
+        /// </summary>
+        /// <param name="dbProperties"></param>
+        public Database(DatabaseProperties dbProperties)
+        {
+            if (Directory.Exists(dbProperties.Path))
+                throw new DatabaseException("Database path already exists. Make sure you use a database path that doesn't exist already.");
+
+            this.DbProperties = dbProperties;
+            this.FieldPath = dbProperties.Path + "\\Fields.db";
+            this.FieldDataPath = dbProperties.Path + "\\FieldData.db";
+
+            Directory.CreateDirectory(dbProperties.Path);
+            dbProperties.writeProperties();
         }
 
         /// <summary>
@@ -45,7 +60,7 @@ namespace Server
         /// <returns></returns>
         public bool locationExists(int location)
         {
-            return location >= 0 && location < DbProperties.Length;
+            return location >= 0 && location < DbProperties.getLength();
         }
         
         /// <summary>
@@ -59,7 +74,7 @@ namespace Server
             if (!locationExists(location))
                 throw new DatabaseException("Can't calculate seek position for field location -1, because this location doesn't exist");
 
-            return location * DbProperties.Width * 8;
+            return location * DbProperties.FieldWidth * 8;
         }
 
         /// <summary>
@@ -148,7 +163,7 @@ namespace Server
         {
             using (FileStream fieldStream = new FileStream(FieldPath, FileMode.OpenOrCreate, FileAccess.Write))     // Opens the field database Stream in write mode.
             {
-                byte[] compressed = field.compressField();               // Gets the compressed field.
+                byte[] compressed = field.compressField();              // Gets the compressed field.
                 fieldStream.Seek(0, SeekOrigin.End);                    // Sets the writing position to the end of the database.
                 fieldStream.Write(compressed, 0, compressed.Length);    // Writes the bytes of the compressed field to the database.
             }
@@ -159,7 +174,7 @@ namespace Server
                 fieldDataStream.Write(new byte[56], 0, 56);
             }
 
-            DbProperties.Length++;
+            DbProperties.fieldAdded();
         }
 
         /// <summary>

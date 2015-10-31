@@ -3,7 +3,7 @@
   <Profiles />
   <Settings>
     <Setting Name="DbPath" Type="System.String" Scope="User">
-      <Value Profile="(Default)">C:\Connect Four</Value>
+      <Value Profile="(Default)">C:\Connect Four\Test</Value>
     </Setting>
   </Settings>
 </SettingsFile>

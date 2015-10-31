@@ -43,6 +43,7 @@ namespace Server
         /// <returns></returns>
         internal static int findField(this Field field, Stream s, out int byteIndex, out int fieldLength)
         {
+            #region Initialisation of variables
             byte[] compressed = compressField(field);   // Gets the compressed version of the given field to compare it with database items.
             int fieldCounter = 0;                       // Counts how many fields we have found. Used as return value.
             int byteCounter = 0;
@@ -55,6 +56,7 @@ namespace Server
 
             int maxStorageSize = (int)Math.Ceiling((double)(field.Width * field.Height) / 4);
             byte[] fieldStorage = new byte[maxStorageSize]; // Array to store the field in we're currently reading.
+            #endregion
 
             #region Read bytes one by one
             while (s.Position != s.Length)                  // Checks whether we've finished searching the database. If (b == -1) we know we've reached the end of the database.
@@ -104,7 +106,7 @@ namespace Server
                     if (equalFields(compressed, fieldStorage))      // Checks whether the given field and the field we've just found are equal.
                     {
                         fieldLength = compressed.Length;
-                        byteIndex = byteCounter - fieldLength;
+                        byteIndex = byteCounter - fieldLength + 1;
                         return fieldCounter;                    // If we find the specified field we return the fields zero-based location in the database.
                     }
 
