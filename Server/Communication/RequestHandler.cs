@@ -19,10 +19,12 @@ namespace Server
         /// <returns>The best move (column) to do</returns>
         public static byte get_column(Field field)
         {
+            Settings.Default.Reload();
+            Database db = new Database(Settings.Default.DbPath);
             int location;
-            if (field.fieldExists(out location))
+            if (db.fieldExists(field, out location))
             {
-                FieldData fieldData = DatabaseHandler.readFieldData(location);
+                FieldData fieldData = db.readFieldData(location);
 
                 float bestChance = 0;
                 byte bestColumn = 0;
@@ -53,14 +55,16 @@ namespace Server
         /// <param name="winning"></param>
         public static void update_field_data(int fieldLocation, byte moveColumn, bool winning)
         {
-            FieldData fieldData = DatabaseHandler.readFieldData(fieldLocation);  // Reads the old field data from the database.
-
+            Settings.Default.Reload();
+            Database db = new Database(Settings.Default.DbPath);
+            FieldData fieldData = db.readFieldData(fieldLocation);  // Reads the old field data from the database.
+            
             // Edits the field data to the wanted values.
             fieldData.totalCounts[moveColumn]++;
             if (winning)
                 fieldData.winningCounts[moveColumn]++;
 
-            DatabaseHandler.writeFieldData(fieldLocation, fieldData);    // Writes the field data to the database.
+            db.writeFieldData(fieldLocation, fieldData);    // Writes the field data to the database.
         }
 
         /*public static void receive_game(Field field)
@@ -68,16 +72,18 @@ namespace Server
             Settings.Default.Reload();  // Gets the settings from the settings file so we can ask for database paths.
             string fieldFilePath = Settings.Default.FieldsDBPath;
 
+            Database db = new Database();
+
             if (!Directory.GetParent(fieldFilePath).Exists) // If the directory of the database doesn't exist we create it.
             {
                 Directory.CreateDirectory(Directory.GetParent(fieldFilePath).FullName);
             }
 
-            int fieldLocation = DatabaseHandler.findField(field);  // Gets the location of the field in the field database. (You could also call it the field index)
+            int fieldLocation = db.findField(field);  // Gets the location of the field in the field database. (You could also call it the field index)
 
             if (fieldLocation == -1)    // Means that field doesn't exist and has to be added to the database.
             {
-                DatabaseHandler.addDatabaseItem(field);
+                db.addDatabaseItem(field);
             }
 
             update_field_data(fieldLocation, moveColumn, winning);    // Applies the new data to the field data database.
