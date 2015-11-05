@@ -45,8 +45,9 @@
     <Compile Include="Database\BitReader.cs" />
     <Compile Include="Database\BitWriter.cs" />
     <Compile Include="Database\Database.cs" />
+    <Compile Include="Database\DatabaseLocation.cs" />
     <Compile Include="Database\DatabaseProperties.cs" />
-    <Compile Include="Database\FieldExtensions.cs" />
+    <Compile Include="Database\Extensions.cs" />
     <Compile Include="Exceptions.cs" />
     <Compile Include="Database\FieldData.cs" />
     <Compile Include="Properties\Settings.Designer.cs">

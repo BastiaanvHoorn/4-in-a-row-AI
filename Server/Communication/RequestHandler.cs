@@ -21,7 +21,7 @@ namespace Server
         {
             Settings.Default.Reload();
             Database db = new Database(Settings.Default.DbPath);
-            int location;
+            DatabaseLocation location;
             if (db.fieldExists(field, out location))
             {
                 FieldData fieldData = db.readFieldData(location);
@@ -53,7 +53,7 @@ namespace Server
         /// <param name="field"></param>
         /// <param name="moveColumn"></param>
         /// <param name="winning"></param>
-        public static void update_field_data(int fieldLocation, byte moveColumn, bool winning)
+        public static void update_field_data(DatabaseLocation fieldLocation, byte moveColumn, bool winning)
         {
             Settings.Default.Reload();
             Database db = new Database(Settings.Default.DbPath);

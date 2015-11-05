@@ -5,15 +5,12 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 using Engine;
-using Server.Properties;
 
 namespace Server
 {
     public class Database
     {
         private DatabaseProperties DbProperties;
-        private string FieldPath;
-        private string FieldDataPath;
 
         /// <summary>
         /// Creates a new database instance from the given path.
@@ -24,15 +21,19 @@ namespace Server
             if (!Directory.Exists(path))
                 throw new DatabaseException($"Database doesn't exist. The given database directory doesn´t exist ({path})");
 
-            FieldPath = path + "\\Fields.db";
-            FieldDataPath = path + "\\FieldData.db";
-
             string propertiesPath = path + "\\Properties";
 
             if (!File.Exists(propertiesPath))
-                throw new DatabaseException("Database incomplete. Properties file not found.");
+                throw new DatabaseException($"Database incomplete. Properties file not found in: {path}");
 
             DbProperties = new DatabaseProperties(path);
+            
+            for (byte i = 1; i <= DbProperties.MaxFieldStorageSize; i++)
+            {
+                string dirPath = DbProperties.getFieldDirPath(i);
+                if (!Directory.Exists(dirPath))
+                    throw new DatabaseException($"Database incomplete. Directory {dirPath} doesn't exist.");
+            }
         }
 
         /// <summary>
@@ -45,10 +46,16 @@ namespace Server
                 throw new DatabaseException("Database path already exists. Make sure you use a database path that doesn't exist already.");
 
             this.DbProperties = dbProperties;
-            this.FieldPath = dbProperties.Path + "\\Fields.db";
-            this.FieldDataPath = dbProperties.Path + "\\FieldData.db";
 
             Directory.CreateDirectory(dbProperties.Path);
+
+            byte maxSize = dbProperties.MaxFieldStorageSize;
+
+            for (byte i = 1; i <= maxSize; i++)
+            {
+                Directory.CreateDirectory(dbProperties.getFieldDirPath(i));
+            }
+
             dbProperties.writeProperties();
         }
 
@@ -56,11 +63,11 @@ namespace Server
         /// Returns whether the given location is an existing (valid to use) location, depending on the field data database Stream. WARNING: Do NOT use the field database Stream (Fields.db), only the field DATA database Stream (Fielddata.db).
         /// </summary>
         /// <param name="location">The location to check</param>
-        /// <param name="fieldDataStream">The field data database Stream</param>
+        /// <param name="fieldDataStream">The field data database stream</param>
         /// <returns></returns>
-        public bool locationExists(int location)
+        public bool locationExists(DatabaseLocation dbLocation)
         {
-            return location >= 0 && location < DbProperties.getLength();
+            return dbLocation.Location >= 0 && dbLocation.Location < DbProperties.getLength(dbLocation.FieldLength);
         }
         
         /// <summary>
@@ -69,14 +76,14 @@ namespace Server
         /// <param name="fieldLocation">The location of the field</param>
         /// <param name="fieldDataStream">The field data database stream</param>
         /// <returns></returns>
-        public int getSeekPosition(int location)
+        public int getSeekPosition(DatabaseLocation dbLocation)
         {
-            if (!locationExists(location))
-                throw new DatabaseException("Can't calculate seek position for field location -1, because this location doesn't exist");
+            if (!locationExists(dbLocation))
+                throw new DatabaseException($"Can't calculate seek position for field location {dbLocation.ToString()}, because this location doesn't exist");
 
-            return location * DbProperties.FieldWidth * 8;
+            return dbLocation.Location * DbProperties.FieldWidth * 8;
         }
-
+        
         /// <summary>
         /// Reads the field data from of the given field the database.
         /// </summary>
@@ -84,30 +91,30 @@ namespace Server
         /// <returns></returns>
         public FieldData readFieldData(Field field)
         {
-            int location = findField(field);
+            DatabaseLocation location = findField(field);
             return readFieldData(location);
         }
 
         /// <summary>
         /// Reads the field data from the database at the specified (field)location. (Not the location in bytes)
         /// </summary>
-        /// <param name="location">Field location</param>
+        /// <param name="dbLocation">Field location</param>
         /// <returns></returns>
-        public FieldData readFieldData(int location)
+        public FieldData readFieldData(DatabaseLocation dbLocation)
         {
-            if (!locationExists(location))
-                throw new DatabaseException("Can't read field data at field location -1, because this location doesn't exist.");
+            if (!locationExists(dbLocation))
+                throw new DatabaseException($"Can't read field data at field location {dbLocation}, because this location doesn't exist.");
 
-            using (FileStream fieldDataStream = new FileStream(FieldDataPath, FileMode.OpenOrCreate, FileAccess.Read)) // Opens the field data database Stream in read mode.
+            using (FileStream fieldDataStream = new FileStream(dbLocation.FieldDataPath, FileMode.OpenOrCreate, FileAccess.Read)) // Opens the field data database Stream in read mode.
             {
-                int seekPosition = getSeekPosition(location);
+                int seekPosition = getSeekPosition(dbLocation);
 
-                uint[] storage = new uint[14];
+                uint[] storage = new uint[DbProperties.FieldWidth * 2];
                 using (BinaryReader br = new BinaryReader(fieldDataStream))
                 {
                     fieldDataStream.Seek(seekPosition, SeekOrigin.Begin);   // Sets the reading position to the wanted byte (uint in our case) database.
 
-                    for (byte i = 0; i < 14; i++)   // We read the uints one by one from the database.
+                    for (byte i = 0; i < DbProperties.FieldWidth * 2; i++)   // We read the uints one by one from the database.
                     {
                         storage[i] = br.ReadUInt32();
                     }
@@ -124,30 +131,30 @@ namespace Server
         /// <param name="fieldData">The field data to write</param>
         public void writeFieldData(Field field, FieldData fieldData)
         {
-            int location = findField(field);
+            DatabaseLocation location = findField(field);
             writeFieldData(location, fieldData);
         }
 
         /// <summary>
         /// Writes the given field data to the database at the specified (field)location. (Not the location in bytes)
         /// </summary>
-        /// <param name="location">Field location</param>
+        /// <param name="dbLocation">Field location</param>
         /// <param name="fieldData">Data to be written</param>
-        public void writeFieldData(int location, FieldData fieldData)
+        public void writeFieldData(DatabaseLocation dbLocation, FieldData fieldData)
         {
-            if (!locationExists(location))
-                throw new DatabaseException("Can't write field data at field location -1, because this location doesn't exist.");
+            if (!locationExists(dbLocation))
+                throw new DatabaseException($"Can't write field data at field location. {dbLocation}. This location doesn't exist.");
 
-            using (FileStream fieldDataStream = new FileStream(FieldDataPath, FileMode.OpenOrCreate, FileAccess.Write)) // Opens the field data database Stream in write mode.
+            using (FileStream fieldDataStream = new FileStream(dbLocation.FieldDataPath, FileMode.OpenOrCreate, FileAccess.Write)) // Opens the field data database Stream in write mode.
             {
-                int seekPosition = getSeekPosition(location);
+                int seekPosition = getSeekPosition(dbLocation);
 
                 using (BinaryWriter bw = new BinaryWriter(fieldDataStream))  // We use a BinaryWriter to be able to write uints directly to the stream.
                 {
                     uint[] storage = fieldData.getStorage();
 
                     fieldDataStream.Seek(seekPosition, SeekOrigin.Begin);   // Sets the writing position to the wanted byte (uint in our case) in the database.
-                    for (byte i = 0; i < 14; i++)                       // We write each uint of the storage to the database stream.
+                    for (byte i = 0; i < DbProperties.FieldWidth * 2; i++)  // We write each uint of the storage to the database stream.
                     {
                         bw.Write(storage[i]);
                     }
@@ -161,20 +168,23 @@ namespace Server
         /// <param name="field">Field to be added</param>
         public void addDatabaseItem(Field field)
         {
-            using (FileStream fieldStream = new FileStream(FieldPath, FileMode.OpenOrCreate, FileAccess.Write))     // Opens the field database Stream in write mode.
+            byte[] compressed = field.compressField();                  // Gets the compressed field.
+            string fieldPath = DbProperties.getFieldDirPath(compressed) + "\\Fields.db";
+
+            using (FileStream fieldStream = new FileStream(fieldPath, FileMode.OpenOrCreate, FileAccess.Write))     // Opens the field database Stream in write mode.
             {
-                byte[] compressed = field.compressField();              // Gets the compressed field.
                 fieldStream.Seek(0, SeekOrigin.End);                    // Sets the writing position to the end of the database.
                 fieldStream.Write(compressed, 0, compressed.Length);    // Writes the bytes of the compressed field to the database.
             }
 
-            using (FileStream fieldDataStream = new FileStream(FieldDataPath, FileMode.OpenOrCreate, FileAccess.Write)) // Opens the field data database Stream in write mode.
+            string fieldDataPath = DbProperties.getFieldDirPath(compressed) + "\\FieldData.db";
+            using (FileStream fieldDataStream = new FileStream(fieldDataPath, FileMode.OpenOrCreate, FileAccess.Write)) // Opens the field data database Stream in write mode.
             {
                 fieldDataStream.Seek(0, SeekOrigin.End);
                 fieldDataStream.Write(new byte[56], 0, 56);
             }
 
-            DbProperties.fieldAdded();
+            DbProperties.fieldAdded((byte)compressed.Length);
         }
 
         /// <summary>
@@ -183,22 +193,20 @@ namespace Server
         /// <param name="field">The field to be cleared</param>
         public void clearDataBaseItem(Field field)
         {
-            int byteIndex;
-            int fieldLength;
-            int location = findField(field, out byteIndex, out fieldLength);
+            DatabaseLocation dbLocation = findField(field);
 
-            if (!locationExists(location))
-                throw new DatabaseException("Can't clear database item at field location -1, because this location doesn't exist.");
+            if (!locationExists(dbLocation))
+                throw new DatabaseException($"Can't clear database item at database location ({dbLocation}), because this location doesn't exist.");
 
-            using (FileStream fieldStream = new FileStream(FieldPath, FileMode.OpenOrCreate, FileAccess.Write))
+            using (FileStream fieldStream = new FileStream(dbLocation.FieldPath, FileMode.OpenOrCreate, FileAccess.Write))
             {
-                fieldStream.Seek(byteIndex, SeekOrigin.Begin);
-                fieldStream.Write(new byte[fieldLength], 0, fieldLength);
+                fieldStream.Seek(dbLocation.getSeekPosition(), SeekOrigin.Begin);
+                fieldStream.Write(new byte[dbLocation.FieldLength], 0, dbLocation.FieldLength);
             }
 
-            using (FileStream fieldDataStream = new FileStream(FieldDataPath, FileMode.OpenOrCreate, FileAccess.Write)) // Opens the field data database Stream in write mode.
+            using (FileStream fieldDataStream = new FileStream(dbLocation.FieldDataPath, FileMode.OpenOrCreate, FileAccess.Write)) // Opens the field data database Stream in write mode.
             {
-                fieldDataStream.Seek(getSeekPosition(location), SeekOrigin.Begin);
+                fieldDataStream.Seek(getSeekPosition(dbLocation), SeekOrigin.Begin);
                 fieldDataStream.Write(new byte[56], 0, 56);
             }
         }
@@ -210,10 +218,11 @@ namespace Server
         /// <param name="s">Stream to get the data from</param>
         public bool fieldExists(Field field)
         {
-            using (FileStream fieldStream = new FileStream(FieldPath, FileMode.OpenOrCreate, FileAccess.Read))
+            DatabaseLocation dbLocation = findField(field);
+
+            using (FileStream fieldStream = new FileStream(dbLocation.FieldPath, FileMode.OpenOrCreate, FileAccess.Read))
             {
-                int location = field.findField(fieldStream);
-                return locationExists(location);
+                return locationExists(dbLocation);
             }
         }
 
@@ -222,12 +231,13 @@ namespace Server
         /// </summary>
         /// <param name="field">Field to check</param>
         /// <param name="s">Stream to get the data from</param>
-        public bool fieldExists(Field field, out int location)
+        public bool fieldExists(Field field, out DatabaseLocation dbLocation)
         {
-            using (FileStream fieldStream = new FileStream(FieldPath, FileMode.OpenOrCreate, FileAccess.Read))
+            dbLocation = findField(field);
+
+            using (FileStream fieldStream = new FileStream(dbLocation.FieldPath, FileMode.OpenOrCreate, FileAccess.Read))
             {
-                location = field.findField(fieldStream);
-                return locationExists(location);
+                return locationExists(dbLocation);
             }
         }
 
@@ -236,25 +246,17 @@ namespace Server
         /// </summary>
         /// <param name="field"></param>
         /// <returns></returns>
-        public int findField(Field field)
+        public DatabaseLocation findField(Field field)
         {
-            using (FileStream fieldStream = new FileStream(FieldPath, FileMode.OpenOrCreate, FileAccess.Read)) //  Gets the stream from the database file in read mode.
-            {
-                return field.findField(fieldStream);
-            }
-        }
+            byte[] compressed = field.compressField();
+            byte fieldLength = (byte)compressed.Length;
 
-        /// <summary>
-        /// Returns where the given field is located in the field database. Return value -1 means the specified field is not included the database. out byteIndex represents the byte where the field storage starts.
-        /// </summary>
-        /// <param name="field"></param>
-        /// <param name="s"></param>
-        /// <returns></returns>
-        public int findField(Field field, out int byteIndex, out int fieldLength)
-        {
-            using (FileStream fieldStream = new FileStream(FieldPath, FileMode.OpenOrCreate, FileAccess.Read)) //  Gets the stream from the database file in read mode.
+            string path = DbProperties.getFieldDirPath(fieldLength);
+
+            using (FileStream fieldStream = new FileStream(path + "\\Fields.db", FileMode.OpenOrCreate, FileAccess.Read)) //  Gets the stream from the database file in read mode.
             {
-                return field.findField(fieldStream, out byteIndex, out fieldLength);
+                int location = compressed.getFieldLocation(fieldStream);
+                return new DatabaseLocation(path, fieldLength, location);
             }
         }
     }
