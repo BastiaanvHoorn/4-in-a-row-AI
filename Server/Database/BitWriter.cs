@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Server
 {
@@ -17,9 +13,9 @@ namespace Server
         /// <summary>
         /// Creates a new instance of BitWriter
         /// </summary>
-        public BitWriter()
+        public BitWriter(int maxLength)
         {
-            Storage = new byte[1];
+            Storage = new byte[maxLength];
             WritePosition = 0;
         }
 
@@ -29,26 +25,27 @@ namespace Server
         /// <param name="value">An integer that has a value of 0 or 1</param>
         public void append(int value)
         {
-            int byteIndex = WritePosition >> 3; //WritePosition / 8
-            int bitIndex = WritePosition % 8;   //WritePosition % 8
-
-            if (Storage.Length == byteIndex)    //In this situation we need to add a byte to the array.
+            if (value == 1)
             {
-                Array.Resize(ref Storage, byteIndex + 1);
+                int byteIndex = WritePosition >> 3; //WritePosition / 8
+                int bitIndex = WritePosition & 7;   //WritePosition % 8
+                
+                Storage[byteIndex] |= (byte)(1 << bitIndex);    //We store the value at the right place in Storage.
             }
-
-            Storage[byteIndex] |= (byte)(value << bitIndex);    //We store the value at the right place in Storage.
 
             WritePosition++;    //By incrementing WritePosition, we know where to store the next bit.
         }
 
         /// <summary>
-        /// Returns the storage array that has been built up. If the last byte has a value of 0, it will be removed from the array.
+        /// Returns the storage array that has been built up.
         /// </summary>
         /// <returns>Storage</returns>
         public byte[] getStorage()
         {
-            return Storage;
+            int size = (WritePosition >> 3) + 1;
+            byte[] result = new byte[size];
+            Buffer.BlockCopy(Storage, 0, result, 0, size);
+            return result;
         }
     }
 }

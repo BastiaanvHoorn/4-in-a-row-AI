@@ -5,10 +5,16 @@
         private readonly string Path;
         public readonly string FieldPath;
         public readonly string FieldDataPath;
-        public readonly byte FieldLength;
+        public readonly int FieldLength;
         public readonly int Location;
 
-        public DatabaseLocation(string path, byte fieldLength, int location)
+        /// <summary>
+        /// Creates a new database location object.
+        /// </summary>
+        /// <param name="path">Path in the database</param>
+        /// <param name="fieldLength"></param>
+        /// <param name="location">Field location in Fields.db</param>
+        public DatabaseLocation(string path, int fieldLength, int location)
         {
             this.Path = path;
             this.FieldPath = path + "\\Fields.db";
@@ -17,6 +23,10 @@
             this.Location = location;
         }
 
+        /// <summary>
+        /// Returns the byte position of the location.
+        /// </summary>
+        /// <returns>Seek position</returns>
         public int getSeekPosition()
         {
             return Location * FieldLength;

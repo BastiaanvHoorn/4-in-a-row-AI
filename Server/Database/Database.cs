@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.IO;
+﻿using System.IO;
 using Engine;
 
 namespace Server
@@ -60,16 +55,37 @@ namespace Server
         }
 
         /// <summary>
-        /// Returns whether the given location is an existing (valid to use) location, depending on the field data database Stream. WARNING: Do NOT use the field database Stream (Fields.db), only the field DATA database Stream (Fielddata.db).
+        /// Returns whether the given location is an existing (valid to use) location.
         /// </summary>
         /// <param name="location">The location to check</param>
-        /// <param name="fieldDataStream">The field data database stream</param>
         /// <returns></returns>
         public bool locationExists(DatabaseLocation dbLocation)
         {
             return dbLocation.Location >= 0 && dbLocation.Location < DbProperties.getLength(dbLocation.FieldLength);
         }
-        
+
+        /// <summary>
+        /// Returns whether it's possible to add the given field to the stream. WARNING: In most cases it's better to do this check yourself, because the findField function could be quite expensive as the database grows.
+        /// </summary>
+        /// <param name="field">Field to check</param>
+        /// <param name="s">Stream to get the data from</param>
+        public bool fieldExists(Field field)
+        {
+            DatabaseLocation dbLocation = findField(field);
+            return locationExists(dbLocation);
+        }
+
+        /// <summary>
+        /// Returns whether the given field exists in the field database stream. Also stores the (field)location of specified field within the database in location. 
+        /// </summary>
+        /// <param name="field">Field to check</param>
+        /// <param name="s">Stream to get the data from</param>
+        public bool fieldExists(Field field, out DatabaseLocation dbLocation)
+        {
+            dbLocation = findField(field);
+            return locationExists(dbLocation);
+        }
+
         /// <summary>
         /// Returns the position (in bytes) in the field data database where the data corresponding to the given field location is stored.
         /// </summary>
@@ -79,7 +95,7 @@ namespace Server
         public int getSeekPosition(DatabaseLocation dbLocation)
         {
             if (!locationExists(dbLocation))
-                throw new DatabaseException($"Can't calculate seek position for field location {dbLocation.ToString()}, because this location doesn't exist");
+                throw new DatabaseException($"Can't calculate seek position for field location. {dbLocation.ToString()}. This location doesn't exist");
 
             return dbLocation.Location * DbProperties.FieldWidth * 8;
         }
@@ -105,7 +121,7 @@ namespace Server
             if (!locationExists(dbLocation))
                 throw new DatabaseException($"Can't read field data at field location {dbLocation}, because this location doesn't exist.");
 
-            using (FileStream fieldDataStream = new FileStream(dbLocation.FieldDataPath, FileMode.OpenOrCreate, FileAccess.Read)) // Opens the field data database Stream in read mode.
+            using (FileStream fieldDataStream = new FileStream(dbLocation.FieldDataPath, FileMode.OpenOrCreate, FileAccess.Read)) // Opens the field data database stream in read mode.
             {
                 int seekPosition = getSeekPosition(dbLocation);
 
@@ -114,7 +130,7 @@ namespace Server
                 {
                     fieldDataStream.Seek(seekPosition, SeekOrigin.Begin);   // Sets the reading position to the wanted byte (uint in our case) database.
 
-                    for (byte i = 0; i < DbProperties.FieldWidth * 2; i++)   // We read the uints one by one from the database.
+                    for (byte i = 0; i < DbProperties.FieldWidth * 2; i++)  // We read the uints one by one from the database.
                     {
                         storage[i] = br.ReadUInt32();
                     }
@@ -184,7 +200,7 @@ namespace Server
                 fieldDataStream.Write(new byte[56], 0, 56);
             }
 
-            DbProperties.fieldAdded((byte)compressed.Length);
+            DbProperties.fieldAdded(compressed.Length);
         }
 
         /// <summary>
@@ -193,10 +209,9 @@ namespace Server
         /// <param name="field">The field to be cleared</param>
         public void clearDataBaseItem(Field field)
         {
-            DatabaseLocation dbLocation = findField(field);
-
-            if (!locationExists(dbLocation))
-                throw new DatabaseException($"Can't clear database item at database location ({dbLocation}), because this location doesn't exist.");
+            DatabaseLocation dbLocation;
+            if (!fieldExists(field, out dbLocation))
+                throw new DatabaseException($"Can't clear database item at database location. {dbLocation}. This location doesn't exist.");
 
             using (FileStream fieldStream = new FileStream(dbLocation.FieldPath, FileMode.OpenOrCreate, FileAccess.Write))
             {
@@ -212,36 +227,6 @@ namespace Server
         }
 
         /// <summary>
-        /// Returns whether it's possible to add the given field to the stream. WARNING: In most cases it's better to do this check yourself, because the findField function could be quite expensive as the database grows.
-        /// </summary>
-        /// <param name="field">Field to check</param>
-        /// <param name="s">Stream to get the data from</param>
-        public bool fieldExists(Field field)
-        {
-            DatabaseLocation dbLocation = findField(field);
-
-            using (FileStream fieldStream = new FileStream(dbLocation.FieldPath, FileMode.OpenOrCreate, FileAccess.Read))
-            {
-                return locationExists(dbLocation);
-            }
-        }
-
-        /// <summary>
-        /// Returns whether the given field exists in the field database stream. Also stores the (field)location of specified field within the database in location. 
-        /// </summary>
-        /// <param name="field">Field to check</param>
-        /// <param name="s">Stream to get the data from</param>
-        public bool fieldExists(Field field, out DatabaseLocation dbLocation)
-        {
-            dbLocation = findField(field);
-
-            using (FileStream fieldStream = new FileStream(dbLocation.FieldPath, FileMode.OpenOrCreate, FileAccess.Read))
-            {
-                return locationExists(dbLocation);
-            }
-        }
-
-        /// <summary>
         /// Returns where the given field is located in the field database. Return value -1 means the specified field is not included in the database.
         /// </summary>
         /// <param name="field"></param>
@@ -249,11 +234,11 @@ namespace Server
         public DatabaseLocation findField(Field field)
         {
             byte[] compressed = field.compressField();
-            byte fieldLength = (byte)compressed.Length;
+            int fieldLength = compressed.Length;
 
             string path = DbProperties.getFieldDirPath(fieldLength);
 
-            using (FileStream fieldStream = new FileStream(path + "\\Fields.db", FileMode.OpenOrCreate, FileAccess.Read)) //  Gets the stream from the database file in read mode.
+            using (FileStream fieldStream = new FileStream(path + "\\Fields.db", FileMode.OpenOrCreate, FileAccess.Read))   // Gets the stream from the database file in read mode.
             {
                 int location = compressed.getFieldLocation(fieldStream);
                 return new DatabaseLocation(path, fieldLength, location);

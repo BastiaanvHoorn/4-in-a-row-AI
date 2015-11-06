@@ -74,7 +74,7 @@ namespace Server
         /// <summary>
         /// Increments the length (in fields) of the given database file by one. (Called after adding a field)
         /// </summary>
-        public void fieldAdded(byte i)
+        public void fieldAdded(int i)
         {
             if (i < 1 || i > MaxFieldStorageSize)
                 throw new DatabaseException($"Argument i is not in range of the database files. i = {i}; min = {1}; max = {MaxFieldStorageSize}");
@@ -87,7 +87,7 @@ namespace Server
         /// Returns the current length (in fields) of the given database file.
         /// </summary>
         /// <returns></returns>
-        public int getLength(byte i)
+        public int getLength(int i)
         {
             if (i < 1 || i > MaxFieldStorageSize)
                 throw new DatabaseException($"Argument i is not in range of the database files. i = {i}; min = {1}; max = {MaxFieldStorageSize}");

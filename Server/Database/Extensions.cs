@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.IO;
 using Engine;
 
@@ -22,11 +18,23 @@ namespace Server
             return location >= 0;
         }
         
+        /// <summary>
+        /// Returns the location (in fields) in the specified stream.
+        /// </summary>
+        /// <param name="field">The field</param>
+        /// <param name="s">Stream to read from</param>
+        /// <returns>Zero-based location</returns>
         public static int getFieldLocation(this Field field, Stream s)
         {
             return field.compressField().getFieldLocation(s);
         }
 
+        /// <summary>
+        /// Returns the location (in fields) in the specified stream.
+        /// </summary>
+        /// <param name="field">Storage of the field</param>
+        /// <param name="s">Stream to read from</param>
+        /// <returns>Zero-based location</returns>
         public static int getFieldLocation(this byte[] field, Stream s)
         {
             int fieldLength = field.Length;
@@ -106,31 +114,24 @@ namespace Server
         /// <returns>The compressed field as a byte array</returns>
         internal static byte[] compressField(this Field field)
         {
-            BitWriter bw = new BitWriter();
+            BitWriter bw = new BitWriter(field.getMaxStorageSize());
 
             for (int column = 0; column < field.Width; column++)
             {
-                int cellValue = 0;
+                int cellValue = field.getCellValue(column, 0);
                 int row = 0;
 
-                do
+                while (row < field.Height && cellValue != 0)
                 {
-                    cellValue = (byte)field.getCellValue(column, row);
-
-                    if (cellValue > 0)
-                    {
-                        bw.append(1);               // 1 means that the cell is taken by a player.
-                        bw.append(cellValue - 1);   // This value represents which player has taken the cell.
-                    }
-                    else
-                    {
-                        bw.append(0);               // 0 means that the cell is empty.
-                        break;                      // We don't have to save additional information about the empty cell. Having said that it's empty in the previous step is enough.
-                    }
+                    bw.append(1);               // 1 means that the cell is taken by a player.
+                    bw.append(cellValue >> 1);  // This value represents which player has taken the cell.
 
                     row++;
+                    cellValue = field.getCellValue(column, row);
                 }
-                while (row < field.Height && cellValue > 0);
+
+                if (row != field.Height)
+                    bw.append(0);
             }
 
             return bw.getStorage();
