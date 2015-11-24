@@ -99,7 +99,7 @@ namespace Server
             if (!dbLocation.locationExists(DbProperties))
                 throw new DatabaseException($"Can't read field data at field location {dbLocation}, because this location doesn't exist.");
 
-            using (FileStream fieldDataStream = new FileStream(dbLocation.FieldDataPath, FileMode.OpenOrCreate, FileAccess.Read)) // Opens the field data database stream in read mode.
+            using (FileStream fieldDataStream = new FileStream(dbLocation.getFieldDataPath(), FileMode.OpenOrCreate, FileAccess.Read)) // Opens the field data database stream in read mode.
             {
                 int seekPosition = dbLocation.getFieldDataSeekPosition(DbProperties);
 
@@ -139,7 +139,7 @@ namespace Server
             if (!dbLocation.locationExists(DbProperties))
                 throw new DatabaseException($"Can't write field data at field location. {dbLocation}. This location doesn't exist.");
 
-            using (FileStream fieldDataStream = new FileStream(dbLocation.FieldDataPath, FileMode.OpenOrCreate, FileAccess.Write)) // Opens the field data database Stream in write mode.
+            using (FileStream fieldDataStream = new FileStream(dbLocation.getFieldDataPath(), FileMode.OpenOrCreate, FileAccess.Write)) // Opens the field data database Stream in write mode.
             {
                 int seekPosition = dbLocation.getFieldDataSeekPosition(DbProperties);
 
@@ -193,13 +193,13 @@ namespace Server
             if (!fieldExists(field, out dbLocation))
                 throw new DatabaseException($"Can't clear database item at database location. {dbLocation}. This location doesn't exist.");
 
-            using (FileStream fieldStream = new FileStream(dbLocation.FieldPath, FileMode.OpenOrCreate, FileAccess.Write))
+            using (FileStream fieldStream = new FileStream(dbLocation.getFieldPath(), FileMode.OpenOrCreate, FileAccess.Write))
             {
                 fieldStream.Seek(dbLocation.getFieldsSeekPosition(), SeekOrigin.Begin);
                 fieldStream.Write(new byte[dbLocation.FieldLength], 0, dbLocation.FieldLength);
             }
 
-            using (FileStream fieldDataStream = new FileStream(dbLocation.FieldDataPath, FileMode.OpenOrCreate, FileAccess.Write)) // Opens the field data database Stream in write mode.
+            using (FileStream fieldDataStream = new FileStream(dbLocation.getFieldDataPath(), FileMode.OpenOrCreate, FileAccess.Write)) // Opens the field data database Stream in write mode.
             {
                 fieldDataStream.Seek(dbLocation.getFieldDataSeekPosition(DbProperties), SeekOrigin.Begin);
                 fieldDataStream.Write(new byte[56], 0, 56);
