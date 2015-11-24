@@ -88,7 +88,7 @@ namespace connect4
                     Console.WriteLine(s);
                 }
                 column = player.get_turn(game.get_field());
-            } while (game.add_stone(column, player.player, ref s));
+            } while (!game.add_stone(column, player.player, ref s));
         }
 
         private bool check_for_win()
