@@ -78,13 +78,16 @@ namespace connect4
         private async void do_turn(IPlayer player)
         {
             string s = "";
+            Task<byte> task;
             do
             {
                 if (s != "")
                 {
                     Console.WriteLine(s);
                 }
-            } while (game.add_stone(await player.get_turn(game.get_field()), player.player, ref s));
+                task = player.get_turn(game.get_field());
+                await task;
+            } while (game.add_stone(task.Result, player.player, ref s));
         }
 
         private bool check_for_win()
@@ -182,29 +185,36 @@ namespace connect4
             loop();
         }
 
-        public async Task<Byte> await_button(player player)
+        public bool get_button_pressed(player player)
         {
             if (player == player.Alice)
             {
-                while (!alice_button_clicked)
+                if (!alice_button_clicked)
                 {
-                    System.Threading.Thread.Sleep(5);
+                    return false;
                 }
                 alice_button_clicked = false;
-                return (byte)numeric_Alice.Value;
+                return true;
             }
             else
             {
-                while (!bob_button_clicked)
+                if (!bob_button_clicked)
                 {
-                    System.Threading.Thread.Sleep(5);
+                    return false;
                 }
                 bob_button_clicked = false;
-                return (byte)numeric_Bob.Value;
+                return true;
             }
         }
 
-
+        public byte get_numeric(player player)
+        {
+            if (player == player.Alice)
+            {
+                return (byte) numeric_Alice.Value;
+            }
+            return (byte) numeric_Bob.Value;
+        }
         private void button_Alice_Click(object sender, EventArgs e)
         {
             alice_button_clicked = true;

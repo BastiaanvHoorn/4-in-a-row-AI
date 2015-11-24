@@ -20,7 +20,22 @@ namespace connect4
 
         public async Task<byte> get_turn(Field field)
         {
-            return await Task.Factory.StartNew(() => gui.await_button(player)).Result;
+            while (true)
+            {
+                Task<bool> task = Task.Factory.StartNew(() => wait_for_button(gui));
+                await task;
+                if (task.Result)
+                {
+                    return gui.get_numeric(player);
+                }
+            }
+        }
+
+        private bool wait_for_button(game_interface gui)
+        {
+            bool button = gui.get_button_pressed(player);
+            System.Threading.Thread.Sleep(5);
+            return button;
         }
     }
 }
