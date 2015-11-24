@@ -23,6 +23,14 @@ namespace Server
             Array.Copy(storage, 7, winningCounts, 0, 7);
         }
 
+        public float getWinningChance(byte column)
+        {
+            uint total = totalCounts[column];
+            uint winning = winningCounts[column];
+            float chance = winning / total;
+            return chance;
+        }
+
         public uint[] getStorage()
         {
             uint[] result = new uint[14];

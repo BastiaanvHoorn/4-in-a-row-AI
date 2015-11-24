@@ -1,21 +1,24 @@
 ﻿using System;
+using System.CodeDom;
+using System.Collections.Generic;
 
 namespace Engine
 {
     public class Game
     {
-        private static byte height;
-        private static byte width;
+        public byte height;
+        public byte width;
+        public byte[] history { get { return game_history.ToArray(); } }
+        private List<byte> game_history { get; }
+        public byte stones_count { get; private set; } //If this is equal to the width times the height, then it is a tie
         private readonly Field field;
-
-        //0 for noone, 1 for alice and 2 for bob
-        public player next_player { get; private set; }
-        private player winning { get; set; }
+        public players next_players { get; private set; }
+        private players winning { get; set; }
         /// <summary>
         /// A check if the specified person has won
         /// </summary>
         /// <param name="player">1 for alice, 2 for bob</param>
-        public bool has_won(player player)
+        public bool has_won(players player)
         {
             if (player == winning)
             {
@@ -29,10 +32,12 @@ namespace Engine
         /// </summary>
         public Game(byte _width, byte _height)
         {
+            game_history = new List<byte>();
+            stones_count = 0;
             height = _height;
             width = _width;
             field = new Field(_width, _height);
-            next_player = player.Alice;
+            next_players = players.Alice;
             winning = 0;
         }
 
@@ -48,29 +53,37 @@ namespace Engine
         /// <param name="player">1 for Alice, 2 for Bob</param>
         /// <param name="info"></param>
         /// <returns>If the stone could be placed in that column</returns>
-        public bool add_stone(byte column, player player, ref string info)
+        public bool add_stone(byte column, players player, ref string info)
         {
-            if (next_player != player)
+            if (stones_count == width*height)
             {
-                info = "It's not this players your turn";
+                info = "The field is full, check for a tie";
+            }
+            string player_name = Enum.GetName(typeof(players), player);
+            if (next_players != player)
+            {
+                info = $"It's not {player_name}'s turn";
                 return false;
             }
             if (column >= field.Width)
             {
-                info = "specified invalid (" + column + ") column";
+                info = $"specified invalid column ({column})";
                 return false;
             }
             byte empty_cell = (byte)field.getEmptyCell(column); //Get the x-coordinate for the first empty cell in the given column
             if (empty_cell < 6) //If there is still room in this column, place a stone
             {
                 field.doMove(column,player);
-                next_player = (player == player.Alice ? player.Bob : player.Alice);
-                Console.WriteLine("Dropped a stone for {0} at {1}, {2}", (player == player.Alice ? "alice" : "bob"), column, empty_cell);
+                next_players = (player == players.Alice ? players.Bob : players.Alice);
+                info = $"{player_name} dropped a stone at {column}, {empty_cell}";
                 check_for_win(column, empty_cell, player);
+
+                stones_count++;
+                game_history.Add(column);
                 return true;
             }
 
-            info = "column " + column + " is already full";
+            info = $"column {column} is already full";
             return false;
         }
         #region check_for_win
@@ -83,7 +96,7 @@ namespace Engine
         /// <param name="x">The x of the given stone</param>
         /// <param name="y">The y of the given stone</param>
         /// <param name="player">1 for alice, 2 for bob</param>
-        private void check_for_win(byte x, byte y, player player)
+        private void check_for_win(byte x, byte y, players player)
         {
             //Checks from botleft to topright
             byte counter = 1;
@@ -130,7 +143,7 @@ namespace Engine
         /// <param name="dy">the direction in y (can only be -1, 0, or -1)</param>
         /// <param name="ab">the player of which the stones should be counted (1 for alice, 2 for bob)</param>
         /// <returns>The amount of stones from player ab found, not counting the starting stone</returns>
-        private byte count_for_win_direction(byte x, byte y, sbyte dx, sbyte dy, player player)
+        private byte count_for_win_direction(byte x, byte y, sbyte dx, sbyte dy, players player)
         {
             byte counter = 0;
             sbyte _x = (sbyte)x;

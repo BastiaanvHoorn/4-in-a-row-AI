@@ -25,25 +25,13 @@ namespace Server.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("C:\\Connect Four\\Fields.db")]
-        public string FieldsDBPath {
+        [global::System.Configuration.DefaultSettingValueAttribute("C:\\Connect Four\\Test")]
+        public string DbPath {
             get {
-                return ((string)(this["FieldsDBPath"]));
+                return ((string)(this["DbPath"]));
             }
             set {
-                this["FieldsDBPath"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("C:\\Connect Four\\FieldData.db")]
-        public string FieldDataDBPath {
-            get {
-                return ((string)(this["FieldDataDBPath"]));
-            }
-            set {
-                this["FieldDataDBPath"] = value;
+                this["DbPath"] = value;
             }
         }
     }

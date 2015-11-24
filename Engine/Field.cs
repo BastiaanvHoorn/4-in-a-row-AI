@@ -66,9 +66,9 @@ namespace Engine
         /// <param name="x">X-coordinate (row)</param>
         /// <param name="y">Y-coordinate (column)</param>
         /// <returns>The player who owns the specified cell</returns>
-		public player getCellPlayer(int x, int y)
+		public players getCellPlayer(int x, int y)
 		{
-            return (player)(getCellValue(x, y));    //Converts the cellValue directly into the player enum.
+            return (players)(getCellValue(x, y));    //Converts the cellValue directly into the player enum.
 		}
 
         /// <summary>
@@ -114,7 +114,7 @@ namespace Engine
         /// <param name="x">X-coordinate</param>
         /// <param name="y">Y-coordinate</param>
         /// <param name="player">The player that needs to be stored in the cell</param>
-		internal void setCell(int x, int y, player player)
+		internal void setCell(int x, int y, players player)
 		{
             int cellIndex = Height * x + y;
             int byteNumber = cellIndex >> 2;
@@ -148,17 +148,17 @@ namespace Engine
         /// <summary>
         /// Performs a move at the given column for the given player
         /// </summary>
-        /// <param name="column">The column of the players choice</param>
+        /// <param name="column">The column of the player choice</param>
         /// <param name="player">The player who performs the turn</param>
-        public void doMove(int column, player player)
+        public void doMove(int column, players player)
         {
             if (column > Width - 1)
             {
                 throw new InvalidMoveException(String.Format("Column {0} doesn't exist. There are just {1} columns available", column + 1, Width));
             }
-            else if (player == player.Empty)
+            else if (player == players.Empty)
             {
-                throw new InvalidMoveException("Only real players, like Alice and Bob can do a move. player.Empty isn't able to do that");
+                throw new InvalidMoveException("Only real player, like Alice and Bob can do a move. player.Empty isn't able to do that");
             }
 
             int emptyCell = getEmptyCell(column);

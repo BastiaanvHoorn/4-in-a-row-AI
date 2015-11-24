@@ -10,7 +10,6 @@ using Engine;
 
 namespace Server
 {
-
     // State object for reading client data asynchronously
     public class StateObject
     {
@@ -26,6 +25,7 @@ namespace Server
 
     public class AsynchronousSocketListener
     {
+        static Random r = new Random();
         // Thread signal.
         public static ManualResetEvent allDone = new ManualResetEvent(false);
 
@@ -123,7 +123,7 @@ namespace Server
                     // Echo the data back to the client.
                     byte[] _field = Encoding.ASCII.GetBytes(content.Remove(content.Length - 5, 5));
                     Field field = new Field(_field);
-                    Send(handler, get_column(field).ToString());
+                    Send(handler, RequestHandler.get_column(field).ToString());
                 }
                 else
                 {
@@ -165,12 +165,6 @@ namespace Server
             {
                 Console.WriteLine(e.ToString());
             }
-        }
-
-        public static byte get_column(Field field)
-        {
-            Random r = new Random();
-            return (byte)(r.Next(6));
         }
 
         public static int Main(String[] args)
