@@ -12,7 +12,7 @@ namespace Engine
         private List<byte> game_history { get; }
         public byte stones_count { get; private set; } //If this is equal to the width times the height, then it is a tie
         private readonly Field field;
-        public players next_players { get; private set; }
+        public players next_player { get; private set; }
         private players winning { get; set; }
         /// <summary>
         /// A check if the specified person has won
@@ -37,7 +37,7 @@ namespace Engine
             height = _height;
             width = _width;
             field = new Field(_width, _height);
-            next_players = players.Alice;
+            next_player = players.Alice;
             winning = 0;
         }
 
@@ -60,7 +60,7 @@ namespace Engine
                 info = "The field is full, check for a tie";
             }
             string player_name = Enum.GetName(typeof(players), player);
-            if (next_players != player)
+            if (next_player != player)
             {
                 info = $"It's not {player_name}'s turn";
                 return false;
@@ -74,7 +74,7 @@ namespace Engine
             if (empty_cell < 6) //If there is still room in this column, place a stone
             {
                 field.doMove(column,player);
-                next_players = (player == players.Alice ? players.Bob : players.Alice);
+                next_player = (player == players.Alice ? players.Bob : players.Alice);
                 info = $"{player_name} dropped a stone at {column}, {empty_cell}";
                 check_for_win(column, empty_cell, player);
 

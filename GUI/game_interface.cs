@@ -43,16 +43,16 @@ namespace connect4
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            alice = new GUI_player(this, player.Alice);
+            alice = new GUI_player(this, Engine.players.Alice);
             if (players == 1)
             {
-                bob = new Bot(player.Bob);
+                bob = new Bot(Engine.players.Bob);
                 numeric_Bob.Visible = false;
                 button_Bob.Visible = false;
             }
             else
             {
-                bob = new GUI_player(this, player.Bob);
+                bob = new GUI_player(this, Engine.players.Bob);
             }
             create_field();
         }
@@ -62,15 +62,15 @@ namespace connect4
         {
             do
             {
-                if (game.next_player == player.Alice)
+                if (game.next_player == Engine.players.Alice)
                 {
                     await Task.Factory.StartNew(() => do_turn(alice));
-                    disable_ui(player.Alice, true);
+                    disable_ui(Engine.players.Alice, true);
                 }
                 else
                 {
                     await Task.Factory.StartNew(() => do_turn(bob));
-                    disable_ui(player.Bob, true);
+                    disable_ui(Engine.players.Bob, true);
                 }
                 update_field();
             } while (!check_for_win());
@@ -93,18 +93,18 @@ namespace connect4
 
         private bool check_for_win()
         {
-            if (game.has_won(player.Alice))
+            if (game.has_won(Engine.players.Alice))
             {
                 Console.WriteLine("Alice has won");
-                disable_ui(player.Alice);
-                disable_ui(player.Bob);
+                disable_ui(Engine.players.Alice);
+                disable_ui(Engine.players.Bob);
                 return true;
             }
-            else if (game.has_won(player.Bob))
+            else if (game.has_won(Engine.players.Bob))
             {
                 Console.WriteLine("bob has won");
-                disable_ui(player.Alice);
-                disable_ui(player.Bob);
+                disable_ui(Engine.players.Alice);
+                disable_ui(Engine.players.Bob);
                 return true;
             }
             return false;
@@ -144,10 +144,10 @@ namespace connect4
                     int k = j_offset - j;
                     switch (field.getCellPlayer(i, j))
                     {
-                        case player.Empty:
+                        case Engine.players.Empty:
                             labels[i][k].BackColor = Color.Wheat;
                             break;
-                        case player.Alice:
+                        case Engine.players.Alice:
                             labels[i][k].BackColor = Color.Red;
                             break;
                         default:
@@ -158,24 +158,22 @@ namespace connect4
             }
         }
 
-        public void disable_ui(player player, bool enable_other = false)
+        public void disable_ui(players player, bool enable_other = false)
         {
-            if (player == player.Alice)
+            if (player == Engine.players.Alice)
             {
                 button_Alice.Enabled = false;
                 numeric_Alice.Enabled = false;
                 if (!enable_other) return;
                 button_Bob.Enabled = true;
                 numeric_Bob.Enabled = true;
+                return;
             }
-            else
-            {
-                button_Bob.Enabled = false;
-                numeric_Alice.Enabled = false;
-                if (!enable_other) return;
-                button_Alice.Enabled = true;
-                numeric_Alice.Enabled = true;
-            }
+            button_Bob.Enabled = false;
+            numeric_Alice.Enabled = false;
+            if (!enable_other) return;
+            button_Alice.Enabled = true;
+            numeric_Alice.Enabled = true;
         }
 
         private void button_start_Click(object sender, EventArgs e)
@@ -187,13 +185,13 @@ namespace connect4
             button_Bob.Visible = true;
             numeric_Alice.Visible = true;
             numeric_Bob.Visible = true;
-            disable_ui(player.Bob, true);
+            disable_ui(Engine.players.Bob, true);
             update_field();
             loop();
         }
-        public bool get_button_pressed(player player)
+        public bool get_button_pressed(players player)
         {
-            if (player == player.Alice)
+            if (player == Engine.players.Alice)
             {
                 if (!alice_button_clicked)
                 {
@@ -202,19 +200,18 @@ namespace connect4
                 alice_button_clicked = false;
                 return true;
             }
-            else
+
+            if (!bob_button_clicked)
             {
-                if (!bob_button_clicked)
-                {
-                    return false;
-                }
-                bob_button_clicked = false;
-                return true;
+                return false;
             }
+            bob_button_clicked = false;
+            return true;
+
         }
-        public byte get_numeric(player player)
+        public byte get_numeric(players player)
         {
-            if (player == player.Alice)
+            if (player == Engine.players.Alice)
             {
                 return (byte)numeric_Alice.Value;
             }

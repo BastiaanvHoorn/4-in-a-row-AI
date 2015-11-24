@@ -54,15 +54,15 @@ namespace Simulator
                 Console.WriteLine($"Created new game of {game.get_field().Width} by {game.get_field().Height}");
             List<IPlayer> _players = new List<IPlayer>() //A fancy list to prevent the use of if-statements
                 {
-                    new Bot(players.Alice, log_mode),
-                    new Bot(players.Bob, log_mode)
+                    new Bot(players.Alice),
+                    new Bot(players.Bob)
                 };
             bool tie = false;
             turns = 0;
             while (true)
             {
                 turns++;
-                tie = !do_turn(_players.Find(player => player.player == game.next_players), game); //Execute the turn the player who's turn it is. If do_turn returns false, it is a tie;
+                tie = !do_turn(_players.Find(player => player.player == game.next_player), game); //Execute the turn the player who's turn it is. If do_turn returns false, it is a tie;
                 if (game.has_won(players.Alice))
                 {
                     return players.Alice;
