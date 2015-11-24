@@ -1,5 +1,6 @@
 ﻿using System;
 using System.CodeDom;
+using System.Collections.Generic;
 
 namespace Engine
 {
@@ -7,6 +8,8 @@ namespace Engine
     {
         public byte height;
         public byte width;
+        public byte[] history { get { return game_history.ToArray(); } }
+        private List<byte> game_history { get; }
         public byte stones_count { get; private set; } //If this is equal to the width times the height, then it is a tie
         private readonly Field field;
         public players next_players { get; private set; }
@@ -29,6 +32,7 @@ namespace Engine
         /// </summary>
         public Game(byte _width, byte _height)
         {
+            game_history = new List<byte>();
             stones_count = 0;
             height = _height;
             width = _width;
@@ -75,6 +79,7 @@ namespace Engine
                 check_for_win(column, empty_cell, player);
 
                 stones_count++;
+                game_history.Add(column);
                 return true;
             }
 

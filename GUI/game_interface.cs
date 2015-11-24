@@ -97,6 +97,7 @@ namespace GUI
                     Console.WriteLine("Alice has won");
                     disable_ui(Engine.players.Alice);
                     disable_ui(Engine.players.Bob);
+                    Console.WriteLine(game.history.ToString());
                 }
                 else if (game.has_won(Engine.players.Bob))
                 {
@@ -113,7 +114,7 @@ namespace GUI
                     else
                     {
                         disable_ui(Engine.players.Alice, true);
-                        //If there are less then 2 real player, bob is played by a bot
+                        //If there are less then 2 real players, bob is played by a bot
                         if (players < 2)
                         {
                             byte row;
