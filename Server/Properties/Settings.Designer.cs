@@ -34,5 +34,17 @@ namespace Server.Properties {
                 this["DbPath"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("134217728")]
+        public long DbMaxFileSize {
+            get {
+                return ((long)(this["DbMaxFileSize"]));
+            }
+            set {
+                this["DbMaxFileSize"] = value;
+            }
+        }
     }
 }

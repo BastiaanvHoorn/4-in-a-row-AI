@@ -118,7 +118,7 @@ namespace UnitTesting.Server
             using (var ms = new MemoryStream(new byte[] { 0 }))
             {
                 Field f = new Field(new byte[11]);
-                long actual = f.findField(ms);
+                long actual = f.getFieldLocation(ms);
                 long expected = 0;
                 Assert.AreEqual(expected, actual);
             }
@@ -128,8 +128,11 @@ namespace UnitTesting.Server
         private static Field f1 = new Field(new byte[] { 5, 80, 5, 21, 80, 0, 0, 0, 0, 0, 0 });
         private static Field f2 = new Field(new byte[] { 5, 16, 0, 21, 80, 85, 1, 80, 1, 1, 0 });
         private static Field f3 = new Field(new byte[] { 85, 80, 5, 85, 80, 5, 85, 80, 5, 85, 0 });
+        private static Field f4 = new Field(new byte[] { 85, 80, 5, 85, 80, 5, 85, 80, 5, 21, 0 });
+        private static Field f5 = new Field(new byte[] { 85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 5 });
 
-        [TestMethod]
+        // These test are designed for the old db format.
+        /*[TestMethod]
         public void findField_Test_2()
         {
             List<byte> memory = new List<byte>();
@@ -140,7 +143,7 @@ namespace UnitTesting.Server
             
             using (var ms = new MemoryStream(memory.ToArray()))
             {
-                long actual = f1.findField(ms);
+                long actual = f1.getFieldLocation(ms);
                 long expected = 1;
                 Assert.AreEqual(expected, actual);
             }
@@ -157,7 +160,7 @@ namespace UnitTesting.Server
 
             using (var ms = new MemoryStream(memory.ToArray()))
             {
-                long actual = f2.findField(ms);
+                long actual = f2.getFieldLocation(ms);
                 long expected = 2;
                 Assert.AreEqual(expected, actual);
             }
@@ -174,7 +177,7 @@ namespace UnitTesting.Server
 
             using (var ms = new MemoryStream(memory.ToArray()))
             {
-                long actual = f3.findField(ms);
+                long actual = f3.getFieldLocation(ms);
                 long expected = 3;
                 Assert.AreEqual(expected, actual);
             }
@@ -236,10 +239,7 @@ namespace UnitTesting.Server
         public void database_findField_speedTest_1()
         {
             var db = new Database(@"C:\Connect Four\db speed test 1");
-            int actual;
-            int fieldLength;
-            db.findField(f2, out actual, out fieldLength);
-
+            int actual = db.findField(f2).Location;
             int expected = 8001;
             Assert.AreEqual(expected, actual);
         }
@@ -260,12 +260,54 @@ namespace UnitTesting.Server
         public void database_findField_speedTest_2()
         {
             var db = new Database(@"C:\Connect Four\db speed test 2");
-            int actual;
-            int fieldLength;
-            db.findField(f2, out actual, out fieldLength);
-
+            int actual = db.findField(f2).Location;
             int expected = 800001;
             Assert.AreEqual(expected, actual);
+        }*/
+
+        // The compressed lengths of f3 and f4 are the same. Necessary for these two tests.
+        /*[TestMethod]
+        public void database_addDatabaseItem_speedTest_3()  // ========== Run test finished: 1 run (0:04:46,4096759) ==========
+        {
+            var dbProps = new DatabaseProperties(@"C:\Connect Four\db speed test 3", 7, 6);
+            //var db = new Database(dbProps);
+
+            using (FileStream fieldStream = new FileStream(dbProps.getFieldDirPath(8) + "\\Fields.db", FileMode.OpenOrCreate, FileAccess.Write))
+            {
+                int bytes = 8 * 100000000;
+                fieldStream.Write(new byte[bytes], 0, bytes);
+            }
+        }*/
+
+        //  Speed test results
+        //  _______________________________________________
+        //  Scanned items (* 8 bytes)       Processing time
+        //  100,000                         70  - 80    ms
+        //  1,000,000                       100 - 110   ms
+        //  10,000,000                      600 - 700   ms
+        //  100,000,000                     ~ 5 - 6     s
+        //  1,000,000,000                   Not supported!
+
+        [TestMethod]
+        public void database_findField_speedTest_3()
+        {
+            var db = new Database(@"C:\Connect Four\db speed test 3");
+            int actual = db.findField(f3).Location;
+            int expected = 100000000;
+            Assert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void database_newFormat_test_2()
+        {
+            var db = new Database(new DatabaseProperties(@"C:\Connect Four\New Format Test 2", 7, 6, 1024));
+
+            for (int i = 0; i < 1000; i++)
+            {
+                db.addDatabaseItem(f3);
+            }
+
+            db.addDatabaseItem(f4);
         }
     }
 }
