@@ -40,7 +40,6 @@ namespace connect4
             this.game = game;
             this.players = players;
         }
-
         private void Form1_Load(object sender, EventArgs e)
         {
             alice = new GUI_player(this, Engine.players.Alice);
@@ -56,8 +55,9 @@ namespace connect4
             }
             create_field();
         }
-
-
+        /// <summary>
+        /// This void will keep performing an asynchronous do_turn for the according player as long as no-one has won
+        /// </summary>
         private async void loop()
         {
             do
@@ -76,7 +76,10 @@ namespace connect4
             } while (!check_for_win());
             //TODO: Add replay stuff
         }
-
+        /// <summary>
+        /// Tries to get a column from the given IPlayer and puts a stone in that column
+        /// </summary>
+        /// <param name="player">The player for which the turn must be executed</param>
         private void do_turn(IPlayer player)
         {
             string s = "";
@@ -90,7 +93,10 @@ namespace connect4
                 column = player.get_turn(game.get_field());
             } while (!game.add_stone(column, player.player, ref s));
         }
-
+        /// <summary>
+        /// Checks for a win and disables all ui-elements if someone has won
+        /// </summary>
+        /// <returns></returns>
         private bool check_for_win()
         {
             if (game.has_won(Engine.players.Alice))
@@ -109,7 +115,9 @@ namespace connect4
             }
             return false;
         }
-
+        /// <summary>
+        /// Instantiates all field labels in the right position
+        /// </summary>
         public void create_field()
         {
             field = game.get_field();
@@ -157,7 +165,11 @@ namespace connect4
                 }
             }
         }
-
+        /// <summary>
+        /// Disables all UI elements for the given player
+        /// </summary>
+        /// <param name="player">The player for whom the UI elements must be disabled</param>
+        /// <param name="enable_other">If the elements of the other player must be enabled</param>
         public void disable_ui(players player, bool enable_other = false)
         {
             if (player == Engine.players.Alice)
@@ -175,20 +187,11 @@ namespace connect4
             button_Alice.Enabled = true;
             numeric_Alice.Enabled = true;
         }
-
-        private void button_start_Click(object sender, EventArgs e)
-        {
-            label1.Visible = true;
-            label2.Visible = true;
-            button_start.Visible = false;
-            button_Alice.Visible = true;
-            button_Bob.Visible = true;
-            numeric_Alice.Visible = true;
-            numeric_Bob.Visible = true;
-            disable_ui(Engine.players.Bob, true);
-            update_field();
-            loop();
-        }
+        /// <summary>
+        /// Checks if the button from the given player is pressed
+        /// </summary>
+        /// <param name="player"></param>
+        /// <returns></returns>
         public bool get_button_pressed(players player)
         {
             if (player == Engine.players.Alice)
@@ -209,6 +212,11 @@ namespace connect4
             return true;
 
         }
+        /// <summary>
+        /// Gets the numeric value from the given player
+        /// </summary>
+        /// <param name="player"></param>
+        /// <returns></returns>
         public byte get_numeric(players player)
         {
             if (player == Engine.players.Alice)
@@ -216,6 +224,19 @@ namespace connect4
                 return (byte)numeric_Alice.Value;
             }
             return (byte)numeric_Bob.Value;
+        }
+        private void button_start_Click(object sender, EventArgs e)
+        {
+            label1.Visible = true;
+            label2.Visible = true;
+            button_start.Visible = false;
+            button_Alice.Visible = true;
+            button_Bob.Visible = true;
+            numeric_Alice.Visible = true;
+            numeric_Bob.Visible = true;
+            disable_ui(Engine.players.Bob, true);
+            update_field();
+            loop();
         }
         private void button_Alice_Click(object sender, EventArgs e)
         {

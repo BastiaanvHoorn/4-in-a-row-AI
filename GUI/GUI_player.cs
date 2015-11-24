@@ -28,11 +28,15 @@ namespace connect4
                 }
             }
         }
-
+        /// <summary>
+        /// waits 5 miliseconds and then returns if the button from the given player is pressed
+        /// </summary>
+        /// <param name="gui"></param>
+        /// <returns></returns>
         private bool wait_for_button(game_interface gui)
         {
-            bool button = gui.get_button_pressed(player);
             System.Threading.Thread.Sleep(5);
+            bool button = gui.get_button_pressed(player);
             return button;
         }
     }
