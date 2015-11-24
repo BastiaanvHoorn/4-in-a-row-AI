@@ -9,6 +9,6 @@ namespace Engine
     public interface IPlayer
     {
         player player { get; }
-        Task<Byte> get_turn(Field field);
+        byte get_turn(Field field);
     }
 }

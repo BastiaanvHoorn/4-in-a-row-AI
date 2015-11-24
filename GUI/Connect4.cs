@@ -14,7 +14,8 @@ namespace connect4
             var game = new Game(7,6);
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new game_interface(byte.Parse(args[0]), game));
+            game_interface gui = new game_interface(byte.Parse(args[0]), game);
+            Application.Run(gui);
 
         }
     }

@@ -18,13 +18,11 @@ namespace connect4
             this.player = player;
         }
 
-        public async Task<byte> get_turn(Field field)
+        public byte get_turn(Field field)
         {
             while (true)
             {
-                Task<bool> task = Task.Factory.StartNew(() => wait_for_button(gui));
-                await task;
-                if (task.Result)
+                if (wait_for_button(gui))
                 {
                     return gui.get_numeric(player);
                 }

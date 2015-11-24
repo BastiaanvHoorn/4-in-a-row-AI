@@ -58,36 +58,37 @@ namespace connect4
         }
 
 
-        private void loop()
+        private async void loop()
         {
             do
             {
                 if (game.next_player == player.Alice)
                 {
-                    do_turn(alice);
+                    await Task.Factory.StartNew(() => do_turn(alice));
+                    disable_ui(player.Alice, true);
                 }
                 else
                 {
-                    do_turn(bob);
+                    await Task.Factory.StartNew(() => do_turn(bob));
+                    disable_ui(player.Bob, true);
                 }
                 update_field();
             } while (!check_for_win());
             //TODO: Add replay stuff
         }
 
-        private async void do_turn(IPlayer player)
+        private void do_turn(IPlayer player)
         {
             string s = "";
-            Task<byte> task;
+            byte column;
             do
             {
                 if (s != "")
                 {
                     Console.WriteLine(s);
                 }
-                task = player.get_turn(game.get_field());
-                await task;
-            } while (game.add_stone(task.Result, player.player, ref s));
+                column = player.get_turn(game.get_field());
+            } while (game.add_stone(column, player.player, ref s));
         }
 
         private bool check_for_win()
@@ -179,12 +180,17 @@ namespace connect4
 
         private void button_start_Click(object sender, EventArgs e)
         {
+            label1.Visible = true;
+            label2.Visible = true;
             button_start.Visible = false;
+            button_Alice.Visible = true;
+            button_Bob.Visible = true;
+            numeric_Alice.Visible = true;
+            numeric_Bob.Visible = true;
             disable_ui(player.Bob, true);
             update_field();
             loop();
         }
-
         public bool get_button_pressed(player player)
         {
             if (player == player.Alice)
@@ -206,20 +212,18 @@ namespace connect4
                 return true;
             }
         }
-
         public byte get_numeric(player player)
         {
             if (player == player.Alice)
             {
-                return (byte) numeric_Alice.Value;
+                return (byte)numeric_Alice.Value;
             }
-            return (byte) numeric_Bob.Value;
+            return (byte)numeric_Bob.Value;
         }
         private void button_Alice_Click(object sender, EventArgs e)
         {
             alice_button_clicked = true;
         }
-
         private void button_Bob_Click(object sender, EventArgs e)
         {
             bob_button_clicked = true;

@@ -84,11 +84,11 @@ namespace Botclient
             return 1;
         }
 
-        public Task<byte> get_turn(Field field)
+        public byte get_turn(Field field)
         {
-            var task = Task.Factory.StartNew(() => get_column_from_server(field));
-            Console.WriteLine($"Tried to drop a stone in colmun {task.Result}");
-            return task;
+            var column = get_column_from_server(field);
+            Console.WriteLine($"Tried to drop a stone in colmun {column}");
+            return column;
         }
 
     }
