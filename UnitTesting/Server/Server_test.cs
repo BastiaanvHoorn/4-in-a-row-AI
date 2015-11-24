@@ -129,6 +129,7 @@ namespace UnitTesting.Server
         private static Field f2 = new Field(new byte[] { 5, 16, 0, 21, 80, 85, 1, 80, 1, 1, 0 });
         private static Field f3 = new Field(new byte[] { 85, 80, 5, 85, 80, 5, 85, 80, 5, 85, 0 });
         private static Field f4 = new Field(new byte[] { 85, 80, 5, 85, 80, 5, 85, 80, 5, 21, 0 });
+        private static Field f5 = new Field(new byte[] { 85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 5 });
 
         // These test are designed for the old db format.
         /*[TestMethod]
@@ -286,7 +287,7 @@ namespace UnitTesting.Server
         //  10,000,000                      600 - 700   ms
         //  100,000,000                     ~ 5 - 6     s
         //  1,000,000,000                   Not supported!
-        
+
         [TestMethod]
         public void database_findField_speedTest_3()
         {
@@ -294,6 +295,19 @@ namespace UnitTesting.Server
             int actual = db.findField(f3).Location;
             int expected = 100000000;
             Assert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void database_newFormat_test_2()
+        {
+            var db = new Database(new DatabaseProperties(@"C:\Connect Four\New Format Test 2", 7, 6, 1024));
+
+            for (int i = 0; i < 1000; i++)
+            {
+                db.addDatabaseItem(f3);
+            }
+
+            db.addDatabaseItem(f4);
         }
     }
 }

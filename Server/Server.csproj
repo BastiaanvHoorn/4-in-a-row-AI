@@ -49,6 +49,7 @@
     <Compile Include="Database\DatabaseLocation.cs" />
     <Compile Include="Database\DatabaseProperties.cs" />
     <Compile Include="Database\Extensions.cs" />
+    <Compile Include="Database\Indexer.cs" />
     <Compile Include="Exceptions.cs" />
     <Compile Include="Database\FieldData.cs" />
     <Compile Include="Properties\Settings.Designer.cs">

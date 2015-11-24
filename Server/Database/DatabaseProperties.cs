@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 
 namespace Server
 {
@@ -7,6 +8,7 @@ namespace Server
         public readonly string Path;
         public readonly byte FieldWidth;
         public readonly byte FieldHeight;
+        public readonly long MaxFileSize;
         public readonly byte MaxFieldStorageSize;
         private int[] Lengths;
 
@@ -24,6 +26,7 @@ namespace Server
                 {
                     FieldWidth = br.ReadByte();
                     FieldHeight = br.ReadByte();
+                    MaxFileSize = br.ReadInt64();
                     MaxFieldStorageSize = br.ReadByte();
                     Lengths = new int[MaxFieldStorageSize];
 
@@ -41,11 +44,12 @@ namespace Server
         /// <param name="path">Database path</param>
         /// <param name="fieldWidth">Width of the fields to store</param>
         /// <param name="height">Height of the fields to store</param>
-        public DatabaseProperties(string path, byte fieldWidth, byte fieldHeight)
+        public DatabaseProperties(string path, byte fieldWidth, byte fieldHeight, long maxFileSize)
         {
             this.Path = path;
             this.FieldWidth = fieldWidth;
             this.FieldHeight = fieldHeight;
+            this.MaxFileSize = maxFileSize;
             this.MaxFieldStorageSize = calculateMaxFieldStorageSize();
             this.Lengths = new int[MaxFieldStorageSize];
         }
@@ -61,6 +65,7 @@ namespace Server
                 {
                     br.Write(this.FieldWidth);
                     br.Write(this.FieldHeight);
+                    br.Write(this.MaxFileSize);
                     br.Write(this.MaxFieldStorageSize);
 
                     for (byte i = 0; i < MaxFieldStorageSize; i++)
@@ -74,7 +79,7 @@ namespace Server
         /// <summary>
         /// Increments the length (in fields) of the given database file by one. (Called after adding a field)
         /// </summary>
-        public void fieldAdded(int i)
+        public void increaseLength(int i)
         {
             if (i < 1 || i > MaxFieldStorageSize)
                 throw new DatabaseException($"Argument i is not in range of the database files. i = {i}; min = {1}; max = {MaxFieldStorageSize}");
@@ -112,7 +117,7 @@ namespace Server
         public string getFieldDirPath(int storageLength)
         {
             string path = this.Path;
-            string subDir = "Field length = " + storageLength;
+            string subDir = "FieldLength" + storageLength;
             return path + "\\" + subDir;
         }
 
@@ -124,6 +129,27 @@ namespace Server
         public string getFieldDirPath(byte[] fieldStorage)
         {
             return getFieldDirPath(fieldStorage.Length);
+        }
+
+        /// <summary>
+        /// Returns the maximum amount of fields that can be stored in one file in the database, based on the fieldlength.
+        /// </summary>
+        /// <param name="fieldLength">The fieldlength to check this value for</param>
+        /// <returns>Max amount of fields</returns>
+        public int getMaxFieldsInFile(int fieldLength)
+        {
+            return (int)(MaxFileSize / fieldLength);
+        }
+
+        /// <summary>
+        /// Returns the amount of files in the database that contain fields with the given fieldLength.
+        /// </summary>
+        /// <param name="fieldLength"></param>
+        /// <returns></returns>
+        public int getFieldFileCount(int fieldLength)
+        {
+            double maxFieldsInFile = getMaxFieldsInFile(fieldLength);
+            return (int)Math.Ceiling(getLength(fieldLength) / maxFieldsInFile);
         }
     }
 }

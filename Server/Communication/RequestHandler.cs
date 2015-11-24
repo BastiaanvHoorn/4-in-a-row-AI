@@ -1,11 +1,6 @@
 ﻿using Engine;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Server.Properties;
-using System.IO;
 
 namespace Server
 {
@@ -60,11 +55,11 @@ namespace Server
             FieldData fieldData = db.readFieldData(fieldLocation);  // Reads the old field data from the database.
             
             // Edits the field data to the wanted values.
-            fieldData.totalCounts[moveColumn]++;
+            fieldData.TotalCounts[moveColumn]++;
             if (winning)
-                fieldData.winningCounts[moveColumn]++;
+                fieldData.WinningCounts[moveColumn]++;
 
-            db.writeFieldData(fieldLocation, fieldData);    // Writes the field data to the database.
+            db.writeFieldData(fieldLocation, fieldData);            // Writes the field data to the database.
         }
 
         /*public static void receive_game(Field field)

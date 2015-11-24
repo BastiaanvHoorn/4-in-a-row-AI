@@ -5,5 +5,8 @@
     <Setting Name="DbPath" Type="System.String" Scope="User">
       <Value Profile="(Default)">C:\Connect Four\Test</Value>
     </Setting>
+    <Setting Name="DbMaxFileSize" Type="System.Int64" Scope="User">
+      <Value Profile="(Default)">134217728</Value>
+    </Setting>
   </Settings>
 </SettingsFile>
