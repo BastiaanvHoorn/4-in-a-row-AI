@@ -3,10 +3,11 @@ using System.Net;
 using System.Net.Sockets;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using Engine;
+using Networker;
 
 namespace Server
 {
@@ -83,7 +84,7 @@ namespace Server
             allDone.Set();
 
             // Get the socket that handles the client request.
-            Socket listener = (Socket) ar.AsyncState;
+            Socket listener = (Socket)ar.AsyncState;
             Socket handler = listener.EndAccept(ar);
 
             // Create the state object.
@@ -95,11 +96,11 @@ namespace Server
 
         public static void ReadCallback(IAsyncResult ar)
         {
-            string content = String.Empty;
+            byte[] content;
 
             // Retrieve the state object and the handler socket
             // from the asynchronous state object.
-            StateObject state = (StateObject) ar.AsyncState;
+            StateObject state = (StateObject)ar.AsyncState;
             Socket handler = state.workSocket;
 
             // Read data from the client socket. 
@@ -108,22 +109,32 @@ namespace Server
             if (bytesRead > 0)
             {
                 // There  might be more data, so store the data received so far.
-                state.sb.Append(Encoding.ASCII.GetString(
-                    state.buffer, 0, bytesRead));
-
+                //state.sb.Append(Encoding.ASCII.GetString(
+                //state.buffer, 0, bytesRead));
                 // Check for end-of-file tag. If it is not there, read 
                 // more data.
-                content = state.sb.ToString();
-                if (content.IndexOf("<EOF>") > -1)
+                content = state.buffer;
+                Console.WriteLine($"Recieved {String.Join("", content)}");
+
+                if (Array.IndexOf(content, (byte)network_codes.end_of_stream) > -1)
                 {
                     // All the data has been read from the 
                     // client. Display it on the console.
                     //Console.WriteLine($"Read {content.Length} bytes from socket. \n Data : {content} \n");
 
                     // Echo the data back to the client.
-                    byte[] _field = Encoding.ASCII.GetBytes(content.Remove(content.Length - 5, 5));
-                    Field field = new Field(_field);
-                    Send(handler, RequestHandler.get_column(field).ToString());
+                    // If the array is marked as a column_request, respond with a column
+                    if (content[0] == (byte)network_codes.column_request)
+                    {
+                        byte[] _field = content.Skip(1).TakeWhile(b => b != (byte)network_codes.end_of_stream).ToArray();
+                        Field field = new Field(_field);
+                        Send(handler, new[] { RequestHandler.get_column(field) });
+                    }
+                    //If the array is marked as a game-history-array, process the array.
+                    else if (content[0] == (byte) network_codes.game_history_array)
+                    {
+                        Send(handler, new[] {(byte)0});
+                    }
                 }
                 else
                 {
@@ -134,14 +145,14 @@ namespace Server
             }
         }
 
-        private static void Send(Socket handler, string data)
+        private static void Send(Socket handler, byte[] data)
         {
             // Convert the string data to byte data using ASCII encoding.
-            byte[] byteData = Encoding.ASCII.GetBytes(data);
+            //byte[] byteData = Encoding.ASCII.GetBytes(data);
 
             // Begin sending the data to the remote device.
-            Console.WriteLine($"Send column {data}");
-            handler.BeginSend(byteData, 0, byteData.Length, 0,
+            Console.WriteLine($"Sent column {data[0]}");
+            handler.BeginSend(data, 0, data.Length, 0,
                 new AsyncCallback(SendCallback), handler);
         }
 
@@ -150,7 +161,7 @@ namespace Server
             try
             {
                 // Retrieve the socket from the state object.
-                Socket handler = (Socket) ar.AsyncState;
+                Socket handler = (Socket)ar.AsyncState;
 
                 int bytesSent = handler.EndSend(ar);
                 // Complete sending the data to the remote device.

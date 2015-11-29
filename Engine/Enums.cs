@@ -14,5 +14,4 @@
         verbose,        //Loggs a lot of things
         debug           //Loggs everything
     }
-
 }

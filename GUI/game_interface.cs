@@ -227,14 +227,17 @@ namespace connect4
         }
         private void button_start_Click(object sender, EventArgs e)
         {
-            label1.Visible = true;
-            label2.Visible = true;
             button_start.Visible = false;
+            label1.Visible = true;
             button_Alice.Visible = true;
-            button_Bob.Visible = true;
             numeric_Alice.Visible = true;
-            numeric_Bob.Visible = true;
-            disable_ui(Engine.players.Bob, true);
+            if (players > 1)
+            {
+                label2.Visible = true;
+                button_Bob.Visible = true;
+                numeric_Bob.Visible = true;
+                disable_ui(Engine.players.Bob, true);
+            }
             update_field();
             loop();
         }

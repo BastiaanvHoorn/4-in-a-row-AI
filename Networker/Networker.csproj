@@ -4,16 +4,15 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{11BA7AB2-5C23-4852-8086-766355CDFF9F}</ProjectGuid>
-    <OutputType>Exe</OutputType>
+    <ProjectGuid>{1366D929-7282-4FAA-8349-095B67DF5A1D}</ProjectGuid>
+    <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Server</RootNamespace>
-    <AssemblyName>Server</AssemblyName>
+    <RootNamespace>Networker</RootNamespace>
+    <AssemblyName>Networker</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -23,7 +22,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
@@ -42,40 +40,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Communication\RequestHandler.cs" />
-    <Compile Include="Database\BitReader.cs" />
-    <Compile Include="Database\BitWriter.cs" />
-    <Compile Include="Database\Database.cs" />
-    <Compile Include="Database\DatabaseLocation.cs" />
-    <Compile Include="Database\DatabaseProperties.cs" />
-    <Compile Include="Database\Extensions.cs" />
-    <Compile Include="Database\Indexer.cs" />
-    <Compile Include="Exceptions.cs" />
-    <Compile Include="Database\FieldData.cs" />
-    <Compile Include="Properties\Settings.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTimeSharedInput>True</DesignTimeSharedInput>
-      <DependentUpon>Settings.settings</DependentUpon>
-    </Compile>
-    <Compile Include="Communication\Server.cs" />
+    <Compile Include="Enums.cs" />
+    <Compile Include="Requester.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="App.config" />
-    <None Include="Properties\Settings.settings">
-      <Generator>SettingsSingleFileGenerator</Generator>
-      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Engine\Engine.csproj">
-      <Project>{f1bb086d-8959-4826-a336-5fb2fd7c9ced}</Project>
-      <Name>Engine</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Networker\Networker.csproj">
-      <Project>{1366d929-7282-4faa-8349-095b67df5a1d}</Project>
-      <Name>Networker</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
