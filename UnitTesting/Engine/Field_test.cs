@@ -106,5 +106,21 @@ namespace UnitTesting
             
             actual.doMove(7, players.Alice);
         }
+
+        [TestMethod]
+        public void Field_Hashcode_test_1()
+        {
+            Field f = new Field(new byte[] { 1, 0, 0, 2, 0, 0, 3, 0, 0, 4, 0, 0 });
+
+            Assert.AreEqual(67305985, f.GetHashCode());
+        }
+
+        [TestMethod]
+        public void Field_Hashcode_test_2()
+        {
+            Field f = new Field(new byte[] { 255, 0, 0, 255, 0, 0, 255, 0, 0, 255, 0, 0 });
+
+            Assert.AreEqual(-1, f.GetHashCode());
+        }
     }
 }

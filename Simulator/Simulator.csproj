@@ -61,6 +61,10 @@
       <Project>{1366d929-7282-4faa-8349-095b67df5a1d}</Project>
       <Name>Networker</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Server\Server.csproj">
+      <Project>{11ba7ab2-5c23-4852-8086-766355cdff9f}</Project>
+      <Name>Server</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

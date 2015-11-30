@@ -43,16 +43,20 @@ namespace Server
             }
         }
 
+        public static void update_field_data(DatabaseLocation fieldLocation, FieldData newData)
+        {
+            Settings.Default.Reload();
+            Database db = new Database(Settings.Default.DbPath);
+        }
+
         /// <summary>
         /// Updates the field data of the specifield field. The data changes are based on the move that has been done and if the player has won the game.
         /// </summary>
         /// <param name="field"></param>
         /// <param name="moveColumn"></param>
         /// <param name="winning"></param>
-        public static void update_field_data(DatabaseLocation fieldLocation, FieldData newData)
+        public static void update_field_data(DatabaseLocation fieldLocation, FieldData newData, Database db)
         {
-            Settings.Default.Reload();
-            Database db = new Database(Settings.Default.DbPath);
             FieldData fieldData = db.readFieldData(fieldLocation);  // Reads the old field data from the database.
 
             // Edits the field data to the wanted values.
@@ -63,29 +67,45 @@ namespace Server
 
         public static void receive_game_history(byte[][] gameHistories)
         {
-            Settings.Default.Reload();  // Gets the settings from the settings file so we can ask for database paths.
-
+            Settings.Default.Reload();
             Database db = new Database(Settings.Default.DbPath);
-
+            receive_game_history(gameHistories, db);
+        }
+        public static void receive_game_history(byte[][] gameHistories, Database db)
+        {
             Dictionary<Field, FieldData> history = new Dictionary<Field, FieldData>();
             
             for (int i = 0; i < gameHistories.Length; i++)
             {
                 byte[] h = gameHistories[i];
                 Field f = new Field(db.DbProperties.FieldWidth, db.DbProperties.FieldHeight);
-                players winner = h[0] == 253 ? players.Alice : players.Bob;
                 players turn = players.Alice;
+                players winner = players.Empty;
 
-                for (int j = 0; j < h.Length; j++)
+                if (h[0] == 211)
+                    winner = players.Alice;
+                else if (h[0] == 212)
+                    winner = players.Bob;
+
+                for (int j = 1; j < h.Length; j++)
                 {
                     byte column = h[j];
 
-                    if (history.ContainsKey(f))
-                        history.Add(new Field(f), new FieldData());
+                    FieldData fd = null;
 
-                    history[f].TotalCounts[column]++;
+                    if (!history.ContainsKey(f))
+                    {
+                        fd = new FieldData();
+                        history.Add(new Field(f), fd);
+                    }
+                    else
+                    {
+                        fd = history[f];
+                    }
+
+                    fd.TotalCounts[column]++;
                     if (turn == winner)
-                        history[f].WinningCounts[column]++;
+                        fd.WinningCounts[column]++;
 
                     f.doMove(column, turn);
 
@@ -101,7 +121,7 @@ namespace Server
                     dbLoc = db.addDatabaseItem(field);
                 }
 
-                update_field_data(dbLoc, history[field]);   // Applies the new data to the field data database.
+                update_field_data(dbLoc, history[field], db);   // Applies the new data to the field data database.
             }
         }
     }

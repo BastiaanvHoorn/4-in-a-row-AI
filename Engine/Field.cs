@@ -182,6 +182,43 @@ namespace Engine
             return Storage;
         }
 
+        public override bool Equals(object obj)
+        {
+            // If parameter is null return false.
+            if (obj == null)
+            {
+                return false;
+            }
+
+            // If parameter cannot be cast to Point return false.
+            Field p = obj as Field;
+            if ((System.Object)p == null)
+            {
+                return false;
+            }
+
+            if (Storage.Length != p.Storage.Length)
+                return false;
+
+            for (int i = 0; i < Storage.Length; i++)
+            {
+                if (Storage[i] != p.Storage[i])
+                    return false;
+            }
+
+            return true;
+        }
+
+        public override int GetHashCode()
+        {
+            int code = 0;
+            code = Storage[0];
+            code += Storage[3] << 8;
+            code += Storage[6] << 16;
+            code += Storage[9] << 24;
+            return code;
+        }
+
         /// <summary>
         /// Returns a concatenation of the hexadecimal presentations of the bytes in byte[] Storage.
         /// </summary>
@@ -200,18 +237,6 @@ namespace Engine
             }
 
             return sb.ToString();
-    }
-
-        //public void foo(int value, int bit)
-        //{
-        //	//Get
-        //	bool b = ((value & Bitmask[bit]) != 0);
-
-        //	//Turn on bit
-        //	value |= Bitmask[bit];
-
-        //	//Turn off bit
-        //	value |= ~Bitmask[bit];
-        //}
+        }
     }
 }

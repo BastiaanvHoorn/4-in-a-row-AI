@@ -168,7 +168,7 @@ namespace Server
             DbProperties.increaseLength(compressed.Length);
             
             int fileIndex = DbProperties.getFieldFileCount(compressed.Length) - 1;
-            string fieldPath = DbProperties.getFieldDirPath(compressed) + $"\\Fields{fileIndex}.db";
+            string fieldPath = DatabaseLocation.getFieldPath(DbProperties.getFieldDirPath(compressed), fileIndex);
 
             using (FileStream fieldStream = new FileStream(fieldPath, FileMode.OpenOrCreate, FileAccess.Write))     // Opens the field database Stream in write mode.
             {
@@ -176,7 +176,7 @@ namespace Server
                 fieldStream.Write(compressed, 0, compressed.Length);    // Writes the bytes of the compressed field to the database.
             }
 
-            string fieldDataPath = DbProperties.getFieldDirPath(compressed) + $"\\FieldData{fileIndex}.db";
+            string fieldDataPath = DatabaseLocation.getFieldDataPath(DbProperties.getFieldDirPath(compressed), fileIndex);
             using (FileStream fieldDataStream = new FileStream(fieldDataPath, FileMode.OpenOrCreate, FileAccess.Write)) // Opens the field data database Stream in write mode.
             {
                 fieldDataStream.Seek(0, SeekOrigin.End);
@@ -224,7 +224,7 @@ namespace Server
 
             for (int i = 0; i < fileCount; i++)
             {
-                int location = findField(compressed, dirPath + $"\\Fields {i}.db");
+                int location = findField(compressed, DatabaseLocation.getFieldPath(dirPath, i));
                 if (location != -1)
                 {
                     return new DatabaseLocation(DbProperties, fieldLength, i, location);

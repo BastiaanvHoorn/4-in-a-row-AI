@@ -311,8 +311,33 @@ namespace UnitTesting.Server
         }
 
         [TestMethod]
-        public void database_addDatabaseItem_test_1()
+        public void gameHistory_processing_test_1()
         {
+            //var dbProps = new DatabaseProperties(@"C:\Connect Four\Game history processing test", 7, 6, 134217728);
+            //var db = new Database(dbProps);
+            var db = new Database(@"C:\Connect Four\Game history processing test");
+
+            Game g = new Game(7, 6);
+            byte[] drop = new byte[] { 0, 1, 0, 1, 0, 1, 0 };
+            players turn = players.Alice;
+
+            for (int i = 0; i < drop.Length; i++)
+            {
+                string info = "";
+                g.add_stone(drop[i], turn, ref info);
+
+                if (turn == players.Alice)
+                    turn = players.Bob;
+                else
+                    turn = players.Alice;
+            }
+
+            byte[] history = new byte[g.history.Length + 1];
+            history[0] = 211;
+            Array.Copy(g.history, 0, history, 1, g.history.Length);
+
+            RequestHandler.receive_game_history(new byte[][] { history }, db);
+
             
         }
     }

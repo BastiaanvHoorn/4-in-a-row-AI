@@ -23,6 +23,7 @@
             this.Path = dbProperties.getFieldDirPath(fieldLength);
             this.GlobalLocation = fileIndex * dbProperties.getMaxFieldsInFile(fieldLength) + location;
             this.FieldLength = fieldLength;
+            this.FileIndex = fileIndex;
             this.Location = location;
         }
         
@@ -42,7 +43,7 @@
         /// <returns>Filepath</returns>
         public string getFieldPath()
         {
-            return $"{Path}\\FieldData{FileIndex}.db";
+            return getFieldPath(Path, FileIndex);
         }
 
         /// <summary>
@@ -51,7 +52,7 @@
         /// <returns>Filepath</returns>
         public string getFieldDataPath()
         {
-            return $"{Path}\\FieldData{FileIndex}.db";
+            return getFieldDataPath(Path, FileIndex);
         }
 
         /// <summary>
@@ -75,6 +76,16 @@
                 throw new DatabaseException($"Can't calculate seek position for field location. {this.ToString()}. This location doesn't exist");
 
             return Location * dbProperties.FieldWidth * 8;
+        }
+
+        public static string getFieldPath(string path, int fileIndex)
+        {
+            return $"{path}\\Fields{fileIndex}.db";
+        }
+
+        public static string getFieldDataPath(string path, int fileIndex)
+        {
+            return $"{path}\\FieldData{fileIndex}.db";
         }
 
         public override string ToString()
