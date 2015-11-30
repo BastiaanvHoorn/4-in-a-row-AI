@@ -300,7 +300,7 @@ namespace UnitTesting.Server
         [TestMethod]
         public void database_newFormat_test_2()
         {
-            var db = new Database(new DatabaseProperties(@"C:\Connect Four\New Format Test 2", 7, 6, 1024));
+            var db = new Database(new DatabaseProperties(@"C:\Connect Four\Database", 7, 6, 134217728));
 
             for (int i = 0; i < 1000; i++)
             {
@@ -308,6 +308,12 @@ namespace UnitTesting.Server
             }
 
             db.addDatabaseItem(f4);
+        }
+
+        [TestMethod]
+        public void database_addDatabaseItem_test_1()
+        {
+            
         }
     }
 }
