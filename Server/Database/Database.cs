@@ -7,7 +7,7 @@ namespace Server
 {
     public class Database
     {
-        private DatabaseProperties DbProperties;
+        public DatabaseProperties DbProperties;
 
         /// <summary>
         /// Creates a new database instance from the given path.
@@ -160,14 +160,15 @@ namespace Server
         /// Adds the given field to the database. WARNING: It's your own responsibility to check for the existance of a field in the database. Always AVOID adding fields that are already included in the database.
         /// </summary>
         /// <param name="field">Field to be added</param>
-        public void addDatabaseItem(Field field)
+        /// <returns>The DatabaseLocation of the added field</returns>
+        public DatabaseLocation addDatabaseItem(Field field)
         {
             byte[] compressed = field.compressField();                  // Gets the compressed field.
 
             DbProperties.increaseLength(compressed.Length);
             
             int fileIndex = DbProperties.getFieldFileCount(compressed.Length) - 1;
-            string fieldPath = DbProperties.getFieldDirPath(compressed) + $"\\Fields {fileIndex}.db";
+            string fieldPath = DbProperties.getFieldDirPath(compressed) + $"\\Fields{fileIndex}.db";
 
             using (FileStream fieldStream = new FileStream(fieldPath, FileMode.OpenOrCreate, FileAccess.Write))     // Opens the field database Stream in write mode.
             {
@@ -175,12 +176,14 @@ namespace Server
                 fieldStream.Write(compressed, 0, compressed.Length);    // Writes the bytes of the compressed field to the database.
             }
 
-            string fieldDataPath = DbProperties.getFieldDirPath(compressed) + $"\\FieldData {fileIndex}.db";
+            string fieldDataPath = DbProperties.getFieldDirPath(compressed) + $"\\FieldData{fileIndex}.db";
             using (FileStream fieldDataStream = new FileStream(fieldDataPath, FileMode.OpenOrCreate, FileAccess.Write)) // Opens the field data database Stream in write mode.
             {
                 fieldDataStream.Seek(0, SeekOrigin.End);
                 fieldDataStream.Write(new byte[56], 0, 56);
             }
+
+            return new DatabaseLocation(DbProperties, compressed.Length, fileIndex, DbProperties.getLength(compressed.Length) % DbProperties.getMaxFieldsInFile(compressed.Length) - 1);
         }
 
         /// <summary>

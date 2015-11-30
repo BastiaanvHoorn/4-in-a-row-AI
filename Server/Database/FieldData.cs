@@ -81,5 +81,21 @@ namespace Server
             WinningCounts.CopyTo(result, 7);
             return result;
         }
+
+        public static FieldData operator +(FieldData fd1, FieldData fd2)
+        {
+            if (fd1.TotalCounts.Length != fd2.TotalCounts.Length)
+                throw new DatabaseException("Can't perform addition on FieldData objects, because the objects don't have the same column count. (Field width is not equal)");
+
+            FieldData result = new FieldData();
+
+            for (int i = 0; i < fd1.TotalCounts.Length; i++)
+            {
+                result.TotalCounts[i] = fd1.TotalCounts[i] + fd2.TotalCounts[i];
+                result.WinningCounts[i] = fd1.WinningCounts[i] + fd2.WinningCounts[i];
+            }
+
+            return result;
+        }
     }
 }

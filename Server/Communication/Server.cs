@@ -180,6 +180,11 @@ namespace Server
 
         public static int Main(String[] args)
         {
+            if (!System.IO.Directory.Exists(Properties.Settings.Default.DbPath))    // Checks if the database already exists
+            {
+                DatabaseProperties dbProps = new DatabaseProperties(Properties.Settings.Default.DbPath, 7, 6, Properties.Settings.Default.DbMaxFileSize);
+                new Database(dbProps);  // Creates a new database
+            }
             StartListening();
             return 0;
         }
