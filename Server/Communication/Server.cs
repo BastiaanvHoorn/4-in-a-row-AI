@@ -2,6 +2,7 @@
 using System.Net;
 using System.Net.Sockets;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
@@ -131,9 +132,11 @@ namespace Server
                         Send(handler, new[] { RequestHandler.get_column(field) });
                     }
                     //If the array is marked as a game-history-array, process the array.
-                    else if (content[0] == (byte) network_codes.game_history_array)
+                    else if (content[0] == (byte)network_codes.game_history_array)
                     {
-                        Send(handler, new[] {(byte)0});
+                        Send(handler, new[] { (byte)0 });
+                        byte[][] game_history = linear_to_parrallel_game_history(content);
+                        RequestHandler.receive_game_history(game_history);
                     }
                 }
                 else
@@ -143,6 +146,50 @@ namespace Server
                         new AsyncCallback(ReadCallback), state);
                 }
             }
+        }
+
+        internal static byte[][] linear_to_parrallel_game_history(byte[] arr)
+        {
+            int game_counter = arr.Count(b => b == (byte)network_codes.game_history_alice || b == (byte)network_codes.game_history_bob);
+            byte[][] game_history = new byte[game_counter][];
+            int game = -1;
+            int turn = 0;
+            for (int i = 0; i < arr.Length; i++)
+            {
+                switch (arr[i])
+                {
+                    case (byte)network_codes.game_history_array:
+                        continue;
+                    case (byte)network_codes.end_of_stream:
+                        return game_history;
+                    case (byte)network_codes.game_history_alice:
+                    case (byte)network_codes.game_history_bob:
+
+                        game++;
+                        turn = 0;
+                        int game_length = 1;
+                        for (int j = i + 1; j < arr.Length; j++)
+                        {
+                            switch (arr[j])
+                            {
+                                case (byte)network_codes.end_of_stream:
+                                case (byte)network_codes.game_history_alice:
+                                case (byte)network_codes.game_history_bob:
+                                    game_history[game] = new byte[game_length];
+                                    break;
+                                default:
+                                    game_length++;
+                                    break;
+                            }
+                            if (game_history[game] != null)
+                                break;
+                        }
+                        break;
+                }
+                game_history[game][turn] = arr[i];
+                turn++;
+            }
+            return game_history;
         }
 
         private static void Send(Socket handler, byte[] data)

@@ -76,10 +76,14 @@ namespace connect4
                 }
                 update_field();
             } while (!check_for_win());
-            List<byte> data = new List<byte>();
-            data.Add((byte)Networker.network_codes.game_history_array);
+
+            //Send the game-history to the server
+            var data = new List<byte>
+            {
+                (byte) network_codes.game_history_array
+            };
             data.AddRange(game.history);
-            Networker.Requester.send(data.ToArray(), signal_types.game_history);
+            Requester.send(data.ToArray(), network_codes.game_history_array);
         }
         /// <summary>
         /// Tries to get a column from the given IPlayer and puts a stone in that column

@@ -5,7 +5,7 @@ using Server;
 using System.IO;
 using System.Collections.Generic;
 
-namespace UnitTesting.Server
+namespace UnitTesting.ServerTest
 {
     [TestClass]
     public class Server_test

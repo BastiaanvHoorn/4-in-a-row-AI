@@ -53,9 +53,11 @@
   </Choose>
   <ItemGroup>
     <Compile Include="Bot_test.cs" />
+    <Compile Include="Networker_test.cs" />
     <Compile Include="Engine\Field_test.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Server\Server_test.cs" />
+    <Compile Include="ServerTest\Game_history_test.cs" />
+    <Compile Include="ServerTest\Server_test.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Botclient\Botclient.csproj">
@@ -69,6 +71,10 @@
     <ProjectReference Include="..\Engine\Engine.csproj">
       <Project>{f1bb086d-8959-4826-a336-5fb2fd7c9ced}</Project>
       <Name>Engine</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Networker\Networker.csproj">
+      <Project>{1366d929-7282-4faa-8349-095b67df5a1d}</Project>
+      <Name>Networker</Name>
     </ProjectReference>
     <ProjectReference Include="..\Server\Server.csproj">
       <Project>{11ba7ab2-5c23-4852-8086-766355cdff9f}</Project>

@@ -90,7 +90,7 @@ namespace Simulator
                 data.AddRange(history);
             }
             Stopwatch sw = new Stopwatch();
-            Requester.send(data.ToArray(), signal_types.game_history);
+            Requester.send(data.ToArray(), network_codes.game_history_array);
 
         }
         /// <summary>

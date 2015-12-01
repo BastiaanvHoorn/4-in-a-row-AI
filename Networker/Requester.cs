@@ -10,7 +10,7 @@ namespace Networker
 {
     public static class Requester
     {
-        public static byte[] send(byte[] data, signal_types type)
+        public static byte[] send(byte[] data, network_codes type)
         {
             // Data buffer for incoming data.
             byte[] bytes = new byte[1024];
@@ -34,24 +34,8 @@ namespace Networker
                     sender.Connect(remoteEP);
 
                     Console.WriteLine($"Socket connected to {sender.RemoteEndPoint}");
-                    //Create a byte-array that is 2 larger then the data that must be send so there is room for a header and a footer
-                    byte[] msg = new byte[data.Length + 2];
-                    //Add a header based on the given signal-type
-                    switch (type)
-                    {
-                        case signal_types.game_history:
-                            msg[0] = (byte)network_codes.game_history_array;
-                            break;
-                        case signal_types.column_request:
-                            msg[0] = (byte) network_codes.column_request;
-                            break;
-                    }
-                    //Add a footer witn an end-of-stream token
-                    msg[msg.Length - 1] = (byte)network_codes.end_of_stream;
 
-                    //Copy all the data to the middle part of the array
-                    data.CopyTo(msg, 1);
-
+                    byte[] msg = add_header_footer(data, type);
                     // Send the data through the socket.
                     int bytesSent = sender.Send(msg);
                     Console.WriteLine("Waiting for response from server");
@@ -85,6 +69,28 @@ namespace Networker
                 Console.WriteLine(e.ToString());
             }
             return new byte[0];
+        }
+
+        internal static byte[] add_header_footer(byte[] data, network_codes type)
+        {
+            //Create a byte-array that is 2 larger then the data that must be send so there is room for a header and a footer
+            byte[] msg = new byte[data.Length + 2];
+            //Add a header based on the given signal-type
+            switch (type)
+            {
+                case network_codes.game_history_array:
+                    msg[0] = (byte)network_codes.game_history_array;
+                    break;
+                case network_codes.column_request:
+                    msg[0] = (byte)network_codes.column_request;
+                    break;
+            }
+            //Add a footer witn an end-of-stream token
+            msg[msg.Length - 1] = (byte)network_codes.end_of_stream;
+
+            //Copy all the data to the middle part of the array
+            data.CopyTo(msg, 1);
+            return msg;
         }
     }
 }

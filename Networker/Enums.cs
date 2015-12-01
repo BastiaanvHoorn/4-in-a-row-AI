@@ -8,10 +8,4 @@
         game_history_alice = 211,   //The first byte of the history of a game which Alice has won
         game_history_bob = 212      //The first byte of the history of a game which Bob has won
     }
-
-    public enum signal_types
-    {
-        game_history,
-        column_request
-    }
 }
