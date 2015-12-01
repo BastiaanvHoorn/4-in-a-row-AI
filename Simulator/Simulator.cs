@@ -24,7 +24,7 @@ namespace Simulator
         /// Returns false if it fails to drop a stone;
         /// </summary>
         /// <param name="player"></param>
-        private bool do_turn(IPlayer player, Game game)
+        private static bool do_turn(IPlayer player, Game game)
         {
             if (game.stones_count == game.width * game.height) //If the whole field is full of stones and no one has won, it's a tie
             {
@@ -81,18 +81,16 @@ namespace Simulator
             }
         }
 
-        private void send_history(List<List<byte>> histories)
+        private static void send_history(List<List<byte>> histories)
         {
-            List<byte> data = new List<byte>();
-            data.Add((byte)network_codes.game_history_array);
+            var data = new List<byte>();
             //Concatenate all the game-histories into one byte-array;
             foreach (var history in histories)
             {
                 data.AddRange(history);
             }
-            data.Add((byte)network_codes.end_of_stream);
             Stopwatch sw = new Stopwatch();
-            Requester.request(data.ToArray());
+            Requester.send(data.ToArray(), signal_types.game_history);
 
         }
         /// <summary>
@@ -105,36 +103,36 @@ namespace Simulator
             sw.Start();
             //Jagged array to store the history of all the games
             //TODO switch list to array
-            List<List<byte> > histories = new List<List<byte>>();
+            var histories = new List<List<byte>>();
             for (int game_count = 0; game_count < max_games; game_count++)
             {
                 var game = new Game(width, height);
-                List<byte> history = new List<byte>();
+                var history = new List<byte>();
                 players victourious_player = do_game(game, ref history);
 
                 int turns = history.Count - 1; //The amount of turns this game lasted. 1 is subtracted for the winner indication at the start.
-                if (victourious_player == players.Alice)
+                switch (victourious_player)
                 {
-                    games_won_alice++;
+                    case players.Alice:
+                        games_won_alice++;
 
-                    histories.Add(history);
+                        histories.Add(history);
 
-                    if (log_mode >= log_modes.verbose)
-                        Console.WriteLine($"Alice won her {games_won_alice}th game after {turns} turns");
-                }
-                else if (victourious_player == players.Bob)
-                {
-                    games_won_bob++;
+                        if (log_mode >= log_modes.verbose)
+                            Console.WriteLine($"Alice won her {games_won_alice}th game after {turns} turns");
+                        break;
+                    case players.Bob:
+                        games_won_bob++;
 
-                    histories.Add(history);
+                        histories.Add(history);
 
-                    if (log_mode >= log_modes.verbose)
-                        Console.WriteLine($"Bob won his {games_won_bob}th game after {turns} turns");
-                }
-                else
-                {
-                    if (log_mode >= log_modes.verbose)
-                        Console.WriteLine($"The game was a tie");
+                        if (log_mode >= log_modes.verbose)
+                            Console.WriteLine($"Bob won his {games_won_bob}th game after {turns} turns");
+                        break;
+                    default:
+                        if (log_mode >= log_modes.verbose)
+                            Console.WriteLine($"The game was a tie");
+                        break;
                 }
             }
             sw.Stop();

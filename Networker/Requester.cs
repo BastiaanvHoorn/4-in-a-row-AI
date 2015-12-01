@@ -10,7 +10,7 @@ namespace Networker
 {
     public static class Requester
     {
-        public static byte[] request(byte[] data)
+        public static byte[] send(byte[] data, signal_types type)
         {
             // Data buffer for incoming data.
             byte[] bytes = new byte[1024];
@@ -34,11 +34,22 @@ namespace Networker
                     sender.Connect(remoteEP);
 
                     Console.WriteLine($"Socket connected to {sender.RemoteEndPoint}");
-
-                    // Encode the data string into a byte array.
+                    //Create a byte-array that is 2 larger then the data that must be send so there is room for a header and a footer
                     byte[] msg = new byte[data.Length + 2];
-                    msg[0] = 200;
+                    //Add a header based on the given signal-type
+                    switch (type)
+                    {
+                        case signal_types.game_history:
+                            msg[0] = (byte)network_codes.game_history_array;
+                            break;
+                        case signal_types.column_request:
+                            msg[0] = (byte) network_codes.column_request;
+                            break;
+                    }
+                    //Add a footer witn an end-of-stream token
                     msg[msg.Length - 1] = (byte)network_codes.end_of_stream;
+
+                    //Copy all the data to the middle part of the array
                     data.CopyTo(msg, 1);
 
                     // Send the data through the socket.

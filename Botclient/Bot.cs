@@ -18,7 +18,7 @@ namespace Botclient
 
         public byte get_turn(Field field)
         {
-            var column = Requester.request(field.getStorage())[0];
+            var column = Requester.send(field.getStorage(), signal_types.column_request)[0];
             Console.WriteLine($"Tried to drop a stone in colmun {column}");
             return column;
         }

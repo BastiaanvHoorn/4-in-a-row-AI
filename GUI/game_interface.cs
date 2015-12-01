@@ -4,6 +4,8 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using Botclient;
 using Engine;
+using System.Collections.Generic;
+using Networker;
 
 namespace connect4
 {
@@ -74,7 +76,10 @@ namespace connect4
                 }
                 update_field();
             } while (!check_for_win());
-            //TODO: Add replay stuff
+            List<byte> data = new List<byte>();
+            data.Add((byte)Networker.network_codes.game_history_array);
+            data.AddRange(game.history);
+            Networker.Requester.send(data.ToArray(), signal_types.game_history);
         }
         /// <summary>
         /// Tries to get a column from the given IPlayer and puts a stone in that column
