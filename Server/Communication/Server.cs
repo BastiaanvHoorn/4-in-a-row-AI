@@ -150,7 +150,9 @@ namespace Server
 
         internal static byte[][] linear_to_parrallel_game_history(byte[] arr)
         {
+            //Count the amount of games that is in this byte-array
             int game_counter = arr.Count(b => b == (byte)network_codes.game_history_alice || b == (byte)network_codes.game_history_bob);
+            //Create an array of arrays with the count of games
             byte[][] game_history = new byte[game_counter][];
             int game = -1;
             int turn = 0;
@@ -158,35 +160,30 @@ namespace Server
             {
                 switch (arr[i])
                 {
-                    case (byte)network_codes.game_history_array:
-                        continue;
-                    case (byte)network_codes.end_of_stream:
-                        return game_history;
-                    case (byte)network_codes.game_history_alice:
-                    case (byte)network_codes.game_history_bob:
+                    case (byte)network_codes.game_history_array:    //If the header is encountered,
+                        continue;                                   //then continue immedeatly
+                    case (byte)network_codes.end_of_stream:     //If the footer is encountered, then we finished looping through everything.
+                        return game_history;                    //Now we can return the array
+                    case (byte)network_codes.game_history_alice:    //If a player tag is encountered, thenwe finished looping through the current game.
+                    case (byte)network_codes.game_history_bob:      //We must then create a new array for the next game.
+                        game++;     //Increase the game-counter the array is indexed properly
+                        turn = 0;   //Reset the turn count since this is a new game
 
-                        game++;
-                        turn = 0;
-                        int game_length = 1;
-                        for (int j = i + 1; j < arr.Length; j++)
+                        for (int j = i + 1; j < arr.Length; j++)    //Start looping through arr with a temporary variable where we left
                         {
                             switch (arr[j])
                             {
-                                case (byte)network_codes.end_of_stream:
-                                case (byte)network_codes.game_history_alice:
-                                case (byte)network_codes.game_history_bob:
-                                    game_history[game] = new byte[game_length];
-                                    break;
-                                default:
-                                    game_length++;
-                                    break;
+                                case (byte)network_codes.end_of_stream:             //If the next player tag or footer is encountered.
+                                case (byte)network_codes.game_history_alice:        //then we have counted all elements in this game and we can initialize a new game.
+                                case (byte)network_codes.game_history_bob:          
+                                    game_history[game] = new byte[j-i];             // The found game is as long as the difference between the global counter and the temporary one
+                                    goto new_game;                                  // Ext the loop after that (break will not work for the for loop since we're inside a switch)
                             }
-                            if (game_history[game] != null)
-                                break;
                         }
+                        new_game:
                         break;
                 }
-                game_history[game][turn] = arr[i];
+                game_history[game][turn] = arr[i];  //Add the current arr element to the new game-history at the right position
                 turn++;
             }
             return game_history;
