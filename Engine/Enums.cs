@@ -6,12 +6,20 @@
         Alice,          
         Bob
     }
+    /// <summary>
+    /// <
+    /// </summary>
     public enum log_modes
     {
-        silent,         //Nothing is logged
-        only_errors,    //Only errors are logged
-        essential,      //Loggs all less common messages and errors (default)
-        verbose,        //Loggs a lot of things
-        debug           //Loggs everything
+        /// <summary> Nothing is logged </summary>
+        silent,
+        /// <summary> Only errors are logged </summary>
+        only_errors,
+        /// <summary> Loggs most important info (per game info) </summary>
+        essential,
+        /// <summary> Loggs a lot of things (per turn info) </summary>
+        verbose,
+        /// <summary> Loggs everything </summary>
+        debug
     }
 }

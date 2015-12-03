@@ -46,7 +46,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Button_awaiter_extensions.cs" />
     <Compile Include="Game_interface.cs">
       <SubType>Form</SubType>
     </Compile>

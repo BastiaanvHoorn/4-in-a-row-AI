@@ -18,7 +18,7 @@ namespace connect4
             this.player = player;
         }
 
-        public byte get_turn(Field field)
+        public byte get_turn(Field field, log_modes log_mode)
         {
             while (true)
             {

@@ -17,7 +17,7 @@ namespace Simulator
         private readonly uint max_games = 1;
         private byte games_won_alice;
         private byte games_won_bob;
-        static private log_modes log_mode = log_modes.verbose;
+        static private log_modes log_mode = log_modes.essential;
         /// <summary>
         /// Tries to execute the given turn from the given player.
         /// If the given turn is not possible for whatever reason, the player is asked again.
@@ -34,7 +34,7 @@ namespace Simulator
             }
             string s = "";
             int counter = 0;
-            while (!game.add_stone(player.get_turn(game.get_field()), player.player, ref s)) //Try to add a stone fails. If that fails, log the error and try it again.
+            while (!game.add_stone(player.get_turn(game.get_field(), log_mode), player.player, ref s)) //Try to add a stone fails. If that fails, log the error and try it again.
             {
                 counter++;
                 if (log_mode >= log_modes.debug)
@@ -90,9 +90,12 @@ namespace Simulator
                 data.AddRange(history);
             }
             Stopwatch sw = new Stopwatch();
-            Requester.send(data.ToArray(), network_codes.game_history_array);
+            if(log_mode >= log_modes.essential)
+                Console.WriteLine($"Created game_history in {sw.ElapsedMilliseconds}ms. Starting to send now");
+            Requester.send(data.ToArray(), network_codes.game_history_array, log_modes.essential);
 
         }
+        private delegate string victory_message(int games_won);
         /// <summary>
         /// Loop through the given amount of games, and log some stuff in the meantime
         /// </summary>
@@ -111,6 +114,8 @@ namespace Simulator
                 players victourious_player = do_game(game, ref history);
 
                 int turns = history.Count - 1; //The amount of turns this game lasted. 1 is subtracted for the winner indication at the start.
+                victory_message victory_message = games_won => $"\t\t{games_won}th game after \t{(games_won < 10 ? "\t" : "")}{turns} turns";
+                string games_left_message = $";\t {max_games - game_count - 1} of {max_games} game(s) left";
                 switch (victourious_player)
                 {
                     case players.Alice:
@@ -118,27 +123,27 @@ namespace Simulator
 
                         histories.Add(history);
 
-                        if (log_mode >= log_modes.verbose)
-                            Console.WriteLine($"Alice won her {games_won_alice}th game after {turns} turns");
+                        if (log_mode >= log_modes.essential)
+                            Console.WriteLine($"Alice won her {victory_message(games_won_alice)}{games_left_message}");
                         break;
                     case players.Bob:
                         games_won_bob++;
 
                         histories.Add(history);
 
-                        if (log_mode >= log_modes.verbose)
-                            Console.WriteLine($"Bob won his {games_won_bob}th game after {turns} turns");
+                        if (log_mode >= log_modes.essential)
+                            Console.WriteLine($"Bob won his {victory_message(games_won_bob)}{games_left_message}");
                         break;
                     default:
-                        if (log_mode >= log_modes.verbose)
-                            Console.WriteLine($"The game was a tie");
+                        if (log_mode >= log_modes.essential)
+                            Console.WriteLine($"The game was a tie\t\t\t\t\t{games_left_message}");
                         break;
                 }
             }
             sw.Stop();
             send_history(histories);
             TimeSpan elapsed = sw.Elapsed;
-            if (log_mode > 0)
+            if (log_mode > log_modes.essential)
             {
                 Console.WriteLine($"Simulation of {max_games} game(s) finished in {elapsed}");
                 Console.WriteLine($"Alice won {games_won_alice} games, Bob won {games_won_bob} and {max_games - games_won_alice - games_won_bob} were a tie;");

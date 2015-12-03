@@ -16,10 +16,11 @@ namespace Botclient
             this.player = player;
         }
 
-        public byte get_turn(Field field)
+        public byte get_turn(Field field, log_modes log_mode)
         {
-            var column = Requester.send(field.getStorage(), network_codes.column_request)[0];
-            Console.WriteLine($"Tried to drop a stone in colmun {column}");
+            var column = Requester.send(field.getStorage(), network_codes.column_request, log_mode)[0];
+            if(log_mode >= log_modes.debug)
+                Console.WriteLine($"Tried to drop a stone in colmun {column}");
             return column;
         }
 

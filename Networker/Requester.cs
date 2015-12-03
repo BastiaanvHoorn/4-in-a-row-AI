@@ -5,12 +5,13 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
+using Engine;
 
 namespace Networker
 {
     public static class Requester
     {
-        public static byte[] send(byte[] data, network_codes type)
+        public static byte[] send(byte[] data, network_codes type, log_modes log_mode)
         {
             // Data buffer for incoming data.
             byte[] bytes = new byte[1024];
@@ -33,15 +34,18 @@ namespace Networker
                 {
                     sender.Connect(remoteEP);
 
-                    Console.WriteLine($"Socket connected to {sender.RemoteEndPoint}");
+                    if(log_mode >= log_modes.debug)
+                        Console.WriteLine($"Socket connected to {sender.RemoteEndPoint}");
 
                     byte[] msg = add_header_footer(data, type);
                     // Send the data through the socket.
                     int bytesSent = sender.Send(msg);
-                    Console.WriteLine("Waiting for response from server");
+                    if (log_mode >= log_modes.debug)
+                        Console.WriteLine("Waiting for response from server");
                     // Receive the response from the remote device.
                     int bytesRec = sender.Receive(bytes);
-                    Console.WriteLine($"Recieved from server = {Encoding.ASCII.GetString(bytes, 0, bytesRec)}");
+                    if (log_mode >= log_modes.debug)
+                        Console.WriteLine($"Recieved from server = {Encoding.ASCII.GetString(bytes, 0, bytesRec)}");
 
                     // Release the socket.
                     sender.Shutdown(SocketShutdown.Both);
