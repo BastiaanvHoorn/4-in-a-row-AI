@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using Engine;
@@ -28,14 +29,13 @@ namespace Server
     public class AsynchronousSocketListener
     {
         static Random r = new Random();
+        public log_modes log_mode;
         // Thread signal.
         public static ManualResetEvent allDone = new ManualResetEvent(false);
-
-        public static void StartListening()
+        private byte[] data;
+        public void StartListening(log_modes log_mode)
         {
-            // Data buffer for incoming data.
-            byte[] bytes = new Byte[1024];
-
+            this.log_mode = log_mode;
             // Establish the local endpoint for the socket.
             // The DNS name of the computer
             // running the listener is "host.contoso.com".
@@ -79,7 +79,7 @@ namespace Server
 
         }
 
-        public static void AcceptCallback(IAsyncResult ar)
+        public void AcceptCallback(IAsyncResult ar)
         {
             // Signal the main thread to continue.
             allDone.Set();
@@ -95,9 +95,8 @@ namespace Server
                 new AsyncCallback(ReadCallback), state);
         }
 
-        public static void ReadCallback(IAsyncResult ar)
+        public void ReadCallback(IAsyncResult ar)
         {
-            byte[] content;
 
             // Retrieve the state object and the handler socket
             // from the asynchronous state object.
@@ -109,41 +108,62 @@ namespace Server
 
             if (bytesRead > 0)
             {
-                // There  might be more data, so store the data received so far.
-                //state.sb.Append(Encoding.ASCII.GetString(
-                //state.buffer, 0, bytesRead));
-                // Check for end-of-file tag. If it is not there, read 
-                // more data.
-                content = state.buffer;
-                Console.WriteLine($"Recieved {String.Join("", content)}");
+                // Read the next bit of data to the data_buffer
+                var data_buffer = state.buffer;
 
-                if (Array.IndexOf(content, (byte)network_codes.end_of_stream) > -1)
+                // Copy the data to the data_buffer
+                if (data == null)
                 {
-                    // All the data has been read from the 
-                    // client. Display it on the console.
-                    //Console.WriteLine($"Read {content.Length} bytes from socket. \n Data : {content} \n");
-
-                    // Echo the data back to the client.
-                    // If the array is marked as a column_request, respond with a column
-                    if (content[0] == (byte)network_codes.column_request)
-                    {
-                        byte[] _field = content.Skip(1).TakeWhile(b => b != (byte)network_codes.end_of_stream).ToArray();
-                        Field field = new Field(_field);
-                        Send(handler, new[] { RequestHandler.get_column(field) });
-                    }
-                    //If the array is marked as a game-history-array, process the array.
-                    else if (content[0] == (byte)network_codes.game_history_array)
-                    {
-                        Send(handler, new[] { (byte)0 });
-                        byte[][] game_history = linear_to_parrallel_game_history(content);
-                        RequestHandler.receive_game_history(game_history);
-                    }
+                    data = data_buffer;
                 }
                 else
+                {
+                    int length1 = data.Length;
+                    int length2 = data.Length + data_buffer.Length;
+                    Array.Resize(ref data, length2);
+                    data_buffer.CopyTo(data, length1);
+                }
+
+                // Check for end-of-file tag. If it is not there, read more data.
+                if (!(Array.IndexOf(data_buffer, (byte)network_codes.end_of_stream) > -1))
                 {
                     // Not all data received. Get more.
                     handler.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0,
                         new AsyncCallback(ReadCallback), state);
+
+                }
+                else
+                {
+                    if (data[0] != (byte)network_codes.column_request &&
+                        data[0] != (byte)network_codes.game_history_array)
+                    {
+
+                        if (log_mode >= log_modes.only_errors)
+                            Console.WriteLine("WARNING: Found no header in data array, will not process data");
+                        data = null;
+                        Send(handler, new[] { (byte)0 });
+                    }
+                    // Echo the data back to the client.
+                    // If the array is marked as a column_request, respond with a column
+                    if (data[0] == (byte)network_codes.column_request)
+                    {
+                        byte[] _field = data.Skip(1).TakeWhile(b => b != (byte)network_codes.end_of_stream).ToArray();
+                        Field field = new Field(_field);
+                        byte[] send_data = new[] { RequestHandler.get_column(field) };
+                        Send(handler, send_data);
+                    }
+                    //If the array is marked as a game-history-array, process the array.
+                    else if (data[0] == (byte)network_codes.game_history_array)
+                    {
+                        if (log_mode >= log_modes.essential)
+                            Console.WriteLine("Recieved game_history");
+                        Send(handler, new[] { (byte)0 });
+                        byte[][] game_history = linear_to_parrallel_game_history(data);
+                        RequestHandler.receive_game_history(game_history);
+                    }
+
+                    //Clear the data array
+                    data = null;
                 }
             }
         }
@@ -175,8 +195,8 @@ namespace Server
                             {
                                 case (byte)network_codes.end_of_stream:             //If the next player tag or footer is encountered.
                                 case (byte)network_codes.game_history_alice:        //then we have counted all elements in this game and we can initialize a new game.
-                                case (byte)network_codes.game_history_bob:          
-                                    game_history[game] = new byte[j-i];             // The found game is as long as the difference between the global counter and the temporary one
+                                case (byte)network_codes.game_history_bob:
+                                    game_history[game] = new byte[j - i];             // The found game is as long as the difference between the global counter and the temporary one
                                     goto new_game;                                  // Ext the loop after that (break will not work for the for loop since we're inside a switch)
                             }
                         }
@@ -189,18 +209,15 @@ namespace Server
             return game_history;
         }
 
-        private static void Send(Socket handler, byte[] data)
+        private void Send(Socket handler, byte[] data)
         {
-            // Convert the string data to byte data using ASCII encoding.
-            //byte[] byteData = Encoding.ASCII.GetBytes(data);
-
             // Begin sending the data to the remote device.
-            Console.WriteLine($"Sent column {data[0]}");
+            //Console.WriteLine($"Sent column {data[0]}");
             handler.BeginSend(data, 0, data.Length, 0,
                 new AsyncCallback(SendCallback), handler);
         }
 
-        private static void SendCallback(IAsyncResult ar)
+        private void SendCallback(IAsyncResult ar)
         {
             try
             {
@@ -212,7 +229,7 @@ namespace Server
                 handler.Shutdown(SocketShutdown.Both);
                 handler.Close();
 
-                Console.WriteLine("Sent {0} bytes to client.", bytesSent);
+                //Console.WriteLine("Sent {0} bytes to client.", bytesSent);
 
 
             }
@@ -221,16 +238,19 @@ namespace Server
                 Console.WriteLine(e.ToString());
             }
         }
+    }
 
-        public static int Main(String[] args)
+    public class server
+    {
+        public static void Main(String[] args)
         {
             if (!System.IO.Directory.Exists(Properties.Settings.Default.DbPath))    // Checks if the database already exists
             {
                 DatabaseProperties dbProps = new DatabaseProperties(Properties.Settings.Default.DbPath, 7, 6, Properties.Settings.Default.DbMaxFileSize);
                 new Database(dbProps);  // Creates a new database
             }
-            StartListening();
-            return 0;
+            AsynchronousSocketListener listener = new AsynchronousSocketListener();
+            listener.StartListening(log_modes.essential);
         }
     }
 }
