@@ -79,13 +79,14 @@ namespace Server
         /// <summary>
         /// Increments the length (in fields) of the given database file by one. (Called after adding a field)
         /// </summary>
-        public void increaseLength(int i)
+        public void increaseLength(int i, bool writeToDisk = true)
         {
             if (i < 1 || i > MaxFieldStorageSize)
                 throw new DatabaseException($"Argument i is not in range of the database files. i = {i}; min = {1}; max = {MaxFieldStorageSize}");
 
             Lengths[i - 1]++;
-            writeProperties();
+            if (writeToDisk)
+                writeProperties();
         }
 
         /// <summary>
@@ -104,7 +105,7 @@ namespace Server
         /// Returns the maximum storage size (in bytes) that could be needed according to the given database properties.
         /// </summary>
         /// <returns>Max bytes needed per field</returns>
-        private byte calculateMaxFieldStorageSize()
+        public byte calculateMaxFieldStorageSize()
         {
             return (byte)Extensions.getMaxStorageSize(FieldWidth, FieldHeight);
         }

@@ -47,6 +47,7 @@ namespace Server
         {
             Settings.Default.Reload();
             Database db = new Database(Settings.Default.DbPath);
+            update_field_data(fieldLocation, newData, db);
         }
 
         /// <summary>
@@ -82,9 +83,9 @@ namespace Server
                 players turn = players.Alice;
                 players winner = players.Empty;
 
-                if (h[0] == 211)
+                if (h[0] == (byte)Networker.network_codes.game_history_alice)
                     winner = players.Alice;
-                else if (h[0] == 212)
+                else if (h[0] == (byte)Networker.network_codes.game_history_bob)
                     winner = players.Bob;
 
                 for (int j = 1; j < h.Length; j++)
@@ -113,16 +114,18 @@ namespace Server
                 }
             }
 
-            foreach (Field field in history.Keys)
+            db.writeMultipleFieldData(history);
+
+            /*foreach (Field field in history.Keys)
             {
                 DatabaseLocation dbLoc;
                 if (!db.fieldExists(field, out dbLoc))      // If the field doesn't exist it has to be added to the database.
                 {
                     dbLoc = db.addDatabaseItem(field);
                 }
-
+                
                 update_field_data(dbLoc, history[field], db);   // Applies the new data to the field data database.
-            }
+            }*/
         }
     }
 }

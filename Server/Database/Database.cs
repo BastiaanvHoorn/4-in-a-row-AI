@@ -2,6 +2,8 @@
 using Engine;
 using System.Threading.Tasks;
 using System.Linq;
+using System.Collections.Generic;
+using System;
 
 namespace Server
 {
@@ -118,6 +120,116 @@ namespace Server
             }
         }
 
+        public void writeMultipleFieldData(Dictionary<Field, FieldData> data)
+        {
+            Dictionary<string, Dictionary<int, FieldData>> locations = new Dictionary<string, Dictionary<int, FieldData>>();
+            Dictionary<string, List<Field>> newFields = new Dictionary<string, List<Field>>();
+
+            foreach (KeyValuePair<Field, FieldData> d in data)
+            {
+                DatabaseLocation dbLoc;
+                if (!fieldExists(d.Key, out dbLoc))
+                {
+                    dbLoc = allocateNextDatabaseLocation(d.Key);
+                    string fieldPath = dbLoc.getFieldPath();
+                    List<Field> fields = null;
+
+                    if (!newFields.ContainsKey(fieldPath))
+                    {
+                        fields = new List<Field>();
+                        newFields.Add(fieldPath, fields);
+                    }
+                    else
+                    {
+                        fields = newFields[fieldPath];
+                    }
+
+                    fields.Add(d.Key);
+                }
+
+                string fdPath = dbLoc.getFieldDataPath();
+
+                Dictionary<int, FieldData> locPair = null;
+                if (!locations.ContainsKey(fdPath))
+                {
+                    locPair = new Dictionary<int, FieldData>();
+                    locations.Add(fdPath, locPair);
+                }
+                else
+                {
+                    locPair = locations[fdPath];
+                }
+
+                locPair.Add(dbLoc.Location, d.Value);
+            }
+
+            foreach (KeyValuePair<string, List<Field>> pair in newFields)
+            {
+                using (FileStream fieldStream = new FileStream(pair.Key, FileMode.OpenOrCreate, FileAccess.Write))
+                {
+                    fieldStream.Seek(0, SeekOrigin.End);
+
+                    foreach (Field f in pair.Value)
+                    {
+                        byte[] storage = f.compressField();
+                        fieldStream.Write(storage, 0, storage.Length);
+                    }
+                }
+            }
+
+            DbProperties.writeProperties();
+
+            foreach (KeyValuePair<string, Dictionary<int, FieldData>> p in locations)
+            {
+                string path = p.Key;
+
+                using (FileStream fieldDataStream = new FileStream(path, FileMode.OpenOrCreate, FileAccess.ReadWrite))
+                {
+                    using (BinaryReader br = new BinaryReader(fieldDataStream))
+                    {
+                        using (BinaryWriter bw = new BinaryWriter(fieldDataStream))
+                        {
+                            foreach (KeyValuePair<int, FieldData> locPair in p.Value)
+                            {
+                                int seekPosition = locPair.Key * DbProperties.FieldWidth * 8;
+                                uint[] locPairStorage = locPair.Value.getStorage();
+                                uint[] newStorage = null;
+
+                                if (seekPosition < fieldDataStream.Length)
+                                {
+                                    newStorage = new uint[DbProperties.FieldWidth * 2];
+
+                                    fieldDataStream.Seek(seekPosition, SeekOrigin.Begin);
+                                    for (byte i = 0; i < DbProperties.FieldWidth * 2; i++)  // We read the uints one by one from the database.
+                                    {
+                                        newStorage[i] = br.ReadUInt32() + locPairStorage[i];
+                                    }
+                                }
+                                else
+                                {
+                                    newStorage = locPairStorage;
+                                }
+
+                                fieldDataStream.Seek(seekPosition, SeekOrigin.Begin);
+                                for (byte i = 0; i < DbProperties.FieldWidth * 2; i++)
+                                {
+                                    bw.Write(newStorage[i]);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        private DatabaseLocation allocateNextDatabaseLocation(Field f)
+        {
+            int length = f.compressField().Length;
+            DbProperties.increaseLength(length, false);
+            int fileIndex = DbProperties.getFieldFileCount(length) - 1;
+            return new DatabaseLocation(DbProperties, length, fileIndex, DbProperties.getLength(length) % DbProperties.getMaxFieldsInFile(length) - 1);
+        }
+
         /// <summary>
         /// Writes the given field data to the database for the specified field.
         /// </summary>
@@ -156,6 +268,21 @@ namespace Server
             }
         }
         
+        /*private void addDatabaseItems(List<Field>[] fields)
+        {
+            for (int i = 0; i < DbProperties.calculateMaxFieldStorageSize(); i++)
+            {
+                foreach (Field f in fields[i])
+                {
+                    string fieldDirPath = DbProperties.getFieldDirPath(i);
+                    using (FileStream fieldStream = new FileStream(fieldPath, FileMode.OpenOrCreate, FileAccess.Write)) // Opens the field database Stream in write mode.
+                    {
+
+                    }
+                }
+            }
+        }*/
+
         /// <summary>
         /// Adds the given field to the database. WARNING: It's your own responsibility to check for the existance of a field in the database. Always AVOID adding fields that are already included in the database.
         /// </summary>
