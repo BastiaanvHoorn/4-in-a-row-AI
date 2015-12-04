@@ -1,16 +1,11 @@
 ﻿using System;
 using System.Net;
 using System.Net.Sockets;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using System.Net.Http;
-using System.Runtime.CompilerServices;
-using System.Text;
 using System.Threading;
+using System.Collections.Generic;
 using Engine;
 using Networker;
-
 namespace Server
 {
     // State object for reading client data asynchronously
@@ -19,11 +14,11 @@ namespace Server
         // Client  socket.
         public Socket workSocket = null;
         // Size of receive buffer.
-        public const int BufferSize = 1024;
+        public const int BufferSize = 64;
         // Receive buffer.
         public byte[] buffer = new byte[BufferSize];
         // Received data string.
-        public StringBuilder sb = new StringBuilder();
+        public List<byte> data = new List<byte>();
     }
 
     public class AsynchronousSocketListener
@@ -32,7 +27,6 @@ namespace Server
         public log_modes log_mode;
         // Thread signal.
         public static ManualResetEvent allDone = new ManualResetEvent(false);
-        private byte[] data;
         public void StartListening(log_modes log_mode)
         {
             this.log_mode = log_mode;
@@ -109,23 +103,10 @@ namespace Server
             if (bytesRead > 0)
             {
                 // Read the next bit of data to the data_buffer
-                var data_buffer = state.buffer;
-
-                // Copy the data to the data_buffer
-                if (data == null)
-                {
-                    data = data_buffer;
-                }
-                else
-                {
-                    int length1 = data.Length;
-                    int length2 = data.Length + data_buffer.Length;
-                    Array.Resize(ref data, length2);
-                    data_buffer.CopyTo(data, length1);
-                }
+                state.data.AddRange(state.buffer);
 
                 // Check for end-of-file tag. If it is not there, read more data.
-                if (!(Array.IndexOf(data_buffer, (byte)network_codes.end_of_stream) > -1))
+                if (!state.data.Contains((byte)network_codes.end_of_stream))
                 {
                     // Not all data received. Get more.
                     handler.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0,
@@ -134,38 +115,54 @@ namespace Server
                 }
                 else
                 {
-                    if (data[0] != (byte)network_codes.column_request &&
-                        data[0] != (byte)network_codes.game_history_array)
-                    {
-
-                        if (log_mode >= log_modes.only_errors)
-                            Console.WriteLine("WARNING: Found no header in data array, will not process data");
-                        data = null;
-                        Send(handler, new[] { (byte)0 });
-                    }
-                    // Echo the data back to the client.
-                    // If the array is marked as a column_request, respond with a column
-                    if (data[0] == (byte)network_codes.column_request)
-                    {
-                        byte[] _field = data.Skip(1).TakeWhile(b => b != (byte)network_codes.end_of_stream).ToArray();
-                        Field field = new Field(_field);
-                        byte[] send_data = new[] { RequestHandler.get_column(field) };
-                        Send(handler, send_data);
-                    }
-                    //If the array is marked as a game-history-array, process the array.
-                    else if (data[0] == (byte)network_codes.game_history_array)
-                    {
-                        if (log_mode >= log_modes.essential)
-                            Console.WriteLine("Recieved game_history");
-                        Send(handler, new[] { (byte)0 });
-                        byte[][] game_history = linear_to_parrallel_game_history(data);
-                        RequestHandler.receive_game_history(game_history);
-                    }
-
-                    //Clear the data array
-                    data = null;
+                    process_data(handler, state.data.ToArray());
                 }
             }
+        }
+
+        private void process_data(Socket handler, byte[] data)
+        {
+            if (data[0] != (byte)network_codes.column_request &&
+                data[0] != (byte)network_codes.game_history_array)
+            {
+
+                if (log_mode >= log_modes.only_errors)
+                    Console.WriteLine("WARNING: Found no header in data array, will not process data");
+                data = null;
+                Send(handler, new[] { (byte)0 });
+            }
+            else
+            {
+                // Echo the data back to the client.
+                // If the array is marked as a column_request, respond with a column
+                if (data[0] == (byte)network_codes.column_request)
+                {
+                    byte[] _field = data.Skip(1).TakeWhile(b => b != (byte)network_codes.end_of_stream).ToArray();
+                    Field field = new Field(_field);
+                    byte[] send_data = new[] { RequestHandler.get_column(field) };
+                    Send(handler, send_data);
+                }
+                //If the array is marked as a game-history-array, process the array.
+                else if (data[0] == (byte)network_codes.game_history_array)
+                {
+                    if (log_mode >= log_modes.essential)
+                        Console.WriteLine("Recieved game_history");
+                    Send(handler, new[] { (byte)0 });
+                    byte[][] game_history = linear_to_parrallel_game_history(data);
+                    RequestHandler.receive_game_history(game_history);
+                }
+
+                //Clear the data array
+                data = null;
+            }
+        }
+
+        private void Send(Socket handler, byte[] data)
+        {
+            // Begin sending the data to the remote device.
+            //Console.WriteLine($"Sent column {data[0]}");
+            handler.BeginSend(data, 0, data.Length, 0,
+                new AsyncCallback(SendCallback), handler);
         }
 
         internal static byte[][] linear_to_parrallel_game_history(byte[] arr)
@@ -208,15 +205,6 @@ namespace Server
             }
             return game_history;
         }
-
-        private void Send(Socket handler, byte[] data)
-        {
-            // Begin sending the data to the remote device.
-            //Console.WriteLine($"Sent column {data[0]}");
-            handler.BeginSend(data, 0, data.Length, 0,
-                new AsyncCallback(SendCallback), handler);
-        }
-
         private void SendCallback(IAsyncResult ar)
         {
             try
