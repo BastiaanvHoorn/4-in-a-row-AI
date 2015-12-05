@@ -136,5 +136,33 @@ namespace Server
 
             return bw.getStorage();
         }
+
+        internal static Field decompressField(this byte[] storage, byte width = 7, byte height = 6)
+        {
+            Field f = new Field(width, height);
+            byte row = 0;
+            byte column = 0;
+
+            BitReader br = new BitReader(storage);
+            int bit = br.readBit();
+
+            while (bit != -1 && column < width)
+            {
+                if (bit == 0 || row == height)
+                {
+                    row = 0;
+                    column++;
+                }
+                else
+                {
+                    row++;
+                    f.doMove(column, (players)(br.readBit() + 1));
+                }
+
+                bit = br.readBit();
+            }
+
+            return f;
+        }
     }
 }

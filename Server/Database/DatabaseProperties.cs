@@ -101,6 +101,18 @@ namespace Server
             return this.Lengths[i - 1];
         }
 
+        public int getTotalLength()
+        {
+            int result = 0;
+
+            for (byte i = 1; i <= MaxFieldStorageSize; i++)
+            {
+                result += getLength(i);
+            }
+
+            return result;
+        }
+
         /// <summary>
         /// Returns the maximum storage size (in bytes) that could be needed according to the given database properties.
         /// </summary>

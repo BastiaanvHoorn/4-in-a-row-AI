@@ -6,7 +6,7 @@
 
         private readonly string Path;
         private readonly int GlobalLocation;
-        private readonly int FileIndex;
+        public readonly int FileIndex;
         public readonly int FieldLength;
         public readonly int Location;
 

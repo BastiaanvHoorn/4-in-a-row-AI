@@ -6,9 +6,11 @@ using System.Threading.Tasks;
 
 namespace Server
 {
-    public static class BitReader
+    public class BitReader
     {
-        private static byte[] Bitmask = new byte[] { 1, 2, 4, 8, 16, 32, 64, 128 };
+        private byte[] Bits;
+        private int ReadPos;
+        //private static byte[] Bitmask = new byte[] { 1, 2, 4, 8, 16, 32, 64, 128 };
 
         /// <summary>
         /// Returns a byte value representing the bit at the give position.
@@ -16,18 +18,50 @@ namespace Server
         /// <param name="toRead">Byte to read bit from</param>
         /// <param name="bitPos">Bit (position in byte) to read</param>
         /// <returns>Byte value 0 or 1</returns>
-        public static byte[] getBits(byte b)
+        public BitReader(byte b)
         {
-            byte[] bits = new byte[8];
+            byte[] Bits = new byte[8];
             byte toRead = b;
 
             for (byte i = 0; i < 8; i++)
             {
-                bits[i] = (byte)(toRead & 1);
+                Bits[i] = (byte)(toRead & 1);
                 toRead >>= 1;
             }
 
-            return bits;
+            ReadPos = 0;
+        }
+
+        public BitReader(byte[] b)
+        {
+            Bits = new byte[8 * b.Length];
+
+            for (int i = 0; i < b.Length; i++)
+            {
+                byte toRead = b[i];
+
+                for (byte j = 0; j < 8; j++)
+                {
+                    Bits[i * 8 + j] = (byte)(toRead & 1);
+                    toRead >>= 1;
+                }
+            }
+
+            ReadPos = 0;
+        }
+
+        public int readBit()
+        {
+            if (ReadPos < Bits.Length)
+            {
+                byte b = Bits[ReadPos];
+                ReadPos++;
+                return b;
+            }
+            else
+            {
+                return -1;
+            }
         }
     }
 }

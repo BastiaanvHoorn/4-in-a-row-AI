@@ -114,7 +114,7 @@ namespace Server
                 }
             }
 
-            db.writeMultipleFieldData(history);
+            db.processGameHistory(history);
 
             /*foreach (Field field in history.Keys)
             {
