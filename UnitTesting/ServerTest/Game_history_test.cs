@@ -19,12 +19,13 @@ namespace UnitTesting.ServerTest
             byte[] exp_2 = { (byte)network_codes.game_history_bob, 4, 8, 4, 5 };
             byte[][] expected = { exp_1, exp_2 };
 
-            byte[] initial = new byte[]
+            List<byte> initial = new List<byte>
             {
                 (byte)network_codes.game_history_array,
                 (byte)network_codes.game_history_alice, 1, 8, 2, 5, 4,
                 (byte)network_codes.game_history_bob, 4, 8, 4, 5,
-                (byte)network_codes.end_of_stream
+                (byte)network_codes.end_of_stream,
+                (byte)network_codes.game_history_bob, 4, 8, 4, 5,
             };
             byte[][] actual = AsynchronousSocketListener.linear_to_parrallel_game_history(initial);
             for (int i = 0; i < expected.Length; i++)

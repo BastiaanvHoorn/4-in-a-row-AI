@@ -115,12 +115,12 @@ namespace Server
                 }
                 else
                 {
-                    process_data(handler, state.data.ToArray());
+                    process_data(handler, state.data);
                 }
             }
         }
 
-        private void process_data(Socket handler, byte[] data)
+        private void process_data(Socket handler, List<byte> data)
         {
             if (data[0] != (byte)network_codes.column_request &&
                 data[0] != (byte)network_codes.game_history_array)
@@ -157,17 +157,12 @@ namespace Server
             }
         }
 
-        private void Send(Socket handler, byte[] data)
+        internal static byte[][] linear_to_parrallel_game_history(List<byte> list)
         {
-            // Begin sending the data to the remote device.
-            //Console.WriteLine($"Sent column {data[0]}");
-            handler.BeginSend(data, 0, data.Length, 0,
-                new AsyncCallback(SendCallback), handler);
-        }
 
-        internal static byte[][] linear_to_parrallel_game_history(byte[] arr)
-        {
+            byte[] arr = list.TakeWhile(b => b != (byte)network_codes.end_of_stream).ToArray();
             //Count the amount of games that is in this byte-array
+            
             int game_counter = arr.Count(b => b == (byte)network_codes.game_history_alice || b == (byte)network_codes.game_history_bob);
             //Create an array of arrays with the count of games
             byte[][] game_history = new byte[game_counter][];
@@ -205,6 +200,14 @@ namespace Server
             }
             return game_history;
         }
+        private void Send(Socket handler, byte[] data)
+        {
+            // Begin sending the data to the remote device.
+            //Console.WriteLine($"Sent column {data[0]}");
+            handler.BeginSend(data, 0, data.Length, 0,
+                new AsyncCallback(SendCallback), handler);
+        }
+
         private void SendCallback(IAsyncResult ar)
         {
             try
