@@ -15,18 +15,19 @@ namespace UnitTesting.ServerTest
         [TestMethod]
         public void linear_to_parrallel_game_history_test()
         {
-            byte[] exp_1 = { (byte)network_codes.game_history_alice, 1, 8, 2, 5, 4 };
-            byte[] exp_2 = { (byte)network_codes.game_history_bob, 4, 8, 4, 5 };
-            byte[][] expected = { exp_1, exp_2 };
+            byte[] game1 = { (byte)network_codes.game_history_alice, 1, 8, 2, 5, 4 };
+            byte[] game2 = { (byte)network_codes.game_history_bob, 4, 8, 4, 5 };
+            byte[][] expected = { game1, game2 , game1, game2};
 
-            List<byte> initial = new List<byte>
-            {
-                (byte)network_codes.game_history_array,
-                (byte)network_codes.game_history_alice, 1, 8, 2, 5, 4,
-                (byte)network_codes.game_history_bob, 4, 8, 4, 5,
-                (byte)network_codes.end_of_stream,
-                (byte)network_codes.game_history_bob, 4, 8, 4, 5,
-            };
+            List<byte> initial = new List<byte>();
+            initial.Add((byte)network_codes.game_history_array);
+            initial.AddRange(game1);
+            initial.AddRange(game2);
+            initial.AddRange(game1);
+            initial.AddRange(game2);
+            initial.Add((byte)network_codes.end_of_stream);
+            initial.AddRange(game2);
+
             byte[][] actual = AsynchronousSocketListener.linear_to_parrallel_game_history(initial);
             for (int i = 0; i < expected.Length; i++)
             {
