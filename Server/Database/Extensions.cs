@@ -171,7 +171,7 @@ namespace Server
 
             while (bit != -1 && column < width)
             {
-                if (bit == 0 || row == height)
+                if (bit == 0)
                 {
                     row = 0;
                     column++;
@@ -180,6 +180,12 @@ namespace Server
                 {
                     row++;
                     f.doMove(column, (players)(br.readBit() + 1));
+
+                    if (row == height)
+                    {
+                        row = 0;
+                        column++;
+                    }
                 }
 
                 bit = br.readBit();
