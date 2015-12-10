@@ -157,46 +157,35 @@ namespace Server
             }
         }
 
-        internal static byte[][] linear_to_parrallel_game_history(List<byte> list)
+        internal static byte[][] linear_to_parrallel_game_history(List<byte> history)
         {
 
-            byte[] arr = list.TakeWhile(b => b != (byte)network_codes.end_of_stream).ToArray();
+            history = history.SkipWhile(b=> b== (byte)network_codes.game_history_array).TakeWhile(b => b != (byte)network_codes.end_of_stream).ToList();
+            history.Add((byte)network_codes.end_of_stream);
             //Count the amount of games that is in this byte-array
-            
-            int game_counter = arr.Count(b => b == (byte)network_codes.game_history_alice || b == (byte)network_codes.game_history_bob);
+            int game_counter = history.Count(b => b == (byte)network_codes.game_history_alice || b == (byte)network_codes.game_history_bob);
+
             //Create an array of arrays with the count of games
             byte[][] game_history = new byte[game_counter][];
-            int game = -1;
-            int turn = 0;
-            for (int i = 0; i < arr.Length; i++)
+            for (int game = 0; game < game_history.Length; game++)
             {
-                switch (arr[i])
+                for (int turn = 1; turn < history.Count; turn++)
                 {
-                    case (byte)network_codes.game_history_array:    //If the header is encountered,
-                        continue;                                   //then continue immedeatly
-                    case (byte)network_codes.end_of_stream:     //If the footer is encountered, then we finished looping through everything.
-                        return game_history;                    //Now we can return the array
-                    case (byte)network_codes.game_history_alice:    //If a player tag is encountered, thenwe finished looping through the current game.
-                    case (byte)network_codes.game_history_bob:      //We must then create a new array for the next game.
-                        game++;     //Increase the game-counter the array is indexed properly
-                        turn = 0;   //Reset the turn count since this is a new game
-
-                        for (int j = i + 1; j < arr.Length; j++)    //Start looping through arr with a temporary variable where we left
-                        {
-                            switch (arr[j])
-                            {
-                                case (byte)network_codes.end_of_stream:             //If the next player tag or footer is encountered.
-                                case (byte)network_codes.game_history_alice:        //then we have counted all elements in this game and we can initialize a new game.
-                                case (byte)network_codes.game_history_bob:
-                                    game_history[game] = new byte[j - i];             // The found game is as long as the difference between the global counter and the temporary one
-                                    goto new_game;                                  // Ext the loop after that (break will not work for the for loop since we're inside a switch)
-                            }
-                        }
-                        new_game:
+                    if (history[turn] == (byte) network_codes.game_history_alice ||
+                        history[turn] == (byte) network_codes.game_history_bob ||
+                        history[turn] == (byte) network_codes.end_of_stream)
+                {
+                        
+                        game_history[game] = new byte[turn];
                         break;
+                    }
                 }
-                game_history[game][turn] = arr[i];  //Add the current arr element to the new game-history at the right position
-                turn++;
+
+                for (int turn = 0; turn < game_history[game].Count(); turn++)
+                {
+                    game_history[game][turn] = history[turn];
+                }
+                history = history.Skip(game_history[game].Count()).ToList();
             }
             return game_history;
         }
