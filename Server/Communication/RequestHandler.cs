@@ -8,15 +8,23 @@ namespace Server
     public static class RequestHandler
     {
         static Random rnd = new Random();
+
+        public static byte get_column(Field field)
+        {
+            Settings.Default.Reload();
+            using (Database db = new Database(Settings.Default.DbPath))
+            {
+                return get_column(field, db);
+            }
+        }
+        
         /// <summary>
         /// Returns the move (column) that suits best with the given field (given situation). If the field is not included in the database a random column is returned.
         /// </summary>
         /// <param name="field">Current field</param>
         /// <returns>The best move (column) to do</returns>
-        public static byte get_column(Field field)
+        public static byte get_column(Field field, Database db)
         {
-            Settings.Default.Reload();
-            Database db = new Database(Settings.Default.DbPath);
             DatabaseLocation location;
             if (db.fieldExists(field, out location))
             {
@@ -46,8 +54,10 @@ namespace Server
         public static void update_field_data(DatabaseLocation fieldLocation, FieldData newData)
         {
             Settings.Default.Reload();
-            Database db = new Database(Settings.Default.DbPath);
-            update_field_data(fieldLocation, newData, db);
+            using (Database db = new Database(Settings.Default.DbPath))
+            {
+                update_field_data(fieldLocation, newData, db);
+            }
         }
 
         /// <summary>
@@ -69,8 +79,10 @@ namespace Server
         public static void receive_game_history(byte[][] gameHistories)
         {
             Settings.Default.Reload();
-            Database db = new Database(Settings.Default.DbPath);
-            receive_game_history(gameHistories, db);
+            using (Database db = new Database(Settings.Default.DbPath))
+            {
+                receive_game_history(gameHistories, db);
+            }
         }
         public static void receive_game_history(byte[][] gameHistories, Database db)
         {

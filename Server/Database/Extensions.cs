@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using Engine;
+using System.Threading.Tasks;
 
 namespace Server
 {
@@ -37,14 +38,36 @@ namespace Server
         /// <returns>Zero-based location</returns>
         public static int getFieldLocation(this byte[] field, Stream s)
         {
+            s.Seek(0, SeekOrigin.Begin);
+
             int fieldLength = field.Length;
             byte[] fieldStorage = new byte[fieldLength];
 
             byte[] bytes = new byte[s.Length];
             s.Read(bytes, 0, (int)s.Length);
-            bool found;
+            int result = -1;
 
-            for (int i = 0; i < bytes.Length; i += fieldLength)
+            Parallel.For(0, bytes.Length / fieldLength, (i, loopState) =>
+            {
+                bool found = true;
+
+                for (int j = 0; j < fieldLength; j++)
+                {
+                    if (bytes[i * fieldLength + j] != field[j])
+                    {
+                        found = false;
+                        break;
+                    }
+                }
+
+                if (found)
+                {
+                    result = i;
+                    loopState.Break();
+                }
+            });
+
+            /*for (int i = 0; i < bytes.Length; i += fieldLength)
             {
                 found = true;
 
@@ -59,9 +82,9 @@ namespace Server
 
                 if (found)
                     return i / fieldLength;
-            }
+            }*/
 
-            return -1;
+            return result;
         }
 
         /// <summary>

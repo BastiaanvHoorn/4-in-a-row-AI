@@ -4,12 +4,15 @@ using System.Threading.Tasks;
 using System.Linq;
 using System.Collections.Generic;
 using System;
+using System.Collections.Concurrent;
 
 namespace Server
 {
-    public class Database
+    public class Database : IDisposable
     {
         public DatabaseProperties DbProperties;
+        private FileStream[][] FieldStream;
+        private FileStream[][] FieldDataStream;
 
         /// <summary>
         /// Creates a new database instance from the given path.
@@ -26,36 +29,68 @@ namespace Server
                 throw new DatabaseException($"Database incomplete. Properties file not found in: {path}");
 
             DbProperties = new DatabaseProperties(path);
-            
-            for (byte i = 1; i <= DbProperties.MaxFieldStorageSize; i++)
-            {
-                string dirPath = DbProperties.getFieldDirPath(i);
-                if (!Directory.Exists(dirPath))
-                    throw new DatabaseException($"Database incomplete. Directory {dirPath} doesn't exist.");
-            }
+            loadStreams();
         }
 
         /// <summary>
-        /// Creates a new database at the given path and creates an instance of this new database.
+        /// Creates a new database at the given path.
         /// </summary>
         /// <param name="dbProperties"></param>
-        public Database(DatabaseProperties dbProperties)
+        public static Database createNew(DatabaseProperties dbProperties)
+        {
+            prepareNew(dbProperties);
+            Database db = new Database(dbProperties.Path);
+            return db;
+        }
+
+        /// <summary>
+        /// Creates a new database at the given path and returns an instance of this new database.
+        /// </summary>
+        /// <param name="dbProperties"></param>
+        public static void prepareNew(DatabaseProperties dbProperties)
         {
             if (Directory.Exists(dbProperties.Path))
                 throw new DatabaseException("Database path already exists. Make sure you use a database path that doesn't exist already.");
-
-            this.DbProperties = dbProperties;
-
+            
             Directory.CreateDirectory(dbProperties.Path);
 
             byte maxSize = dbProperties.MaxFieldStorageSize;
 
             for (byte i = 1; i <= maxSize; i++)
             {
-                Directory.CreateDirectory(dbProperties.getFieldDirPath(i));
+                string dirPath = dbProperties.getFieldDirPath(i);
+                Directory.CreateDirectory(dirPath);
+                File.Create(DatabaseLocation.getFieldPath(dirPath, 0)).Dispose();
+                File.Create(DatabaseLocation.getFieldDataPath(dirPath, 0)).Dispose();
             }
 
             dbProperties.writeProperties();
+        }
+
+        private void loadStreams()
+        {
+            FieldStream = new FileStream[DbProperties.MaxFieldStorageSize][];
+            FieldDataStream = new FileStream[DbProperties.MaxFieldStorageSize][];
+
+            for (byte i = 1; i <= DbProperties.MaxFieldStorageSize; i++)
+            {
+                string dirPath = DbProperties.getFieldDirPath(i);
+                if (!Directory.Exists(dirPath))
+                    throw new DatabaseException($"Database incomplete. Directory {dirPath} doesn't exist.");
+
+                int fileCount = Math.Max(1, DbProperties.getFieldFileCount(i));
+                FieldStream[i - 1] = new FileStream[fileCount];
+                FieldDataStream[i - 1] = new FileStream[fileCount];
+
+                for (int j = 0; j < fileCount; j++)
+                {
+                    string fPath = DatabaseLocation.getFieldPath(dirPath, j);
+                    FieldStream[i - 1][j] = new FileStream(fPath, FileMode.OpenOrCreate, FileAccess.ReadWrite);
+
+                    string fdPath = DatabaseLocation.getFieldDataPath(dirPath, j);
+                    FieldDataStream[i - 1][j] = new FileStream(fdPath, FileMode.OpenOrCreate, FileAccess.ReadWrite);
+                }
+            }
         }
 
         /// <summary>
@@ -101,28 +136,24 @@ namespace Server
             if (!dbLocation.locationExists(DbProperties))
                 throw new DatabaseException($"Can't read field data at field location {dbLocation}, because this location doesn't exist.");
 
-            using (FileStream fieldDataStream = new FileStream(dbLocation.getFieldDataPath(), FileMode.OpenOrCreate, FileAccess.Read)) // Opens the field data database stream in read mode.
+            FileStream fieldDataStream = FieldDataStream[dbLocation.FieldLength - 1][dbLocation.FileIndex];
+            int seekPosition = dbLocation.getFieldDataSeekPosition(DbProperties);
+
+            uint[] storage = new uint[DbProperties.FieldWidth * 2];
+            BinaryReader br = new BinaryReader(fieldDataStream);
+            fieldDataStream.Seek(seekPosition, SeekOrigin.Begin);   // Sets the reading position to the wanted byte (uint in our case) database.
+
+            for (byte i = 0; i < DbProperties.FieldWidth * 2; i++)  // We read the uints one by one from the database.
             {
-                int seekPosition = dbLocation.getFieldDataSeekPosition(DbProperties);
-
-                uint[] storage = new uint[DbProperties.FieldWidth * 2];
-                using (BinaryReader br = new BinaryReader(fieldDataStream))
-                {
-                    fieldDataStream.Seek(seekPosition, SeekOrigin.Begin);   // Sets the reading position to the wanted byte (uint in our case) database.
-
-                    for (byte i = 0; i < DbProperties.FieldWidth * 2; i++)  // We read the uints one by one from the database.
-                    {
-                        storage[i] = br.ReadUInt32();
-                    }
-                }
-
-                return new FieldData(storage);
+                storage[i] = br.ReadUInt32();
             }
+
+            return new FieldData(storage);
         }
 
         public void processGameHistory(Dictionary<Field, FieldData> data)
         {
-            #region Initialization and sorting of data Dictionary.
+            // Initialization and sorting of data Dictionary.
             byte maxFS = DbProperties.calculateMaxFieldStorageSize();
             Dictionary<Field, FieldData>[] cData = new Dictionary<Field, FieldData>[maxFS];
             for (byte i = 0; i < maxFS; i++)
@@ -135,108 +166,135 @@ namespace Server
                 int length = pair.Key.compressField().Length;
                 cData[length - 1].Add(pair.Key, pair.Value);
             }
-            #endregion
 
-            for (byte i = 1; i <= maxFS; i++)
+            for (int i = 0; i < maxFS; i++)
             {
-                #region Processes the fielddata of all fields that are already included in the database.
+                // Processes the fielddata of all fields that are already included in the database.
+                List<Field> matches;
+                updateExistingFieldData(cData[i], i + 1, out matches);
 
-                Dictionary<Field, FieldData> dictionary = cData[i - 1];
-                List<Field> matches = new List<Field>();
+                // Determination of the fields that need to be added to the database.
+                Dictionary<int, List<Field>> newFields = getNewFieldsDictionary(i + 1, cData[i], matches);
 
-                string dirPath = DbProperties.getFieldDirPath(i);
-                int fileCount = DbProperties.getFieldFileCount(i);
-                
-                for (int j = 0; j < fileCount; j++)
-                {
-                    string fPath = DatabaseLocation.getFieldPath(dirPath, j);
-                    string fdPath = DatabaseLocation.getFieldDataPath(dirPath, j);
-
-                    using (FileStream fieldStream = new FileStream(fPath, FileMode.OpenOrCreate, FileAccess.Read))
-                    {
-                        using (FileStream fieldDataStream = new FileStream(fdPath, FileMode.OpenOrCreate, FileAccess.ReadWrite))
-                        {
-                            int totalLength = (int)fieldStream.Length;
-                            byte[] bytes = new byte[totalLength];
-                            fieldStream.Read(bytes, 0, totalLength);
-
-                            for (int k = 0; k < totalLength; k += i)
-                            {
-                                byte[] fStorage = new byte[i];
-                                Buffer.BlockCopy(bytes, k, fStorage, 0, i);
-                                Field f = fStorage.decompressField();
-
-                                if (dictionary.ContainsKey(f))
-                                {
-                                    DatabaseLocation dbLoc = new DatabaseLocation(DbProperties, i, j, k / i);
-                                    processFieldData(dbLoc, dictionary[f], fieldDataStream);
-                                    matches.Add(f);
-                                }
-                            }
-                        }
-                    }
-                }
-                #endregion
-
-                #region Determination of the fields that need to be added to the database.
-                Dictionary<int, List<Field>> newFields = new Dictionary<int, List<Field>>();
-
-                foreach (Field f in dictionary.Keys.Where(f => !matches.Contains(f)))
-                {
-                    DatabaseLocation dbLoc = allocateNextDatabaseLocation(i);
-                    int fileIndex = dbLoc.FileIndex;
-
-                    List<Field> l = null;
-
-                    if (newFields.ContainsKey(fileIndex))
-                    {
-                        l = newFields[fileIndex];
-                    }
-                    else
-                    {
-                        l = new List<Field>();
-                        newFields.Add(fileIndex, l);
-                    }
-
-                    l.Add(f);
-                }
-                #endregion
-
-                #region Addition of new fields.
-                foreach (KeyValuePair<int, List<Field>> pair in newFields)
-                {
-                    List<byte> bytes = new List<byte>();
-
-                    string fdPath = DatabaseLocation.getFieldDataPath(DbProperties.getFieldDirPath(i), pair.Key);
-                    using (FileStream fieldDataStream = new FileStream(fdPath, FileMode.OpenOrCreate, FileAccess.ReadWrite))
-                    {
-                        BinaryWriter bw = new BinaryWriter(fieldDataStream);
-                        foreach (Field f in pair.Value)
-                        {
-                            bytes.AddRange(f.compressField());
-
-                            fieldDataStream.Seek(0, SeekOrigin.End);
-
-                            uint[] fdStorage = dictionary[f].getStorage();
-                            
-                            for (int k = 0; k < fdStorage.Length; k++)
-                            {
-                                bw.Write(fdStorage[k]);
-                            }
-                        }
-                    }
-
-                    string fPath = DatabaseLocation.getFieldPath(DbProperties.getFieldDirPath(i), pair.Key);
-                    using (FileStream fieldStream = new FileStream(fPath, FileMode.OpenOrCreate, FileAccess.Write))
-                    {
-                        fieldStream.Seek(0, SeekOrigin.End);
-                        fieldStream.Write(bytes.ToArray(), 0, bytes.Count);
-                    }
-                }
-                #endregion
+                // Addition of new fields.
+                addFields(i + 1, cData[i], newFields);
             }
 
             DbProperties.writeProperties();
+        }
+
+        private void addFields(int i, Dictionary<Field, FieldData> dictionary, Dictionary<int, List<Field>> newFields)
+        {
+            foreach (KeyValuePair<int, List<Field>> pair in newFields)
+            {
+                List<byte> bytes = new List<byte>();
+
+                FileStream fieldDataStream = FieldDataStream[i - 1][pair.Key];
+                BinaryWriter bw = new BinaryWriter(fieldDataStream);
+                foreach (Field f in pair.Value)
+                {
+                    bytes.AddRange(f.compressField());
+
+                    fieldDataStream.Seek(0, SeekOrigin.End);
+
+                    uint[] fdStorage = dictionary[f].getStorage();
+
+                    for (int k = 0; k < fdStorage.Length; k++)
+                    {
+                        bw.Write(fdStorage[k]);
+                    }
+                }
+
+                string fPath = DatabaseLocation.getFieldPath(DbProperties.getFieldDirPath(i), pair.Key);
+                FileStream fieldStream = FieldStream[i - 1][pair.Key];
+                fieldStream.Seek(0, SeekOrigin.End);
+                fieldStream.Write(bytes.ToArray(), 0, bytes.Count);
+            }
+        }
+
+        private Dictionary<int, List<Field>> getNewFieldsDictionary(int i, Dictionary<Field, FieldData> dictionary, List<Field> matches)
+        {
+            Dictionary<int, List<Field>> newFields = new Dictionary<int, List<Field>>();
+            //List<Field> relevant = dictionary.Keys.AsParallel().Where(f => !matches.Contains(f)).ToList();
+
+            foreach (Field f in dictionary.Keys.AsParallel().Where(f => !matches.Contains(f)))
+            {
+                DatabaseLocation dbLoc = allocateNextDatabaseLocation(i);
+                int fileIndex = dbLoc.FileIndex;
+
+                List<Field> l = null;
+
+                if (newFields.ContainsKey(fileIndex))
+                {
+                    l = newFields[fileIndex];
+                }
+                else
+                {
+                    l = new List<Field>();
+                    newFields.Add(fileIndex, l);
+                }
+
+                l.Add(f);
+            }
+
+            return newFields;
+        }
+
+        private void updateExistingFieldData(Dictionary<Field, FieldData> dictionary, int i, out List<Field> matches)
+        {
+            ConcurrentBag<Field> fList = new ConcurrentBag<Field>();
+            
+            int fileCount = DbProperties.getFieldFileCount(i);
+
+            for (int j = 0; j < fileCount; j++)
+            {
+                FileStream fieldStream = FieldStream[i - 1][j];
+                fieldStream.Seek(0, SeekOrigin.Begin);
+                FileStream fieldDataStream = FieldDataStream[i - 1][j];
+
+                int totalLength = (int)fieldStream.Length;
+                byte[] bytes = new byte[totalLength];
+                fieldStream.Read(bytes, 0, totalLength);
+
+                ConcurrentDictionary<int, FieldData> locations = new ConcurrentDictionary<int, FieldData>();
+
+                Parallel.For(0, totalLength / i, k =>
+                {
+                    byte[] fStorage = new byte[i];
+                    Buffer.BlockCopy(bytes, k * i, fStorage, 0, i);
+                    Field f = fStorage.decompressField();
+
+                    if (dictionary.ContainsKey(f))
+                    {
+                        DatabaseLocation dbLoc = new DatabaseLocation(DbProperties, i, j, k / i);
+                        //locations.AddOrUpdate(dbLoc.getFieldDataSeekPosition(DbProperties), dictionary[f], );//, processFieldData(dbLoc, dictionary[f], fieldDataStream);
+                        locations.GetOrAdd(dbLoc.getFieldDataSeekPosition(DbProperties), dictionary[f]);
+                        fList.Add(f);
+                    }
+                });
+
+                foreach (KeyValuePair<int, FieldData> l in locations)
+                {
+                    processFieldData(l.Key, l.Value, fieldDataStream);
+                }
+
+                /*for (int k = 0; k < totalLength; k += i)
+                {
+                    //byte[] fStorage = new byte[i];
+                    //Buffer.BlockCopy(bytes, k, fStorage, 0, i);
+                    //Field f = fStorage.decompressField();
+
+                    //if (dictionary.ContainsKey(f))
+                    //{
+                    //    DatabaseLocation dbLoc = new DatabaseLocation(DbProperties, i, j, k / i);
+                    //    //locations.AddOrUpdate(dbLoc.getFieldDataSeekPosition(DbProperties), dictionary[f], );//, processFieldData(dbLoc, dictionary[f], fieldDataStream);
+                    //    locations.GetOrAdd(dbLoc.getFieldDataSeekPosition(DbProperties), dictionary[f]);
+                    //    matches.Add(f);
+                    //}
+                }*/
+            }
+
+            matches = fList.ToList();
         }
 
         private DatabaseLocation allocateNextDatabaseLocation(Field f)
@@ -272,34 +330,26 @@ namespace Server
             if (!dbLocation.locationExists(DbProperties))
                 throw new DatabaseException($"Can't write field data at field location. {dbLocation}. This location doesn't exist.");
 
-            using (FileStream fieldDataStream = new FileStream(dbLocation.getFieldDataPath(), FileMode.OpenOrCreate, FileAccess.Write)) // Opens the field data database Stream in write mode.
+            FileStream fieldDataStream = FieldDataStream[dbLocation.FieldLength - 1][dbLocation.FileIndex];
+            int seekPosition = dbLocation.getFieldDataSeekPosition(DbProperties);
+
+            BinaryWriter bw = new BinaryWriter(fieldDataStream);
+            uint[] storage = fieldData.getStorage();
+
+            fieldDataStream.Seek(seekPosition, SeekOrigin.Begin);   // Sets the writing position to the wanted byte (uint in our case) in the database.
+            for (byte i = 0; i < DbProperties.FieldWidth * 2; i++)  // We write each uint of the storage to the database stream.
             {
-                int seekPosition = dbLocation.getFieldDataSeekPosition(DbProperties);
-
-                using (BinaryWriter bw = new BinaryWriter(fieldDataStream))  // We use a BinaryWriter to be able to write uints directly to the stream.
-                {
-                    uint[] storage = fieldData.getStorage();
-
-                    fieldDataStream.Seek(seekPosition, SeekOrigin.Begin);   // Sets the writing position to the wanted byte (uint in our case) in the database.
-                    for (byte i = 0; i < DbProperties.FieldWidth * 2; i++)  // We write each uint of the storage to the database stream.
-                    {
-                        bw.Write(storage[i]);
-                    }
-                }
+                bw.Write(storage[i]);
             }
         }
 
         /// <summary>
-        /// Writes the given field data to the database at the specified (field)location. (Not the location in bytes)
+        /// Writes the given field data to an existing location in the database (location in bytes).
         /// </summary>
         /// <param name="dbLocation">Field location</param>
         /// <param name="fieldData">Data to be written</param>
-        public void processFieldData(DatabaseLocation dbLocation, FieldData fieldData, FileStream fieldDataStream)
+        public void processFieldData(int seekPosition, FieldData fieldData, FileStream fieldDataStream)
         {
-            if (!dbLocation.locationExists(DbProperties))
-                throw new DatabaseException($"Can't write field data at field location. {dbLocation}. This location doesn't exist.");
-            
-            int seekPosition = dbLocation.getFieldDataSeekPosition(DbProperties);
             fieldDataStream.Seek(seekPosition, SeekOrigin.Begin);
 
             BinaryWriter bw = new BinaryWriter(fieldDataStream);
@@ -347,22 +397,15 @@ namespace Server
         {
             byte[] compressed = field.compressField();                  // Gets the compressed field.
             DatabaseLocation dbLoc = allocateNextDatabaseLocation(compressed.Length);
-            
-            int fileIndex = dbLoc.FileIndex;
-            string fieldPath = dbLoc.getFieldPath();
 
-            using (FileStream fieldStream = new FileStream(fieldPath, FileMode.OpenOrCreate, FileAccess.Write))     // Opens the field database Stream in write mode.
-            {
-                fieldStream.Seek(0, SeekOrigin.End);                    // Sets the writing position to the end of the database.
-                fieldStream.Write(compressed, 0, compressed.Length);    // Writes the bytes of the compressed field to the database.
-            }
+            FileStream fieldStream = FieldStream[dbLoc.FieldLength - 1][dbLoc.FileIndex];
+            fieldStream.Seek(0, SeekOrigin.End);                    // Sets the writing position to the end of the database.
+            fieldStream.Write(compressed, 0, compressed.Length);    // Writes the bytes of the compressed field to the database.
 
-            string fieldDataPath = dbLoc.getFieldDataPath();
-            using (FileStream fieldDataStream = new FileStream(fieldDataPath, FileMode.OpenOrCreate, FileAccess.Write)) // Opens the field data database Stream in write mode.
-            {
-                fieldDataStream.Seek(0, SeekOrigin.End);
-                fieldDataStream.Write(new byte[DbProperties.FieldWidth * 8], 0, DbProperties.FieldWidth * 8);
-            }
+
+            FileStream fieldDataStream = FieldDataStream[dbLoc.FieldLength - 1][dbLoc.FileIndex];
+            fieldDataStream.Seek(0, SeekOrigin.End);
+            fieldDataStream.Write(new byte[DbProperties.FieldWidth * 8], 0, DbProperties.FieldWidth * 8);
 
             return dbLoc;
         }
@@ -377,17 +420,13 @@ namespace Server
             if (!fieldExists(field, out dbLocation))
                 throw new DatabaseException($"Can't clear database item at database location. {dbLocation}. This location doesn't exist.");
 
-            using (FileStream fieldStream = new FileStream(dbLocation.getFieldPath(), FileMode.OpenOrCreate, FileAccess.Write))
-            {
-                fieldStream.Seek(dbLocation.getFieldsSeekPosition(), SeekOrigin.Begin);
-                fieldStream.Write(new byte[dbLocation.FieldLength], 0, dbLocation.FieldLength);
-            }
+            FileStream fieldStream = FieldStream[dbLocation.FieldLength - 1][dbLocation.FileIndex];
+            fieldStream.Seek(dbLocation.getFieldsSeekPosition(), SeekOrigin.Begin);
+            fieldStream.Write(new byte[dbLocation.FieldLength], 0, dbLocation.FieldLength);
 
-            using (FileStream fieldDataStream = new FileStream(dbLocation.getFieldDataPath(), FileMode.OpenOrCreate, FileAccess.Write)) // Opens the field data database Stream in write mode.
-            {
-                fieldDataStream.Seek(dbLocation.getFieldDataSeekPosition(DbProperties), SeekOrigin.Begin);
-                fieldDataStream.Write(new byte[56], 0, 56);
-            }
+            FileStream fieldDataStream = FieldDataStream[dbLocation.FieldLength - 1][dbLocation.FileIndex];
+            fieldDataStream.Seek(dbLocation.getFieldDataSeekPosition(DbProperties), SeekOrigin.Begin);
+            fieldDataStream.Write(new byte[DbProperties.FieldWidth * 8], 0, DbProperties.FieldWidth * 8);
         }
         
         /// <summary>
@@ -399,13 +438,11 @@ namespace Server
         {
             byte[] compressed = field.compressField();
             int fieldLength = compressed.Length;
-
-            string dirPath = DbProperties.getFieldDirPath(fieldLength);
             int fileCount = DbProperties.getFieldFileCount(fieldLength);
 
             for (int i = 0; i < fileCount; i++)
             {
-                int location = findField(compressed, DatabaseLocation.getFieldPath(dirPath, i));
+                int location = findField(compressed, fieldLength, i);
                 if (location != -1)
                 {
                     return new DatabaseLocation(DbProperties, fieldLength, i, location);
@@ -421,11 +458,21 @@ namespace Server
         /// <param name="compressed"></param>
         /// <param name="filePath"></param>
         /// <returns></returns>
-        private int findField(byte[] compressed, string filePath)
+        private int findField(byte[] compressed, int fieldLength, int fileIndex)
         {
-            using (FileStream fieldStream = new FileStream(filePath, FileMode.OpenOrCreate, FileAccess.Read))   // Gets the stream from the database file in read mode.
+            FileStream fieldStream = FieldStream[fieldLength - 1][fileIndex];
+            return compressed.getFieldLocation(fieldStream);
+        }
+
+        public void Dispose()
+        {
+            for (int i = 0; i < FieldStream.Length; i++)
             {
-                return compressed.getFieldLocation(fieldStream);
+                for (int j = 0; j < FieldStream[i].Length; j++)
+                {
+                    FieldStream[i][j].Dispose();
+                    FieldDataStream[i][j].Dispose();
+                }
             }
         }
     }
