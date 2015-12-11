@@ -76,15 +76,16 @@ namespace Server
             db.writeFieldData(fieldLocation, fieldData);            // Writes the field data to the database.
         }
 
-        public static void receive_game_history(byte[][] gameHistories)
+        public static int receive_game_history(byte[][] gameHistories)
         {
             Settings.Default.Reload();
             using (Database db = new Database(Settings.Default.DbPath))
             {
-                receive_game_history(gameHistories, db);
+                return receive_game_history(gameHistories, db);
             }
         }
-        public static void receive_game_history(byte[][] gameHistories, Database db)
+
+        public static int receive_game_history(byte[][] gameHistories, Database db)
         {
             Dictionary<Field, FieldData> history = new Dictionary<Field, FieldData>();
             
@@ -128,16 +129,7 @@ namespace Server
 
             db.processGameHistory(history);
 
-            /*foreach (Field field in history.Keys)
-            {
-                DatabaseLocation dbLoc;
-                if (!db.fieldExists(field, out dbLoc))      // If the field doesn't exist it has to be added to the database.
-                {
-                    dbLoc = db.addDatabaseItem(field);
-                }
-                
-                update_field_data(dbLoc, history[field], db);   // Applies the new data to the field data database.
-            }*/
+            return history.Count;
         }
     }
 }

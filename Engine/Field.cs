@@ -76,7 +76,7 @@ namespace Engine
         /// </summary>
         /// <param name="column"></param>
         /// <returns>Returns the Y-coord of the empty cell</returns>
-        public int getEmptyCell(int column)
+        public byte getEmptyCell(int column)
         {
             if (Height == 6)
             {
@@ -93,7 +93,7 @@ namespace Engine
                     value = ((Storage[startByte] & 240) >> 4) + 16 * (Storage[startByte + 1]); // We need the 2 last cells stored in the first byte and all cells that are stored in the next byte, to get the total column value.
                 }
 
-                int cell = 0;
+                byte cell = 0;
                 while (value > 0) //    Every iteration in the while loop we shift value with 2 bits. When value is 0, we know that every bit in value is 0 and all remaining cells in the column are empty.
                 {
                     cell++;      //Every iteration row is increased by 1. Cell represents how many bitshifts were necessary to make value 0. This means that cell is the first empty cell in the given column.
@@ -161,7 +161,7 @@ namespace Engine
                 throw new InvalidMoveException("Only real player, like Alice and Bob can do a move. player.Empty isn't able to do that");
             }
 
-            int emptyCell = getEmptyCell(column);
+            byte emptyCell = getEmptyCell(column);
 
             if (emptyCell > Height - 1)
             {
