@@ -26,25 +26,26 @@ namespace Engine
         /// <returns>Zero-based location</returns>
         public static int getFieldLocation(this Field field, Stream s)
         {
-            return field.compressField().getFieldLocation(s);
+            s.Seek(0, SeekOrigin.Begin);
+
+            byte[] fStorage = field.compressField();
+
+            byte[] bytes = new byte[s.Length];
+            s.Read(bytes, 0, (int)s.Length);
+
+            return fStorage.getFieldLocation(bytes);
         }
 
         /// <summary>
-        /// Returns the location (in fields) in the specified stream.
+        /// Returns the location (in fields) in the specified byte array.
         /// </summary>
         /// <param name="field">Storage of the field</param>
         /// <param name="s">Stream to read from</param>
         /// <returns>Zero-based location</returns>
-        public static int getFieldLocation(this byte[] field, Stream s)
+        public static int getFieldLocation(this byte[] field, byte[] bytes)
         {
-            s.Seek(0, SeekOrigin.Begin);
-
-            int fieldLength = field.Length;
-            byte[] fieldStorage = new byte[fieldLength];
-
-            byte[] bytes = new byte[s.Length];
-            s.Read(bytes, 0, (int)s.Length);
             int result = -1;
+            int fieldLength = field.Length;
 
             Parallel.For(0, bytes.Length / fieldLength, (i, loopState) =>
             {
@@ -65,23 +66,6 @@ namespace Engine
                     loopState.Break();
                 }
             });
-
-            /*for (int i = 0; i < bytes.Length; i += fieldLength)
-            {
-                found = true;
-
-                for (int j = 0; j < fieldLength; j++)
-                {
-                    if (bytes[i + j] != field[j])
-                    {
-                        found = false;
-                        break;
-                    }
-                }
-
-                if (found)
-                    return i / fieldLength;
-            }*/
 
             return result;
         }
