@@ -2,6 +2,7 @@
 using System;
 using Server.Properties;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Server
 {
@@ -30,16 +31,26 @@ namespace Server
             {
                 FieldData fieldData = db.readFieldData(location);
 
-                float bestChance = 0;
+                float bestChance = -1;
                 byte bestColumn = 0;
 
-                for (byte i = 0; i < 7; i++)
+                float[] chances = new float[field.Width];
+
+                for (byte i = 0; i < field.Width; i++)
                 {
-                    float chance = fieldData.getWinningChance(i);
-                    if (chance > bestChance)
+                    chances[i] = fieldData.getWinningChance(i);
+                }
+
+                for (byte i = 0; i < field.Width; i++)
+                {
+                    if (field.getEmptyCell(i) < field.Height)
                     {
-                        bestChance = chance;
-                        bestColumn = i;
+                        float chance = fieldData.getWinningChance(i);
+                        if (chance > bestChance)
+                        {
+                            bestChance = chance;
+                            bestColumn = i;
+                        }
                     }
                 }
 

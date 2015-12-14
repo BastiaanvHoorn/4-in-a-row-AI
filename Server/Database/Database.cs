@@ -90,7 +90,7 @@ namespace Server
                 int fileCount = Math.Max(1, DbProperties.getFieldFileCount(i));
                 FieldStream[i - 1] = new FileStream[fileCount];
                 FieldDataStream[i - 1] = new FileStream[fileCount];
-                Fields[i - 1] = new Dictionary<Field, DatabaseLocation>();
+                ConcurrentDictionary<Field, DatabaseLocation> fields = new ConcurrentDictionary<Field, DatabaseLocation>();
 
                 for (int j = 0; j < fileCount; j++)
                 {
@@ -103,19 +103,33 @@ namespace Server
                     byte[] bytes = new byte[fStream.Length];
                     fStream.Read(bytes, 0, bytes.Length);
 
-                    DatabaseLocation dbLoc = new DatabaseLocation(DbProperties, i, j, 0);
-
-                    for (int k = 0; k < bytes.Length / i; k++)
+                    Parallel.For(0, bytes.Length / i, k =>
                     {
                         byte[] fStorage = new byte[i];
                         Buffer.BlockCopy(bytes, k * i, fStorage, 0, i);
                         Field f = fStorage.decompressField();
+                        DatabaseLocation dbLoc = new DatabaseLocation(DbProperties, i, j, k);
+                        fields.GetOrAdd(f, dbLoc);
+                    });
+
+                    /*for (int k = 0; k < bytes.Length / i; k++)
+                    {
+                        byte[] fStorage = new byte[i];
+                        Buffer.BlockCopy(bytes, k * i, fStorage, 0, i);
+                        Field f = fStorage.decompressField();
+                        DatabaseLocation dbLoc = new DatabaseLocation(DbProperties, i, j, k);
                         Fields[i - 1].Add(f, dbLoc);
-                        dbLoc += 1;
-                    }
+                    }*/
 
                     FieldStream[i - 1][j] = fStream;
                     FieldDataStream[i - 1][j] = fdStream;
+                }
+
+                Fields[i - 1] = new Dictionary<Field, DatabaseLocation>();
+
+                foreach (KeyValuePair<Field, DatabaseLocation> pair in fields)
+                {
+                    Fields[i - 1].Add(pair.Key, pair.Value);
                 }
             }
         }
