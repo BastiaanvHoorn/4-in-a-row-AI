@@ -24,13 +24,14 @@ namespace Server
 
     public class AsynchronousSocketListener
     {
-        static Random r = new Random();
         private Logger logger;
+        private Database db;
         // Thread signal.
         public static ManualResetEvent allDone = new ManualResetEvent(false);
 
-        public AsynchronousSocketListener(log_modes log_mode)
+        public AsynchronousSocketListener(log_modes log_mode, Database db)
         {
+            this.db = db;
             this.logger = new Logger(log_mode);
         }
         public void StartListening()
@@ -143,7 +144,7 @@ namespace Server
                 {
                     byte[] _field = data.Skip(1).TakeWhile(b => b != (byte)network_codes.end_of_stream).ToArray();
                     Field field = new Field(_field);
-                    byte[] send_data = new[] { RequestHandler.get_column(field) };
+                    byte[] send_data = new[] { RequestHandler.get_column(field, db) };
                     Send(handler, send_data);
                 }
                 //If the array is marked as a game-history-array, process the array.
@@ -152,7 +153,7 @@ namespace Server
                     logger.log("Recieved game_history", log_modes.essential);
                     Send(handler, new[] { (byte)0 });
                     byte[][] game_history = linear_to_parrallel_game_history(data);
-                    RequestHandler.receive_game_history(game_history);
+                    RequestHandler.receive_game_history(game_history, db);
                 }
 
                 //Clear the data array
@@ -163,7 +164,7 @@ namespace Server
         internal static byte[][] linear_to_parrallel_game_history(List<byte> history)
         {
 
-            history = history.SkipWhile(b=> b== (byte)network_codes.game_history_array).TakeWhile(b => b != (byte)network_codes.end_of_stream).ToList();
+            history = history.SkipWhile(b => b == (byte)network_codes.game_history_array).TakeWhile(b => b != (byte)network_codes.end_of_stream).ToList();
             history.Add((byte)network_codes.end_of_stream);
             //Count the amount of games that is in this byte-array
             int game_counter = history.Count(b => b == (byte)network_codes.game_history_alice || b == (byte)network_codes.game_history_bob);
@@ -174,11 +175,11 @@ namespace Server
             {
                 for (int turn = 1; turn < history.Count; turn++)
                 {
-                    if (history[turn] == (byte) network_codes.game_history_alice ||
-                        history[turn] == (byte) network_codes.game_history_bob ||
-                        history[turn] == (byte) network_codes.end_of_stream)
-                {
-                        
+                    if (history[turn] == (byte)network_codes.game_history_alice ||
+                        history[turn] == (byte)network_codes.game_history_bob ||
+                        history[turn] == (byte)network_codes.end_of_stream)
+                    {
+
                         game_history[game] = new byte[turn];
                         break;
                     }
@@ -233,9 +234,15 @@ namespace Server
                 DatabaseProperties dbProps = new DatabaseProperties(Properties.Settings.Default.DbPath, 7, 6, Properties.Settings.Default.DbMaxFileSize);
                 Database.prepareNew(dbProps);  // Creates a new database
             }
-            AsynchronousSocketListener listener = new AsynchronousSocketListener(log_modes.essential);
-            Console.WriteLine("Starting server");
-            listener.StartListening();
+
+            using (Database db = new Database(Properties.Settings.Default.DbPath))
+            {
+
+                AsynchronousSocketListener listener = new AsynchronousSocketListener(log_modes.essential, db);
+                Console.WriteLine("Starting server");
+                listener.StartListening();
+            }
         }
     }
 }
+
