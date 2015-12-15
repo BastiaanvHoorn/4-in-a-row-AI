@@ -6,6 +6,7 @@
 
         private readonly string Path;
         private readonly int GlobalLocation;
+        private DatabaseProperties DbProperties;
         public readonly int FileIndex;
         public readonly int FieldLength;
         public readonly int Location;
@@ -20,6 +21,7 @@
         /// <param name="location">Field location in Fields.db</param>
         public DatabaseLocation(DatabaseProperties dbProperties, int fieldLength, int fileIndex, int location)
         {
+            this.DbProperties = dbProperties;
             this.Path = dbProperties.getFieldDirPath(fieldLength);
             this.GlobalLocation = fileIndex * dbProperties.getMaxFieldsInFile(fieldLength) + location;
             this.FieldLength = fieldLength;
@@ -32,9 +34,9 @@
         /// </summary>
         /// <param name="location">The location to check</param>
         /// <returns></returns>
-        public bool locationExists(DatabaseProperties dbProperties)
+        public bool locationExists()
         {
-            return Location >= 0 && Location < dbProperties.getMaxFieldsInFile(FieldLength);
+            return Location >= 0 && Location < DbProperties.getMaxFieldsInFile(FieldLength);
         }
         
         /// <summary>
@@ -70,12 +72,12 @@
         /// <param name="fieldLocation">The location of the field</param>
         /// <param name="fieldDataStream">The field data database stream</param>
         /// <returns></returns>
-        public int getFieldDataSeekPosition(DatabaseProperties dbProperties)
+        public int getFieldDataSeekPosition()
         {
-            if (!locationExists(dbProperties))
-                throw new DatabaseException($"Can't calculate seek position for field location. {this.ToString()}. This location doesn't exist");
+            if (!locationExists())
+                throw new DatabaseException($"Can't calculate seek position for field location. {ToString()}. This location doesn't exist");
 
-            return Location * dbProperties.FieldWidth * 8;
+            return Location * DbProperties.FieldWidth * 8;
         }
 
         public static string getFieldPath(string path, int fileIndex)
@@ -86,6 +88,16 @@
         public static string getFieldDataPath(string path, int fileIndex)
         {
             return $"{path}\\FieldData{fileIndex}.db";
+        }
+
+        public static DatabaseLocation operator +(DatabaseLocation dbLoc, int i)
+        {
+            int globalLoc = dbLoc.GlobalLocation + i;
+            int maxFieldsInFile = dbLoc.DbProperties.getMaxFieldsInFile(i);
+            int fileIndex = globalLoc / maxFieldsInFile;
+            int location = globalLoc % maxFieldsInFile;
+
+            return new DatabaseLocation(dbLoc.DbProperties, dbLoc.FieldLength, fileIndex, location);
         }
 
         public override string ToString()

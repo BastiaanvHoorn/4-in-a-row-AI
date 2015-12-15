@@ -2,36 +2,55 @@
 using System;
 using Server.Properties;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Server
 {
     public static class RequestHandler
     {
         static Random rnd = new Random();
+
+        public static byte get_column(Field field)
+        {
+            Settings.Default.Reload();
+            using (Database db = new Database(Settings.Default.DbPath))
+            {
+                return get_column(field, db);
+            }
+        }
+        
         /// <summary>
         /// Returns the move (column) that suits best with the given field (given situation). If the field is not included in the database a random column is returned.
         /// </summary>
         /// <param name="field">Current field</param>
         /// <returns>The best move (column) to do</returns>
-        public static byte get_column(Field field)
+        public static byte get_column(Field field, Database db)
         {
-            Settings.Default.Reload();
-            Database db = new Database(Settings.Default.DbPath);
             DatabaseLocation location;
             if (db.fieldExists(field, out location))
             {
                 FieldData fieldData = db.readFieldData(location);
 
-                float bestChance = 0;
+                float bestChance = -1;
                 byte bestColumn = 0;
 
-                for (byte i = 0; i < 7; i++)
+                float[] chances = new float[field.Width];
+
+                for (byte i = 0; i < field.Width; i++)
                 {
-                    float chance = fieldData.getWinningChance(i);
-                    if (chance > bestChance)
+                    chances[i] = fieldData.getWinningChance(i);
+                }
+
+                for (byte i = 0; i < field.Width; i++)
+                {
+                    if (field.getEmptyCell(i) < field.Height)
                     {
-                        bestChance = chance;
-                        bestColumn = i;
+                        float chance = fieldData.getWinningChance(i);
+                        if (chance > bestChance)
+                        {
+                            bestChance = chance;
+                            bestColumn = i;
+                        }
                     }
                 }
 
@@ -46,8 +65,10 @@ namespace Server
         public static void update_field_data(DatabaseLocation fieldLocation, FieldData newData)
         {
             Settings.Default.Reload();
-            Database db = new Database(Settings.Default.DbPath);
-            update_field_data(fieldLocation, newData, db);
+            using (Database db = new Database(Settings.Default.DbPath))
+            {
+                update_field_data(fieldLocation, newData, db);
+            }
         }
 
         /// <summary>
@@ -66,13 +87,16 @@ namespace Server
             db.writeFieldData(fieldLocation, fieldData);            // Writes the field data to the database.
         }
 
-        public static void receive_game_history(byte[][] gameHistories)
+        public static int receive_game_history(byte[][] gameHistories)
         {
             Settings.Default.Reload();
-            Database db = new Database(Settings.Default.DbPath);
-            receive_game_history(gameHistories, db);
+            using (Database db = new Database(Settings.Default.DbPath))
+            {
+                return receive_game_history(gameHistories, db);
+            }
         }
-        public static void receive_game_history(byte[][] gameHistories, Database db)
+
+        public static int receive_game_history(byte[][] gameHistories, Database db)
         {
             Dictionary<Field, FieldData> history = new Dictionary<Field, FieldData>();
             
@@ -116,16 +140,7 @@ namespace Server
 
             db.processGameHistory(history);
 
-            /*foreach (Field field in history.Keys)
-            {
-                DatabaseLocation dbLoc;
-                if (!db.fieldExists(field, out dbLoc))      // If the field doesn't exist it has to be added to the database.
-                {
-                    dbLoc = db.addDatabaseItem(field);
-                }
-                
-                update_field_data(dbLoc, history[field], db);   // Applies the new data to the field data database.
-            }*/
+            return history.Count;
         }
     }
 }

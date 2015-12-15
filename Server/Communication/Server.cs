@@ -230,7 +230,7 @@ namespace Server
             if (!System.IO.Directory.Exists(Properties.Settings.Default.DbPath))    // Checks if the database already exists
             {
                 DatabaseProperties dbProps = new DatabaseProperties(Properties.Settings.Default.DbPath, 7, 6, Properties.Settings.Default.DbMaxFileSize);
-                new Database(dbProps);  // Creates a new database
+                Database.prepareNew(dbProps);  // Creates a new database
             }
             AsynchronousSocketListener listener = new AsynchronousSocketListener(log_modes.essential);
             listener.StartListening();

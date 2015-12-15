@@ -1,8 +1,8 @@
 ﻿using System;
 using System.IO;
-using Engine;
+using System.Threading.Tasks;
 
-namespace Server
+namespace Engine
 {
     public static class Extensions
     {
@@ -26,31 +26,34 @@ namespace Server
         /// <returns>Zero-based location</returns>
         public static int getFieldLocation(this Field field, Stream s)
         {
-            return field.compressField().getFieldLocation(s);
+            s.Seek(0, SeekOrigin.Begin);
+
+            byte[] fStorage = field.compressField();
+
+            byte[] bytes = new byte[s.Length];
+            s.Read(bytes, 0, (int)s.Length);
+
+            return fStorage.getFieldLocation(bytes);
         }
 
         /// <summary>
-        /// Returns the location (in fields) in the specified stream.
+        /// Returns the location (in fields) in the specified byte array.
         /// </summary>
         /// <param name="field">Storage of the field</param>
         /// <param name="s">Stream to read from</param>
         /// <returns>Zero-based location</returns>
-        public static int getFieldLocation(this byte[] field, Stream s)
+        public static int getFieldLocation(this byte[] field, byte[] bytes)
         {
+            int result = -1;
             int fieldLength = field.Length;
-            byte[] fieldStorage = new byte[fieldLength];
 
-            byte[] bytes = new byte[s.Length];
-            s.Read(bytes, 0, (int)s.Length);
-            bool found;
-
-            for (int i = 0; i < bytes.Length; i += fieldLength)
+            Parallel.For(0, bytes.Length / fieldLength, (i, loopState) =>
             {
-                found = true;
+                bool found = true;
 
                 for (int j = 0; j < fieldLength; j++)
                 {
-                    if (bytes[i + j] != field[j])
+                    if (bytes[i * fieldLength + j] != field[j])
                     {
                         found = false;
                         break;
@@ -58,10 +61,13 @@ namespace Server
                 }
 
                 if (found)
-                    return i / fieldLength;
-            }
+                {
+                    result = i;
+                    loopState.Break();
+                }
+            });
 
-            return -1;
+            return result;
         }
 
         /// <summary>
@@ -91,7 +97,7 @@ namespace Server
         /// <param name="field1"></param>
         /// <param name="field2"></param>
         /// <returns>Equality of fields</returns>
-        internal static bool equalFields(byte[] field1, byte[] field2)
+        public static bool equalFields(byte[] field1, byte[] field2)
         {
             if (field1.Length != field2.Length)
                 return false;
@@ -112,7 +118,7 @@ namespace Server
         /// </summary>
         /// <param name="field">The field to be compressed</param>
         /// <returns>The compressed field as a byte array</returns>
-        internal static byte[] compressField(this Field field)
+        public static byte[] compressField(this Field field)
         {
             BitWriter bw = new BitWriter(field.getMaxStorageSize());
 
@@ -137,7 +143,7 @@ namespace Server
             return bw.getStorage();
         }
 
-        internal static Field decompressField(this byte[] storage, byte width = 7, byte height = 6)
+        public static Field decompressField(this byte[] storage, byte width = 7, byte height = 6)
         {
             Field f = new Field(width, height);
             byte row = 0;
@@ -148,7 +154,7 @@ namespace Server
 
             while (bit != -1 && column < width)
             {
-                if (bit == 0 || row == height)
+                if (bit == 0)
                 {
                     row = 0;
                     column++;
@@ -157,12 +163,99 @@ namespace Server
                 {
                     row++;
                     f.doMove(column, (players)(br.readBit() + 1));
+
+                    if (row == height)
+                    {
+                        row = 0;
+                        column++;
+                    }
                 }
 
                 bit = br.readBit();
             }
 
             return f;
+        }
+
+        /// <summary>
+        /// count the amount of consecutive stones of one player in the given direction
+        /// </summary>
+        /// <param name="x">the x-coordinate of the start</param>
+        /// <param name="y">the y-cooordinate of the start</param>
+        /// <param name="dx">the direction in x (can only be -1, 0, or -1)</param>
+        /// <param name="dy">the direction in y (can only be -1, 0, or -1)</param>
+        /// <param name="ab">the player of which the stones should be counted (1 for alice, 2 for bob)</param>
+        /// <returns>The amount of stones from player ab found, not counting the starting stone</returns>
+        public static byte count_for_win_direction(this Field field, byte x, byte y, sbyte dx, sbyte dy, players player)
+        {
+            byte counter = 0;
+            sbyte _x = (sbyte)x;
+            sbyte _y = (sbyte)y;
+            while (true)
+            {
+                _x += dx;
+                _y += dy;
+                if (_x < 0 || _x >= field.Width || _y < 0 || _y >= field.Height)
+                {
+                    break;
+                }
+                if (field.getCellPlayer(_x, _y) != player)
+                {
+                    break;
+                }
+                counter++;
+            }
+            return counter;
+        }
+
+        /// <summary>
+        /// Checks if someone has won
+        /// </summary>
+        /// <p>
+        /// Checks in each direction from the given stone if it can make a whole row. If so, the variable winning will be changed
+        /// </p>
+        /// <param name="x">The x of the given stone</param>
+        /// <param name="y">The y of the given stone</param>
+        /// <param name="player">1 for alice, 2 for bob</param>
+        public static bool check_for_win(this Field field, byte x, byte y, players player)
+        {
+            //Checks from botleft to topright
+            byte counter = 1;
+            counter += field.count_for_win_direction(x, y, -1, 1, player);
+            counter += field.count_for_win_direction(x, y, 1, -1, player);
+            if (counter >= 4)
+            {
+                return true;
+            }
+
+            //checks from topleft to botright
+            counter = 1;
+            counter += field.count_for_win_direction(x, y, 1, 1, player);
+            counter += field.count_for_win_direction(x, y, -1, -1, player);
+            if (counter >= 4)
+            {
+                return true;
+            }
+
+            //checks horizontal
+            counter = 1;
+            counter += field.count_for_win_direction(x, y, 0, 1, player);
+            counter += field.count_for_win_direction(x, y, 0, -1, player);
+            if (counter >= 4)
+            {
+                return true;
+            }
+
+            //checks vertical
+            counter = 1;
+            counter += field.count_for_win_direction(x, y, -1, 0, player);
+            counter += field.count_for_win_direction(x, y, 1, 0, player);
+            if (counter >= 4)
+            {
+                return true;
+            }
+
+            return false;
         }
     }
 }

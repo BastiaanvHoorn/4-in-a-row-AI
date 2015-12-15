@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Server
+namespace Engine
 {
     /// <summary>
     /// A simple class which makes it easier to store separate bits into a byte array
