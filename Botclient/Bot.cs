@@ -4,20 +4,31 @@ using System.Net.Sockets;
 using Engine;
 using System.Text;
 using System.Threading.Tasks;
-using Networker;
+using Util;
 
 namespace Botclient
 {
     public class Bot : IPlayer
     {
         public players player { get; }
-        public Bot(players player)
+        private byte random_chance;
+        private Random random;
+        public Bot(players player, byte random_chance = 0)
         {
             this.player = player;
+            
+            this.random_chance = random_chance;
+            if (this.random_chance > 100)
+                this.random_chance = 100;
+            random = new Random();
         }
 
         public byte get_turn(Field field, log_modes log_mode)
         {
+            if (random.Next(100) < random_chance)
+                return (byte)random.Next(field.Width);
+            
+
             for (byte x = 0; x < field.Width; x++)
             {
                 byte y = field.getEmptyCell(x);

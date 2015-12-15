@@ -90,7 +90,7 @@ namespace Util
             }
             //Add a footer witn an end-of-stream token
             msg[msg.Length - 1] = (byte)network_codes.end_of_stream;
-
+            
             //Copy all the data to the middle part of the array
             data.CopyTo(msg, 1);
             return msg;

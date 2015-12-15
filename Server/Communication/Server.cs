@@ -4,6 +4,7 @@ using System.Net.Sockets;
 using System.Linq;
 using System.Threading;
 using System.Collections.Generic;
+using System.Diagnostics;
 using Engine;
 using Util;
 namespace Server
@@ -233,6 +234,7 @@ namespace Server
                 Database.prepareNew(dbProps);  // Creates a new database
             }
             AsynchronousSocketListener listener = new AsynchronousSocketListener(log_modes.essential);
+            Console.WriteLine("Starting server");
             listener.StartListening();
         }
     }
