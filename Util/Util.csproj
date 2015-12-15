@@ -7,8 +7,8 @@
     <ProjectGuid>{1366D929-7282-4FAA-8349-095B67DF5A1D}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Networker</RootNamespace>
-    <AssemblyName>Networker</AssemblyName>
+    <RootNamespace>Util</RootNamespace>
+    <AssemblyName>Util</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -41,6 +41,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Enums.cs" />
+    <Compile Include="Logger.cs" />
     <Compile Include="Requester.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

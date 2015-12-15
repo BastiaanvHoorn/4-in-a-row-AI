@@ -1,4 +1,4 @@
-﻿namespace Networker
+﻿namespace Util
 {
     public enum network_codes
     {
@@ -7,5 +7,19 @@
         game_history_array = 210,   //The first byte when the bot sends an array of game_history
         game_history_alice = 211,   //The first byte of the history of a game which Alice has won
         game_history_bob = 212      //The first byte of the history of a game which Bob has won
+    }
+    public enum log_modes
+    {
+        silent,
+        essential,
+        per_game,
+        per_turn,
+        debug
+    }
+    public enum log_types
+    {
+        error,
+        warning,
+        message
     }
 }

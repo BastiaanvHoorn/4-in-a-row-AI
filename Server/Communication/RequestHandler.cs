@@ -83,9 +83,9 @@ namespace Server
                 players turn = players.Alice;
                 players winner = players.Empty;
 
-                if (h[0] == (byte)Networker.network_codes.game_history_alice)
+                if (h[0] == (byte)Util.network_codes.game_history_alice)
                     winner = players.Alice;
-                else if (h[0] == (byte)Networker.network_codes.game_history_bob)
+                else if (h[0] == (byte)Util.network_codes.game_history_bob)
                     winner = players.Bob;
 
                 for (int j = 1; j < h.Length; j++)

@@ -5,7 +5,7 @@ using System.Linq;
 using System.Threading;
 using System.Collections.Generic;
 using Engine;
-using Networker;
+using Util;
 namespace Server
 {
     // State object for reading client data asynchronously
@@ -24,12 +24,16 @@ namespace Server
     public class AsynchronousSocketListener
     {
         static Random r = new Random();
-        public log_modes log_mode;
+        private Logger logger;
         // Thread signal.
         public static ManualResetEvent allDone = new ManualResetEvent(false);
-        public void StartListening(log_modes log_mode)
+
+        public AsynchronousSocketListener(log_modes log_mode)
         {
-            this.log_mode = log_mode;
+            this.logger = new Logger(log_mode);
+        }
+        public void StartListening()
+        {
             // Establish the local endpoint for the socket.
             // The DNS name of the computer
             // running the listener is "host.contoso.com".
@@ -53,7 +57,7 @@ namespace Server
                     allDone.Reset();
 
                     // Start an asynchronous socket to listen for connections.
-                    Console.WriteLine("Waiting for a connection...");
+                    logger.log("Waiting for a connection...", log_modes.debug);
                     listener.BeginAccept(
                         new AsyncCallback(AcceptCallback),
                         listener);
@@ -126,8 +130,7 @@ namespace Server
                 data[0] != (byte)network_codes.game_history_array)
             {
 
-                if (log_mode >= log_modes.only_errors)
-                    Console.WriteLine("WARNING: Found no header in data array, will not process data");
+                logger.log("WARNING: Found no header in data array, will not process data", log_modes.essential, log_types.warning);
                 data = null;
                 Send(handler, new[] { (byte)0 });
             }
@@ -145,8 +148,7 @@ namespace Server
                 //If the array is marked as a game-history-array, process the array.
                 else if (data[0] == (byte)network_codes.game_history_array)
                 {
-                    if (log_mode >= log_modes.essential)
-                        Console.WriteLine("Recieved game_history");
+                    logger.log("Recieved game_history", log_modes.essential);
                     Send(handler, new[] { (byte)0 });
                     byte[][] game_history = linear_to_parrallel_game_history(data);
                     RequestHandler.receive_game_history(game_history);
@@ -189,6 +191,7 @@ namespace Server
             }
             return game_history;
         }
+
         private void Send(Socket handler, byte[] data)
         {
             // Begin sending the data to the remote device.
@@ -229,8 +232,8 @@ namespace Server
                 DatabaseProperties dbProps = new DatabaseProperties(Properties.Settings.Default.DbPath, 7, 6, Properties.Settings.Default.DbMaxFileSize);
                 new Database(dbProps);  // Creates a new database
             }
-            AsynchronousSocketListener listener = new AsynchronousSocketListener();
-            listener.StartListening(log_modes.essential);
+            AsynchronousSocketListener listener = new AsynchronousSocketListener(log_modes.essential);
+            listener.StartListening();
         }
     }
 }

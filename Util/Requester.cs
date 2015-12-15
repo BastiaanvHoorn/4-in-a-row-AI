@@ -5,9 +5,8 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
-using Engine;
 
-namespace Networker
+namespace Util
 {
     public static class Requester
     {

@@ -5,19 +5,19 @@ using System.Linq;
 using System.Xml.Schema;
 using Engine;
 using Botclient;
-using Networker;
+using Util;
 
 namespace Simulator
 {
-    class Simulator
+    internal class Simulator
     {
 
         private readonly byte width = 7;
         private readonly byte height = 6;
         private readonly uint max_games = 1;
-        private byte games_won_alice;
-        private byte games_won_bob;
-        static private log_modes log_mode = log_modes.essential;
+        private uint games_won_alice;
+        private uint games_won_bob;
+        private static Logger logger;
         /// <summary>
         /// Tries to execute the given turn from the given player.
         /// If the given turn is not possible for whatever reason, the player is asked again.
@@ -26,22 +26,21 @@ namespace Simulator
         /// <param name="player"></param>
         private static bool do_turn(IPlayer player, Game game)
         {
-            if (game.stones_count == game.width * game.height) //If the whole field is full of stones and no one has won, it's a tie
+            if (game.stones_count == game.width * game.height)
+            //If the whole field is full of stones and no one has won, it's a tie
             {
-                if (log_mode >= log_modes.verbose)
-                    Console.WriteLine($"The field is full, it is a tie if no one has won");
+                logger.log("The field is full, it is a tie if no one has won", log_modes.per_game, log_types.warning);
                 return false;
             }
             string s = "";
             int counter = 0;
-            while (!game.add_stone(player.get_turn(game.get_field(), log_mode), player.player, ref s)) //Try to add a stone fails. If that fails, log the error and try it again.
+            while (!game.add_stone(player.get_turn(game.get_field(), logger.log_mode), player.player, ref s))
+            //Try to add a stone fails. If that fails, log the error and try it again.
             {
                 counter++;
-                if (log_mode >= log_modes.debug)
-                    Console.WriteLine($"{s} ({counter} tries)");
+                logger.log($"{s} ({counter} tries)", log_modes.debug);
                 if (counter < 100) continue;
-                if (log_mode >= log_modes.only_errors)
-                    Console.WriteLine("Exceeded maximum of tries for a turn");
+                logger.log("Exceeded maximum of tries for a turn", log_modes.debug, log_types.error);
                 return false;
             }
             return true;
@@ -50,16 +49,16 @@ namespace Simulator
         private players do_game(Game game, ref List<byte> history)
         {
             game = new Game(width, height);
-            if (log_mode >= log_modes.debug)
-                Console.WriteLine($"Created new game of {game.get_field().Width} by {game.get_field().Height}");
+            logger.log($"Created new game of {game.get_field().Width} by {game.get_field().Height}", log_modes.per_game);
             var _players = new List<IPlayer>() //A fancy list to prevent the use of if-statements
-                {
-                    new Bot(players.Alice),
-                    new Bot(players.Bob)
-                };
+            {
+                new Bot(players.Alice),
+                new Bot(players.Bob)
+            };
             while (true)
             {
-                bool tie = !do_turn(_players.Find(player => player.player == game.next_player), game); //Execute the turn the player who's turn it is. If do_turn returns false, it is a tie;
+                bool tie = !do_turn(_players.Find(player => player.player == game.next_player), game);
+                //Execute the turn the player who's turn it is. If do_turn returns false, it is a tie;
                 //First add the indication of the winner of the match to the history-list
                 //Then add the history itself
                 if (game.has_won(players.Alice))
@@ -90,12 +89,13 @@ namespace Simulator
                 data.AddRange(history);
             }
             Stopwatch sw = new Stopwatch();
-            if(log_mode >= log_modes.essential)
-                Console.WriteLine($"Created game_history in {sw.ElapsedMilliseconds}ms. Starting to send now");
+            logger.log($"Created game_history in {sw.ElapsedMilliseconds}ms. Starting to send now", log_modes.essential);
             Requester.send(data.ToArray(), network_codes.game_history_array, log_modes.essential);
 
         }
+
         private delegate string victory_message(int games_won);
+
         /// <summary>
         /// Loop through the given amount of games, and log some stuff in the meantime
         /// </summary>
@@ -113,8 +113,10 @@ namespace Simulator
                 var history = new List<byte>();
                 players victourious_player = do_game(game, ref history);
 
-                int turns = history.Count - 1; //The amount of turns this game lasted. 1 is subtracted for the winner indication at the start.
-                victory_message victory_message = games_won => $"\t\t{games_won}th game after \t{(games_won < 10 ? "\t" : "")}{turns} turns";
+                int turns = history.Count - 1;
+                //The amount of turns this game lasted. 1 is subtracted for the winner indication at the start.
+                victory_message victory_message =
+                    games_won => $"\t\t{games_won}th game after \t{(games_won < 10 ? "\t" : "")}{turns} turns";
                 string games_left_message = $";\t {max_games - game_count - 1} of {max_games} game(s) left";
                 switch (victourious_player)
                 {
@@ -123,31 +125,30 @@ namespace Simulator
 
                         histories.Add(history);
 
-                        if (log_mode >= log_modes.essential)
-                            Console.WriteLine($"Alice won her {victory_message(games_won_alice)}{games_left_message}");
+                        logger.log($"Alice won her {victory_message((int)games_won_alice)}{games_left_message}",
+                            log_modes.per_game);
                         break;
                     case players.Bob:
                         games_won_bob++;
 
                         histories.Add(history);
 
-                        if (log_mode >= log_modes.essential)
-                            Console.WriteLine($"Bob won his {victory_message(games_won_bob)}{games_left_message}");
+                        logger.log($"Bob won his {victory_message((int)games_won_bob)}{games_left_message}",
+                            log_modes.per_game);
                         break;
                     default:
-                        if (log_mode >= log_modes.essential)
-                            Console.WriteLine($"The game was a tie\t\t\t\t\t{games_left_message}");
+                        logger.log($"The game was a tie\t\t\t\t\t{games_left_message}", log_modes.per_game);
                         break;
                 }
             }
             sw.Stop();
             send_history(histories);
             TimeSpan elapsed = sw.Elapsed;
-            if (log_mode > log_modes.essential)
-            {
-                Console.WriteLine($"Simulation of {max_games} game(s) finished in {elapsed}");
-                Console.WriteLine($"Alice won {games_won_alice} games, Bob won {games_won_bob} and {max_games - games_won_alice - games_won_bob} were a tie;");
-            }
+            logger.log($"Simulation of {max_games} game(s) finished in {elapsed}", log_modes.essential);
+            logger.log(
+                $"Alice won {games_won_alice} games, Bob won {games_won_bob} and {max_games - games_won_alice - games_won_bob} were a tie;",
+                log_modes.essential);
+
         }
         /// <summary>
         /// Initialize 1 option from a list of command-line arguments and return the value.
@@ -169,20 +170,17 @@ namespace Simulator
                     uint option = uint.Parse(args[index + 1]); //As the output of this relies on user input, this can give errors.
                     if (option >= min && option <= max)
                     {
-                        if (log_mode >= log_modes.essential)
-                            Console.WriteLine($"{arg_name} is set to {option}");
+                        logger.log($"{arg_name} is set to {option}", log_modes.essential);
                         return option;
                     }
 
-                    if (log_mode >= log_modes.only_errors)
-                        Console.WriteLine($"{arg_name} was given outside of the boundaries {min} and {max}");
-                    if (log_mode >= log_modes.essential)
-                        Console.WriteLine($"{arg_name} defaulted to {default_value}");
+                    logger.log($"{arg_name} was given outside of the boundaries {min} and {max}", log_modes.essential,
+                        log_types.error);
+                    logger.log($"{arg_name} defaulted to {default_value}", log_modes.essential);
                 }
                 catch (FormatException) //Formatexception for the uint.parse
                 {
-                    if (log_mode >= log_modes.only_errors)
-                        Console.WriteLine($"{arg_name} was given in the wrong format");
+                    logger.log($"{arg_name} was given in the wrong format", log_modes.essential, log_types.error);
                 }
             }
             //Return the default value when we had an exception or the found parameter was outside of the given boundaries
@@ -195,17 +193,21 @@ namespace Simulator
         public Simulator(string[] _args)
         {
             List<string> args = new List<string>(_args);
-            log_mode = (log_modes)parse_arg(args, "m", "log _modes", 0, 5, 2);
+            log_modes mode = (log_modes)parse_arg(args, "m", "log _modes", 0, 5, 2);
+            logger = new Logger(mode);
             width = (byte)parse_arg(args, "w", "width", 2, 20, 7);
             height = (byte)parse_arg(args, "h", "height", 2, 20, 6);
             max_games = parse_arg(args, "g", "maximum of games", 1, uint.MaxValue, 1);
+            
             Console.ReadLine();
         }
         /// <param name="args">
-        /// -l  [0-5]   log _modes (default 2) <see cref="log_modes"/>
-        /// -w  [>0]    width  of the playing field (default 7)
-        /// -h  [>0]    height of the playing field (default 6)
-        /// -g  [>0]    amount of games to simulate (default 1)
+        /// -l  [0-5]                   log _modes (default 2) <see cref="log_modes"/>
+        /// -w  [>0]                    width  of the playing field (default 7)
+        /// -h  [>0]                    height of the playing field (default 6)
+        /// 
+        /// -g  [>0]                    amount of games to simulate (default 1)
+        /// -d  [date in the future]    date at which the simulation will be cutt off (default null)
         /// </param>
         private static void Main(string[] args)
         {

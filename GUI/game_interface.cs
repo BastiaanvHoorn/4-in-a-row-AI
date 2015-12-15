@@ -5,7 +5,7 @@ using System.Windows.Forms;
 using Botclient;
 using Engine;
 using System.Collections.Generic;
-using Networker;
+using Util;
 
 namespace connect4
 {
