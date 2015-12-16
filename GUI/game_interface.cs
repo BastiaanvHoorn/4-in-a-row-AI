@@ -47,7 +47,7 @@ namespace connect4
             alice = new GUI_player(this, Engine.players.Alice);
             if (players == 1)
             {
-                bob = new Bot(Engine.players.Bob);
+                bob = new Bot(Engine.players.Bob, 0);
                 numeric_Bob.Visible = false;
                 button_Bob.Visible = false;
             }
