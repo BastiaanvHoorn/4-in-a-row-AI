@@ -21,7 +21,6 @@ namespace connect4
         private const int dy = 25;
         private IPlayer alice;
         private IPlayer bob;
-        private log_modes log_mode;
         private bool alice_button_clicked = false;
         private bool bob_button_clicked = false;
 
@@ -29,7 +28,7 @@ namespace connect4
         /// Constructor for the game
         /// </summary>
         /// <param name="players">The amount of players that is gonna play, 0 for bot vs bot, 1 for player vs bot and 2 for player vs player</param>
-        public game_interface(int players, log_modes log_mode, Game game)
+        public game_interface(int players, Game game)
         {
             InitializeComponent();
             if (players < 1)
@@ -42,7 +41,6 @@ namespace connect4
             }
             this.game = game;
             this.players = players;
-            this.log_mode = log_mode;
         }
         private void Form1_Load(object sender, EventArgs e)
         {
@@ -85,7 +83,7 @@ namespace connect4
                 (byte) network_codes.game_history_array
             };
             data.AddRange(game.history);
-            Requester.send(data.ToArray(), network_codes.game_history_array, log_mode);
+            Requester.send(data.ToArray(), network_codes.game_history_array);
         }
         /// <summary>
         /// Tries to get a column from the given IPlayer and puts a stone in that column
@@ -101,7 +99,7 @@ namespace connect4
                 {
                     Console.WriteLine(s);
                 }
-                column = player.get_turn(game.get_field(), log_mode);
+                column = player.get_turn(game.get_field());
             } while (!game.add_stone(column, player.player, ref s));
         }
         /// <summary>

@@ -8,18 +8,4 @@
         game_history_alice = 211,   //The first byte of the history of a game which Alice has won
         game_history_bob = 212      //The first byte of the history of a game which Bob has won
     }
-    public enum log_modes
-    {
-        silent,
-        essential,
-        per_game,
-        per_turn,
-        debug
-    }
-    public enum log_types
-    {
-        error,
-        warning,
-        message
-    }
 }

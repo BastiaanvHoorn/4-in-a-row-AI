@@ -2,14 +2,15 @@
 using System.Net;
 using System.Net.Sockets;
 using Engine;
-using System.Text;
-using System.Threading.Tasks;
 using Util;
+using NLog;
+using Logger = NLog.Logger;
 
 namespace Botclient
 {
     public class Bot : IPlayer
     {
+        private static Logger logger = LogManager.GetCurrentClassLogger();
         public players player { get; }
         private byte random_chance;
         private Random random;
@@ -23,7 +24,7 @@ namespace Botclient
             random = new Random();
         }
 
-        public byte get_turn(Field field, log_modes log_mode)
+        public byte get_turn(Field field)
         {
             if (random.Next(100) < random_chance)
                 return (byte)random.Next(field.Width);
@@ -46,9 +47,8 @@ namespace Botclient
                     return x;
             }
 
-            var column = Requester.send(field.getStorage(), network_codes.column_request, log_mode)[0];
-            if(log_mode >= log_modes.debug)
-                Console.WriteLine($"Tried to drop a stone in colmun {column}");
+            var column = Requester.send(field.getStorage(), network_codes.column_request)[0];
+            logger.Debug($"Tried to drop a stone in colmun {column}");
             return column;
         }
 

@@ -1,16 +1,16 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using System.Threading.Tasks;
+using NLog;
+using Logger = NLog.Logger;
 
 namespace Util
 {
     public static class Requester
     {
-        public static byte[] send(byte[] data, network_codes type, log_modes log_mode)
+        private static Logger logger = LogManager.GetCurrentClassLogger();
+        public static byte[] send(byte[] data, network_codes type)
         {
             // Data buffer for incoming data.
             byte[] bytes = new byte[1024];
@@ -33,18 +33,15 @@ namespace Util
                 {
                     sender.Connect(remoteEP);
 
-                    if(log_mode >= log_modes.debug)
-                        Console.WriteLine($"Socket connected to {sender.RemoteEndPoint}");
+                    logger.Debug($"Socket connected to {sender.RemoteEndPoint}");
 
                     byte[] msg = add_header_footer(data, type);
                     // Send the data through the socket.
                     int bytesSent = sender.Send(msg);
-                    if (log_mode >= log_modes.debug)
-                        Console.WriteLine("Waiting for response from server");
+                    logger.Debug("Waiting for response from server");
                     // Receive the response from the remote device.
                     int bytesRec = sender.Receive(bytes);
-                    if (log_mode >= log_modes.debug)
-                        Console.WriteLine($"Recieved from server = {Encoding.ASCII.GetString(bytes, 0, bytesRec)}");
+                    logger.Debug($"Recieved from server = {Encoding.ASCII.GetString(bytes, 0, bytesRec)}");
 
                     // Release the socket.
                     sender.Shutdown(SocketShutdown.Both);
@@ -55,15 +52,15 @@ namespace Util
                 }
                 catch (ArgumentNullException ane)
                 {
-                    Console.WriteLine($"ArgumentNullException : {ane}");
+                    logger.Error($"ArgumentNullException : {ane}");
                 }
                 catch (SocketException se)
                 {
-                    Console.WriteLine($"SocketException : {se}");
+                    logger.Error($"SocketException : {se}");
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine($"Unexpected exception : {e}");
+                    logger.Error($"Unexpected exception : {e}");
                 }
 
             }
@@ -79,15 +76,8 @@ namespace Util
             //Create a byte-array that is 2 larger then the data that must be send so there is room for a header and a footer
             byte[] msg = new byte[data.Length + 2];
             //Add a header based on the given signal-type
-            switch (type)
-            {
-                case network_codes.game_history_array:
-                    msg[0] = (byte)network_codes.game_history_array;
-                    break;
-                case network_codes.column_request:
-                    msg[0] = (byte)network_codes.column_request;
-                    break;
-            }
+            msg[0] = (byte)type;
+
             //Add a footer witn an end-of-stream token
             msg[msg.Length - 1] = (byte)network_codes.end_of_stream;
             

@@ -6,12 +6,15 @@ using System.Text;
 using System.Threading.Tasks;
 using Botclient;
 using Engine;
+using NLog;
 using Util;
+using Logger = NLog.Logger;
 
 namespace Simulator
 {
     public class Game_processor
     {
+        private static Logger logger = LogManager.GetCurrentClassLogger();
         private readonly byte width = 7;
         private readonly byte height = 6;
         public uint games_won_alice;
@@ -44,8 +47,11 @@ namespace Simulator
                 var game = new Game(width, height);
                 var history = new List<byte>();
                 players victourious_player = do_game(game, ref history);
-                int turns = history.Count - 1;
+
                 //The amount of turns this game lasted. 1 is subtracted for the winner indication at the start.
+                int turns = history.Count - 1;
+
+                //Log a nice message for the winner
                 victory_message victory_message =
                     games_won => $"\t\t{games_won}th game after \t{(games_won < 10 ? "\t" : "")}{turns} turns";
                 string games_left_message = $";\t {games - game_count - 1} of {games} game(s) left";
@@ -54,25 +60,23 @@ namespace Simulator
                     case players.Alice:
                         games_won_alice++;
                         histories.Add(history);
-                        Console.WriteLine($"Alice won her {victory_message((int) games_won_alice)}{games_left_message}");
+                        logger.Info($"Alice won her {victory_message((int) games_won_alice)}{games_left_message}");
                         break;
                     case players.Bob:
                         games_won_bob++;
                         histories.Add(history);
-
-                        Console.WriteLine($"Bob won his {victory_message((int)games_won_bob)}{games_left_message}");
+                        logger.Info($"Bob won his {victory_message((int)games_won_bob)}{games_left_message}");
                         break;
                     default:
-                        //logger.log($"The game was a tie\t\t\t\t\t{games_left_message}", log_modes.per_game);
+                        logger.Info($"The game was a tie\t\t\t\t\t{games_left_message}");
                         break;
                 }
             }
             sw.Stop();
             TimeSpan elapsed = sw.Elapsed;
-            //logger.log($"Simulation of {games} game(s) finished in {elapsed}", log_modes.essential);
-            //logger.log(
-            //    $"Alice won {games_won_alice} games, Bob won {games_won_bob} and {games - games_won_alice - games_won_bob} were a tie;",
-            //    log_modes.essential);
+            logger.Info($"Simulation of {games} game(s) finished in {elapsed}");
+            logger.Info(
+                $"Alice won {games_won_alice} games, Bob won {games_won_bob} and {games - games_won_alice - games_won_bob} were a tie;");
             return histories;
         }
 
@@ -85,6 +89,7 @@ namespace Simulator
                 new Bot(players.Alice, random_alice),
                 new Bot(players.Bob, random_bob)
             };
+
             while (true)
             {
                 bool tie = !do_turn(_players.Find(player => player.player == game.next_player), game);
@@ -126,13 +131,13 @@ namespace Simulator
             }
             string s = "";
             int counter = 0;
-            while (!game.add_stone(player.get_turn(game.get_field(), log_modes.essential), player.player, ref s))
+            while (!game.add_stone(player.get_turn(game.get_field()), player.player, ref s))
             //Try to add a stone fails. If that fails, log the error and try it again.
             {
                 counter++;
                 //logger.log($"{s} ({counter} tries)", log_modes.debug);
                 if (counter < 100) continue;
-                //logger.log("Exceeded maximum of tries for a turn", log_modes.debug, log_types.error);
+                logger.Warn("Exceeded maximum of tries for a turn");
                 return false;
             }
             return true;

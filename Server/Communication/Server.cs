@@ -6,7 +6,10 @@ using System.Threading;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Engine;
+using NLog;
+using Logger = NLog.Logger;
 using Util;
+
 namespace Server
 {
     // State object for reading client data asynchronously
@@ -24,15 +27,17 @@ namespace Server
 
     public class AsynchronousSocketListener
     {
-        private Logger logger;
+
+        private static Logger logger = LogManager.GetCurrentClassLogger();
         private Database db;
+        public int port;
         // Thread signal.
         public static ManualResetEvent allDone = new ManualResetEvent(false);
 
-        public AsynchronousSocketListener(log_modes log_mode, Database db)
+        public AsynchronousSocketListener(Database db, int port)
         {
             this.db = db;
-            this.logger = new Logger(log_mode);
+            this.port = port;
         }
         public void StartListening()
         {
@@ -41,8 +46,8 @@ namespace Server
             // running the listener is "host.contoso.com".
             IPHostEntry ipHostInfo = Dns.Resolve(Dns.GetHostName());
             IPAddress ipAddress = ipHostInfo.AddressList[0];
-            IPEndPoint localEndPoint = new IPEndPoint(ipAddress, 11000);
-
+            IPEndPoint localEndPoint = new IPEndPoint(ipAddress, port);
+            logger.Info($"Starting server at port {port}");
             // Create a TCP/IP socket.
             Socket listener = new Socket(AddressFamily.InterNetwork,
                 SocketType.Stream, ProtocolType.Tcp);
@@ -59,7 +64,7 @@ namespace Server
                     allDone.Reset();
 
                     // Start an asynchronous socket to listen for connections.
-                    logger.log("Waiting for a connection...", log_modes.debug);
+                    logger.Debug("Waiting for a connection...");
                     listener.BeginAccept(
                         new AsyncCallback(AcceptCallback),
                         listener);
@@ -132,7 +137,8 @@ namespace Server
                 data[0] != (byte)network_codes.game_history_array)
             {
 
-                logger.log("WARNING: Found no header in data array, will not process data", log_modes.essential, log_types.warning);
+                logger.Warn("Found no header in data array, will not process data");
+                logger.Trace(data);
                 data = null;
                 Send(handler, new[] { (byte)0 });
             }
@@ -145,15 +151,19 @@ namespace Server
                     byte[] _field = data.Skip(1).TakeWhile(b => b != (byte)network_codes.end_of_stream).ToArray();
                     Field field = new Field(_field);
                     byte[] send_data = new[] { RequestHandler.get_column(field, db) };
+                    logger.Debug($"Sending column {send_data[0]}");
                     Send(handler, send_data);
                 }
                 //If the array is marked as a game-history-array, process the array.
                 else if (data[0] == (byte)network_codes.game_history_array)
                 {
-                    logger.log("Recieved game_history", log_modes.essential);
+                    logger.Debug("Recieved game_history");
                     Send(handler, new[] { (byte)0 });
+                    Stopwatch sw = new Stopwatch();
+                    sw.Start();
                     byte[][] game_history = linear_to_parrallel_game_history(data);
                     RequestHandler.receive_game_history(game_history, db);
+                    logger.Info($"Processed game history in {sw.ElapsedMilliseconds}ms");
                 }
 
                 //Clear the data array
@@ -238,8 +248,7 @@ namespace Server
             using (Database db = new Database(Properties.Settings.Default.DbPath))
             {
 
-                AsynchronousSocketListener listener = new AsynchronousSocketListener(log_modes.essential, db);
-                Console.WriteLine("Starting server");
+                AsynchronousSocketListener listener = new AsynchronousSocketListener(db, 11000);
                 listener.StartListening();
             }
         }

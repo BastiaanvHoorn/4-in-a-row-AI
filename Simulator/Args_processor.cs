@@ -3,12 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Util;
+using NLog;
+using Logger = NLog.Logger;
 
 namespace Simulator
 {
     static class Args_processor
     {
+        private static Logger logger = LogManager.GetCurrentClassLogger();
         /// <summary>
         /// Initialize 1 option from a list of command-line arguments and return the value.
         /// </summary>
@@ -28,16 +30,14 @@ namespace Simulator
                 {
                     return option;
                 }
-
-                //logger.log($"{arg_name} was given outside of the boundaries {min} and {max}", log_modes.essential,
-                //    log_types.error);
-                //logger.log($"{arg_name} defaulted to {default_value}", log_modes.essential);
+                logger.Info($"{arg_name} was given outside of the boundaries {min} and {max}");
             }
             catch (FormatException) //Formatexception for the uint.parse
             {
-                //logger.log($"{arg_name} was given in the wrong format", log_modes.essential, log_types.error);
+                logger.Info($"{arg_name} was given in the wrong format");
             }
             //Return the default value when we had an exception or the found parameter was outside of the given boundaries
+            logger.Info($"{arg_name} defaulted to {default_value}");
             return default_value;
         }
 
@@ -46,7 +46,6 @@ namespace Simulator
             int index = args.IndexOf("-" + cmd_char);
             if (index == -1) return default_value;
             string option = args[index + 1];
-            //logger.log($"{arg_name} is set to {option}", log_modes.essential);
             return option;
         }
     }
