@@ -288,7 +288,7 @@ namespace UnitTesting.ServerTest
         //  100,000,000                     ~ 5 - 6     s
         //  1,000,000,000                   Not supported!
 
-        [TestMethod]
+        /*[TestMethod]
         public void database_findField_speedTest_3()
         {
             var db = new Database(@"C:\Connect Four\db speed test 3");
@@ -308,7 +308,7 @@ namespace UnitTesting.ServerTest
             }
 
             db.addDatabaseItem(f4);
-        }
+        }*/
 
         [TestMethod]
         public void gameHistory_processing_test_1()

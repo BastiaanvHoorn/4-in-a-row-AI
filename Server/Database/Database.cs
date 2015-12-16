@@ -16,7 +16,7 @@ namespace Server
         public DatabaseProperties DbProperties;
         private FileStream[][] FieldStream;
         private FileStream[][] FieldDataStream;
-        private Dictionary<Field, DatabaseLocation>[] Fields;
+        private Dictionary<Field, int>[] Fields;
 
         /// <summary>
         /// Creates a new database instance from the given path.
@@ -27,7 +27,7 @@ namespace Server
             if (!Directory.Exists(path))
                 throw new DatabaseException($"Database doesn't exist. The given database directory doesn´t exist ({path})");
 
-            string propertiesPath = path + "\\Properties";
+            string propertiesPath = path + Path.DirectorySeparatorChar + "Properties";
 
             if (!File.Exists(propertiesPath))
                 throw new DatabaseException($"Database incomplete. Properties file not found in: {path}");
@@ -79,7 +79,7 @@ namespace Server
             int maxStorageSize = DbProperties.MaxFieldStorageSize;
             FieldStream = new FileStream[maxStorageSize][];
             FieldDataStream = new FileStream[maxStorageSize][];
-            Fields = new Dictionary<Field, DatabaseLocation>[maxStorageSize];
+            Fields = new Dictionary<Field, int>[maxStorageSize];
 
             for (byte i = 1; i <= DbProperties.MaxFieldStorageSize; i++)
             {
@@ -90,7 +90,7 @@ namespace Server
                 int fileCount = Math.Max(1, DbProperties.getFieldFileCount(i));
                 FieldStream[i - 1] = new FileStream[fileCount];
                 FieldDataStream[i - 1] = new FileStream[fileCount];
-                ConcurrentDictionary<Field, DatabaseLocation> fields = new ConcurrentDictionary<Field, DatabaseLocation>();
+                ConcurrentDictionary<Field, int> fields = new ConcurrentDictionary<Field, int>();
 
                 for (int j = 0; j < fileCount; j++)
                 {
@@ -109,25 +109,16 @@ namespace Server
                         Buffer.BlockCopy(bytes, k * i, fStorage, 0, i);
                         Field f = fStorage.decompressField();
                         DatabaseLocation dbLoc = new DatabaseLocation(DbProperties, i, j, k);
-                        fields.GetOrAdd(f, dbLoc);
+                        fields.GetOrAdd(f, dbLoc.GlobalLocation);
                     });
-
-                    /*for (int k = 0; k < bytes.Length / i; k++)
-                    {
-                        byte[] fStorage = new byte[i];
-                        Buffer.BlockCopy(bytes, k * i, fStorage, 0, i);
-                        Field f = fStorage.decompressField();
-                        DatabaseLocation dbLoc = new DatabaseLocation(DbProperties, i, j, k);
-                        Fields[i - 1].Add(f, dbLoc);
-                    }*/
 
                     FieldStream[i - 1][j] = fStream;
                     FieldDataStream[i - 1][j] = fdStream;
                 }
 
-                Fields[i - 1] = new Dictionary<Field, DatabaseLocation>();
+                Fields[i - 1] = new Dictionary<Field, int>();
 
-                foreach (KeyValuePair<Field, DatabaseLocation> pair in fields)
+                foreach (KeyValuePair<Field, int> pair in fields)
                 {
                     Fields[i - 1].Add(pair.Key, pair.Value);
                 }
@@ -156,7 +147,7 @@ namespace Server
             int i = field.compressField().Length;
             bool exists = Fields[i - 1].ContainsKey(field);
             if (exists)
-                dbLocation = Fields[i - 1][field];
+                dbLocation = new DatabaseLocation(DbProperties, i, Fields[i - 1][field]);
             else
                 dbLocation = DatabaseLocation.NonExisting;
 
@@ -300,7 +291,7 @@ namespace Server
             int length = compressed.Length;
             DatabaseLocation dbLoc = allocateNextDatabaseLocation(length);
 
-            Fields[length - 1].Add(field, dbLoc);
+            Fields[length - 1].Add(field, dbLoc.GlobalLocation);
 
             FileStream fieldStream = FieldStream[length - 1][dbLoc.FileIndex];
             fieldStream.Seek(0, SeekOrigin.End);                    // Sets the writing position to the end of the database.
@@ -383,7 +374,7 @@ namespace Server
             foreach (Field f in dictionary.Keys.AsParallel().Where(f => !matches.Contains(f)))
             {
                 DatabaseLocation dbLoc = allocateNextDatabaseLocation(i);
-                Fields[i - 1].Add(f, dbLoc);
+                Fields[i - 1].Add(f, dbLoc.GlobalLocation);
 
                 int fileIndex = dbLoc.FileIndex;
 
@@ -419,7 +410,7 @@ namespace Server
 
                 Parallel.ForEach(Fields[i - 1].AsParallel().Where(f => dictionary.ContainsKey(f.Key)), p =>
                 {
-                    DatabaseLocation dbLoc = p.Value;
+                    DatabaseLocation dbLoc = new DatabaseLocation(DbProperties, i, p.Value);
                     locations.GetOrAdd(dbLoc.getFieldDataSeekPosition(), dictionary[p.Key]);
                     fList.Add(p.Key);
                 });

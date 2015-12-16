@@ -5,11 +5,11 @@
         public static DatabaseLocation NonExisting = new DatabaseLocation();
 
         private readonly string Path;
-        private readonly int GlobalLocation;
         private DatabaseProperties DbProperties;
         public readonly int FileIndex;
         public readonly int FieldLength;
         public readonly int Location;
+        public readonly int GlobalLocation;
 
         private DatabaseLocation() { Location = -1; }
 
@@ -29,6 +29,16 @@
             this.Location = location;
         }
         
+        public DatabaseLocation(DatabaseProperties dbProperties, int fieldLength, int globalLocation)
+        {
+            this.DbProperties = dbProperties;
+            this.FieldLength = fieldLength;
+            this.GlobalLocation = globalLocation;
+            int maxFieldsInFile = DbProperties.getMaxFieldsInFile(fieldLength);
+            this.FileIndex = globalLocation / maxFieldsInFile;
+            this.Location = globalLocation % maxFieldsInFile;
+        }
+
         /// <summary>
         /// Returns whether the given location is an existing (valid to use) location.
         /// </summary>
