@@ -7,6 +7,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections;
 using System.Diagnostics;
+using NLog;
 
 namespace Server
 {
@@ -15,6 +16,8 @@ namespace Server
     /// </summary>
     public class Database : IDisposable
     {
+        private static Logger logger = LogManager.GetCurrentClassLogger();
+
         public DatabaseProperties DbProperties;
         private List<FileStream>[] FieldStream;
         private List<FileStream>[] FieldDataStream;
@@ -453,7 +456,11 @@ namespace Server
             foreach (Field f in dictionary.Keys.AsParallel().Where(f => !matches.Contains(f)))
             {
                 DatabaseLocation dbLoc = allocateNextDatabaseLocation(i);
-                Fields[i - 1].Add(f, dbLoc.GlobalLocation);
+
+                if (!Fields[i - 1].ContainsKey(f))
+                    Fields[i - 1].Add(f, dbLoc.GlobalLocation);
+                else
+                    logger.Error($"Field {f.ToString()} is already included in the database at location {Fields[i - 1][f]}");
                 
                 int fileIndex = dbLoc.FileIndex;
 
