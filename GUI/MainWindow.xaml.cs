@@ -2,6 +2,7 @@
 using System.CodeDom;
 using System.Collections.Generic;
 using System.Net;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -18,22 +19,26 @@ namespace connect4
     /// </summary>
     public partial class MainWindow : Window
     {
+        private IPlayer alice;
+        private IPlayer bob;
 
-        private List<IPlayer> _players = new List<IPlayer>();
         private Label[][] labels;
         private Game game;
+        public byte? col_clicked;
         public MainWindow()
         {
             InitializeComponent();
+            settings_grid.Visibility = Visibility.Visible;
+            game_grid.Visibility = Visibility.Collapsed;
             for (int i = 0; i < Width.Value; i++)
             {
                 var coldef = new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) };
-                game_grid.ColumnDefinitions.Add(coldef);
+                label_grid.ColumnDefinitions.Add(coldef);
             }
             for (int i = 0; i < Height.Value; i++)
             {
                 var rowdef = new RowDefinition { Height = new GridLength(1, GridUnitType.Star) };
-                game_grid.RowDefinitions.Add(rowdef);
+                label_grid.RowDefinitions.Add(rowdef);
             }
             labels = new Label[(uint)Width.Value][];
             for (int x = 0; x < Width.Value; x++)
@@ -43,7 +48,7 @@ namespace connect4
                 {
 
                     Label label = new Label();
-                    game_grid.Children.Add(label);
+                    label_grid.Children.Add(label);
 
                     label.MouseEnter += label_enter;
                     label.MouseRightButtonDown += label_click;
@@ -58,52 +63,80 @@ namespace connect4
 
         private void Start_Click(object sender, RoutedEventArgs e)
         {
+            start_game();
+        }
+
+        private void start_game()
+        {
             game = new Game((byte)Width.Value, (byte)Height.Value);
-            _players.Add(new GUI_player(this, players.Alice));
+            settings_button.Visibility = Visibility.Hidden;
+            rematch_button.Visibility = Visibility.Hidden;
+            message_label.Content = string.Empty;
+            alice = new GUI_player(this, players.Alice);
             if (AI_checkbox.IsChecked.Value)
             {
-                _players.Add(new Bot(players.Bob, (byte)difficulty_slider.Value));
+                bob = new Bot(players.Bob, (byte)difficulty_slider.Value);
             }
             else
             {
-                _players.Add(new GUI_player(this, players.Bob));
+                bob = new GUI_player(this, players.Bob);
             }
             settings_grid.Visibility = Visibility.Collapsed;
             game_grid.Visibility = Visibility.Visible;
+            update_field();
+            loop();
         }
 
-        internal bool get_button_pressed(players player)
+        private async void loop()
         {
-            throw new NotImplementedException();
-        }
+            do
+            {
+                if (game.next_player == players.Alice)
+                {
+                    await Task.Factory.StartNew(() => do_turn(alice));
+                }
+                else
+                {
+                    await Task.Factory.StartNew(() => do_turn(bob));
+                }
+                col_clicked = null;
+                update_field();
+            } while (!(game.has_won(players.Alice) || game.has_won(players.Bob)));
+            message_label.Content = game.has_won(players.Alice) ? "Alice" : "Bob" + " has won";
+            rematch_button.Visibility = Visibility.Visible;
+            settings_button.Visibility = Visibility.Visible;
 
-        internal byte get_numeric(players player)
-        {
-            throw new NotImplementedException();
         }
-
         private void label_click(object sender, MouseEventArgs e)
         {
             byte x = ((byte[])((Label)sender).Tag)[0];
-            string s = string.Empty;
-            if(!game.add_stone(x, game.next_player, ref s))
-            {
-                Console.WriteLine(s);
-            }
-
-            if (game.has_won(players.Alice) || game.has_won(players.Bob))
-            {
-                game_grid.Visibility = Visibility.Collapsed;
-                settings_grid.Visibility = Visibility.Visible;
-            }
+            col_clicked = x;
             update_field(((byte[])((Label)sender).Tag)[0], ((byte[])((Label)sender).Tag)[1]);
-
         }
+
+        private void do_turn(IPlayer player)
+        {
+            string s = "";
+            byte column;
+            do
+            {
+                if (s != "")
+                {
+                    Console.WriteLine(s);
+                }
+                column = player.get_turn(game.get_field());
+            } while (!game.add_stone(column, player.player, ref s));
+        }
+
         private void label_enter(object sender, MouseEventArgs e)
         {
-            //paint_black();
-            byte[] coords = (byte[])((Label)sender).Tag;
-            update_field(coords[0], coords[1]);
+            if (game != null)
+            {
+
+                //paint_black();
+                byte[] coords = (byte[])((Label)sender).Tag;
+                update_field(coords[0], coords[1]);
+            }
         }
 
         private void update_field(int? mousex = null, int? mousey = null)
@@ -148,6 +181,17 @@ namespace connect4
                     }
                 }
             }
+        }
+
+        private void rematch_button_Click(object sender, RoutedEventArgs e)
+        {
+            start_game();
+        }
+
+        private void settings_button_Click(object sender, RoutedEventArgs e)
+        {
+            game_grid.Visibility = Visibility.Collapsed;
+            settings_grid.Visibility = Visibility.Visible;
         }
     }
 }
