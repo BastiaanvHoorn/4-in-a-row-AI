@@ -1,14 +1,16 @@
-﻿namespace Server
+﻿using System;
+
+namespace Server
 {
     public class DatabaseLocation
     {
         public static DatabaseLocation NonExisting = new DatabaseLocation();
 
         private readonly string Path;
-        private readonly int GlobalLocation;
         private DatabaseProperties DbProperties;
         public readonly int FileIndex;
         public readonly int FieldLength;
+        public readonly int GlobalLocation;
         public readonly int Location;
 
         private DatabaseLocation() { Location = -1; }
@@ -28,7 +30,16 @@
             this.FileIndex = fileIndex;
             this.Location = location;
         }
-        
+
+        public DatabaseLocation(DatabaseProperties dbProperties, int fieldLength, int globalLocation)
+        {
+            this.DbProperties = dbProperties;
+            this.FieldLength = fieldLength;
+            this.GlobalLocation = globalLocation;
+            this.FileIndex = (int)Math.Floor((double)globalLocation / (double)dbProperties.getMaxFieldsInFile(fieldLength));
+            this.Location = globalLocation % fieldLength;
+        }
+
         /// <summary>
         /// Returns whether the given location is an existing (valid to use) location.
         /// </summary>
@@ -38,14 +49,14 @@
         {
             return Location >= 0 && Location < DbProperties.getMaxFieldsInFile(FieldLength);
         }
-        
+
         /// <summary>
         /// Returns the filepath of the file which contains the field belonging to the DatabaseLocation.
         /// </summary>
         /// <returns>Filepath</returns>
         public string getFieldPath()
         {
-            return getFieldPath(Path, FileIndex);
+            return getFieldPath(Path, FileIndex, DbProperties);
         }
 
         /// <summary>
@@ -54,7 +65,7 @@
         /// <returns>Filepath</returns>
         public string getFieldDataPath()
         {
-            return getFieldDataPath(Path, FileIndex);
+            return getFieldDataPath(Path, FileIndex, DbProperties);
         }
 
         /// <summary>
@@ -65,7 +76,7 @@
         {
             return Location * FieldLength;
         }
-        
+
         /// <summary>
         /// Returns the position (in bytes) in the field data database where the data corresponding to the given field location is stored.
         /// </summary>
@@ -80,14 +91,14 @@
             return Location * DbProperties.FieldWidth * 8;
         }
 
-        public static string getFieldPath(string path, int fileIndex)
+        public static string getFieldPath(string path, int fileIndex, DatabaseProperties dbProperties)
         {
-            return $"{path}\\Fields{fileIndex}.db";
+            return $"{path}{dbProperties.PathSeparator}Fields{fileIndex}.db";
         }
 
-        public static string getFieldDataPath(string path, int fileIndex)
+        public static string getFieldDataPath(string path, int fileIndex, DatabaseProperties dbProperties)
         {
-            return $"{path}\\FieldData{fileIndex}.db";
+            return $"{path}{dbProperties.PathSeparator}FieldData{fileIndex}.db";
         }
 
         public static DatabaseLocation operator +(DatabaseLocation dbLoc, int i)
@@ -98,6 +109,26 @@
             int location = globalLoc % maxFieldsInFile;
 
             return new DatabaseLocation(dbLoc.DbProperties, dbLoc.FieldLength, fileIndex, location);
+        }
+
+        public override bool Equals(object obj)
+        {
+            // If parameter is null return false.
+            if (obj == null)
+                return false;
+
+            // If parameter cannot be cast to Point return false.
+            DatabaseLocation p = obj as DatabaseLocation;
+            if ((System.Object)p == null)
+                return false;
+
+            if (Path.Equals(p.Path))
+                return false;
+
+            if (GlobalLocation != p.GlobalLocation)
+                return false;
+
+            return true;
         }
 
         public override string ToString()

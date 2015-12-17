@@ -11,6 +11,7 @@ namespace Server
         public readonly byte FieldHeight;
         public readonly long MaxFileSize;
         public readonly byte MaxFieldStorageSize;
+        public readonly char PathSeparator;
         private int[] Lengths;
 
         /// <summary>
@@ -21,7 +22,12 @@ namespace Server
         {
             this.Path = path;
 
-            using (FileStream properties = new FileStream(path + "\\Properties", FileMode.Open, FileAccess.Read))
+            if (path.Contains("\\"))
+                PathSeparator = '\\';
+            else
+                PathSeparator = '/';
+
+            using (FileStream properties = new FileStream(path + PathSeparator + "Properties", FileMode.Open, FileAccess.Read))
             {
                 using (BinaryReader br = new BinaryReader(properties))
                 {
@@ -47,6 +53,10 @@ namespace Server
         /// <param name="height">Height of the fields to store</param>
         public DatabaseProperties(string path, byte fieldWidth, byte fieldHeight, long maxFileSize)
         {
+            if (path.Contains("\\"))
+                PathSeparator = '\\';
+            else
+                PathSeparator = '/';
             this.Path = path;
             this.FieldWidth = fieldWidth;
             this.FieldHeight = fieldHeight;
@@ -60,7 +70,7 @@ namespace Server
         /// </summary>
         public void writeProperties()
         {
-            using (FileStream properties = new FileStream(Path + "\\Properties", FileMode.OpenOrCreate, FileAccess.Write))
+            using (FileStream properties = new FileStream(Path + PathSeparator + "Properties", FileMode.OpenOrCreate, FileAccess.Write))
             {
                 using (BinaryWriter br = new BinaryWriter(properties))
                 {
@@ -132,7 +142,7 @@ namespace Server
         {
             string path = this.Path;
             string subDir = "FieldLength" + storageLength;
-            return path + "\\" + subDir;
+            return path + PathSeparator + subDir;
         }
 
         /// <summary>

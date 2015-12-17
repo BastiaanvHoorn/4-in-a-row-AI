@@ -4,6 +4,7 @@ using Engine;
 using Server;
 using System.IO;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace UnitTesting.ServerTest
 {
@@ -288,7 +289,7 @@ namespace UnitTesting.ServerTest
         //  100,000,000                     ~ 5 - 6     s
         //  1,000,000,000                   Not supported!
 
-        [TestMethod]
+        /*[TestMethod]
         public void database_findField_speedTest_3()
         {
             var db = new Database(@"C:\Connect Four\db speed test 3");
@@ -308,37 +309,133 @@ namespace UnitTesting.ServerTest
             }
 
             db.addDatabaseItem(f4);
-        }
+        }*/
 
         [TestMethod]
         public void gameHistory_processing_test_1()
         {
-            //var dbProps = new DatabaseProperties(@"C:\Connect Four\Game history processing test", 7, 6, 134217728);
-            //var db = new Database(dbProps);
-            var db = new Database(@"C:\Connect Four\Game history processing test");
-
-            Game g = new Game(7, 6);
-            byte[] drop = new byte[] { 0, 1, 0, 1, 0, 1, 0 };
-            players turn = players.Alice;
-
-            for (int i = 0; i < drop.Length; i++)
+            string dbDir = @"C:\Connect Four\Simulation Learning";
+            if (!Directory.Exists(dbDir))
             {
-                string info = "";
-                g.add_stone(drop[i], turn, ref info);
-
-                if (turn == players.Alice)
-                    turn = players.Bob;
-                else
-                    turn = players.Alice;
+                var dbProps = new DatabaseProperties(dbDir, 7, 6, 134217728);
+                Database.prepareNew(dbProps);
             }
 
-            byte[] history = new byte[g.history.Length + 1];
-            history[0] = 211;
-            Array.Copy(g.history, 0, history, 1, g.history.Length);
+            using (var db = new Database(dbDir))
+            {
+                Stopwatch sw = new Stopwatch();
+                Util.Logger logger = new Util.Logger(Util.log_modes.essential);
 
-            RequestHandler.receive_game_history(new byte[][] { history }, db);
+                int times = 0;
+                int dbLength = db.DbProperties.getTotalLength();
 
-            
+                int gameCount = 1000;
+                int batchCount = 1;
+                var iterationTime = new TimeSpan();
+
+                while (times < 100)//DateTime.Now.Add(iterationTime) < new DateTime(2015, 12, 12, 18, 10, 0))
+                {
+                    sw.Restart();
+
+                    int aliceWon = 0;
+                    int bobWon = 0;
+                    var histories = new byte[gameCount * batchCount][];
+                    Random rnd = new Random();
+
+                    for (int j = 0; j < batchCount; j++)
+                    {
+                        for (int i = 0; i < gameCount; i++)
+                        {
+                            Game g = new Game(7, 6);
+
+                            while (g.has_won(players.Empty) && g.stones_count != 42)
+                            {
+                                string info = "";
+                                byte column = 0;
+                                //if (g.next_player == players.Alice)
+                                //{
+                                if (rnd.NextDouble() <= 0.8)
+                                {
+                                    column = RequestHandler.get_column(g.get_field(), db, logger);
+                                }
+                                else
+                                {
+                                    column = (byte)rnd.Next(0, 7);
+                                }
+                                //}
+                                //else
+                                //{
+                                //    column = (byte)rnd.Next(0, 7);
+                                //}
+
+                                g.add_stone(column, g.next_player, ref info);
+                            }
+
+                            byte[] data = new byte[g.stones_count + 1];
+
+                            if (g.has_won(players.Alice))
+                            {
+                                aliceWon++;
+                                data[0] = (byte)Util.network_codes.game_history_alice;
+                            }
+                            else
+                            {
+                                bobWon++;
+                                data[0] = (byte)Util.network_codes.game_history_bob;
+                            }
+
+                            data[0] = g.has_won(players.Alice) ? (byte)Util.network_codes.game_history_alice : (byte)Util.network_codes.game_history_bob;
+                            Buffer.BlockCopy(g.history, 0, data, 1, g.stones_count);
+                            histories[j * gameCount + i] = data;
+                        }
+                    }
+
+                    var simulationTime = sw.Elapsed;
+                    sw.Restart();
+
+                    int fieldsProc = RequestHandler.receive_game_history(histories, db, logger);
+
+                    var processingTime = sw.Elapsed;
+                    iterationTime = simulationTime + processingTime;
+
+                    times++;
+                    int newLength = db.DbProperties.getTotalLength();
+
+                    Trace.WriteLine("________________________________________________");
+                    Trace.WriteLine("Iteration " + times + " took " + iterationTime.Minutes + " m " + iterationTime.Seconds + " s");
+                    Trace.WriteLine("Batch count " + batchCount);
+                    Trace.WriteLine("Batch size " + gameCount);
+                    Trace.WriteLine("Games in iteration " + batchCount * gameCount);
+
+                    double percAlice = Math.Round((double)aliceWon / (batchCount * gameCount) * 100, 1);
+                    double percBob = Math.Round((double)bobWon / (batchCount * gameCount) * 100, 1);
+                    double ties = Math.Round(100 - percAlice - percBob, 1);
+                    Trace.WriteLine($"Game results | Alice won {percAlice}% | Bob won {percBob}% | Ties {ties}%");
+
+                    double avgSimSpeed = batchCount * gameCount / simulationTime.TotalMinutes;
+                    avgSimSpeed = Math.Round(avgSimSpeed, Math.Max(0, 2 - (int)Math.Log10(avgSimSpeed)));
+                    Trace.WriteLine("Average simulation speed " + avgSimSpeed + " games/minute");
+
+                    double avgProcSpeed = batchCount * gameCount / processingTime.TotalMinutes;
+                    avgProcSpeed = Math.Round(avgProcSpeed, Math.Max(0, 2 - (int)Math.Log10(avgProcSpeed)));
+                    Trace.WriteLine("Average processing speed " + avgProcSpeed + " games/minute");
+
+                    Trace.WriteLine("Fields processed " + fieldsProc);
+
+                    double avgFieldSpeed = fieldsProc / processingTime.TotalMinutes;
+                    avgFieldSpeed = Math.Round(avgFieldSpeed, Math.Max(0, 2 - (int)Math.Log10(avgFieldSpeed)));
+                    Trace.WriteLine("Average field processing speed " + avgFieldSpeed + " fields/minute");
+
+                    Trace.WriteLine("New fields added " + (newLength - dbLength));
+                    Trace.WriteLine("Currently " + newLength + " stored in database");
+                    Trace.WriteLine("Total games processed (since creation of database) " + db.readFieldData(f0).getOccuranceCount());
+
+                    dbLength = newLength;
+
+                    //if (DateTime.Now.Add(iterationTime) > new DateTime(2015, 12, 11, 6, 45, 0))
+                    //    break;
+                }
+            }
         }
     }
 }

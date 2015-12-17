@@ -25,7 +25,7 @@ namespace Server.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("C:\\Connect Four\\Database")]
+        [global::System.Configuration.DefaultSettingValueAttribute("/home/bastiaan/connect-four/Simulation Learning - 15-12-2015")]
         public string DbPath {
             get {
                 return ((string)(this["DbPath"]));

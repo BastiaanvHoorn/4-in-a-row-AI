@@ -3,6 +3,9 @@ using System;
 using Server.Properties;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using Util;
+using System.Diagnostics;
 
 namespace Server
 {
@@ -10,26 +13,37 @@ namespace Server
     {
         static Random rnd = new Random();
 
-        public static byte get_column(Field field)
+        /*public static byte get_column(Field field)
         {
             Settings.Default.Reload();
             using (Database db = new Database(Settings.Default.DbPath))
             {
                 return get_column(field, db);
             }
-        }
-        
+        }*/
+
         /// <summary>
         /// Returns the move (column) that suits best with the given field (given situation). If the field is not included in the database a random column is returned.
         /// </summary>
         /// <param name="field">Current field</param>
         /// <returns>The best move (column) to do</returns>
-        public static byte get_column(Field field, Database db)
+        public static byte get_column(Field field, Database db, Logger logger)
         {
+            if (db.isBusy())
+            {
+                logger.log("Can't get column, because database is busy! Waiting...", log_modes.essential);
+                while (db.isBusy())
+                    Thread.Sleep(100);
+            }
+
+            db.setBusy(true);
+
             DatabaseLocation location;
             if (db.fieldExists(field, out location))
             {
                 FieldData fieldData = db.readFieldData(location);
+
+                db.setBusy(false);
 
                 float bestChance = -1;
                 byte bestColumn = 0;
@@ -58,6 +72,7 @@ namespace Server
             }
             else
             {
+                db.setBusy(false);
                 return (byte)rnd.Next(7); //Returns a value between 0 and 6
             }
         }
@@ -87,19 +102,23 @@ namespace Server
             db.writeFieldData(fieldLocation, fieldData);            // Writes the field data to the database.
         }
 
-        public static int receive_game_history(byte[][] gameHistories)
+        /*public static int receive_game_history(byte[][] gameHistories)
         {
             Settings.Default.Reload();
             using (Database db = new Database(Settings.Default.DbPath))
             {
                 return receive_game_history(gameHistories, db);
             }
-        }
+        }*/
 
-        public static int receive_game_history(byte[][] gameHistories, Database db)
+        public static int receive_game_history(byte[][] gameHistories, Database db, Logger logger)
         {
+            logger.log($"Processing {gameHistories.Length} games...", log_modes.essential);
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
+
             Dictionary<Field, FieldData> history = new Dictionary<Field, FieldData>();
-            
+
             for (int i = 0; i < gameHistories.Length; i++)
             {
                 byte[] h = gameHistories[i];
@@ -138,7 +157,24 @@ namespace Server
                 }
             }
 
+            if (db.isBusy())
+            {
+                sw.Stop();
+                logger.log("Can't process game history, because database is busy! Waiting...", log_modes.essential);
+                while (db.isBusy())
+                    Thread.Sleep(100);
+            }
+
+            sw.Start();
+
+            db.setBusy(true);
             db.processGameHistory(history);
+            db.setBusy(false);
+
+            sw.Stop();
+
+            string deltaTime = sw.Elapsed.Minutes + "m and " + sw.Elapsed.Seconds + "s";
+            logger.log($"{history.Count} fields processed in {deltaTime}", log_modes.essential);
 
             return history.Count;
         }

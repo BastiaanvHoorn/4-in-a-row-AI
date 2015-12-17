@@ -5,6 +5,7 @@ using System.Linq;
 using System.Collections.Generic;
 using System;
 using System.Collections.Concurrent;
+using System.Collections;
 
 namespace Server
 {
@@ -16,7 +17,9 @@ namespace Server
         public DatabaseProperties DbProperties;
         private FileStream[][] FieldStream;
         private FileStream[][] FieldDataStream;
-        private Dictionary<Field, DatabaseLocation>[] Fields;
+        private Dictionary<Field, int>[] Fields;
+
+        private bool Busy;
 
         /// <summary>
         /// Creates a new database instance from the given path.
@@ -27,9 +30,15 @@ namespace Server
             if (!Directory.Exists(path))
                 throw new DatabaseException($"Database doesn't exist. The given database directory doesn´t exist ({path})");
 
-            string propertiesPath = path + "\\Properties";
-
-            if (!File.Exists(propertiesPath))
+            string[] files = Directory.GetFiles(path);
+            
+            if (files.Length > 0)
+            {
+                string propertiesPath = files[0];
+                if (propertiesPath.EndsWith("Properties") && !File.Exists(propertiesPath))
+                    throw new DatabaseException($"Database incomplete. Properties file not found in: {path}");
+            }
+            else
                 throw new DatabaseException($"Database incomplete. Properties file not found in: {path}");
 
             DbProperties = new DatabaseProperties(path);
@@ -64,8 +73,8 @@ namespace Server
             {
                 string dirPath = dbProperties.getFieldDirPath(i);
                 Directory.CreateDirectory(dirPath);
-                File.Create(DatabaseLocation.getFieldPath(dirPath, 0)).Dispose();
-                File.Create(DatabaseLocation.getFieldDataPath(dirPath, 0)).Dispose();
+                File.Create(DatabaseLocation.getFieldPath(dirPath, 0, dbProperties)).Dispose();
+                File.Create(DatabaseLocation.getFieldDataPath(dirPath, 0, dbProperties)).Dispose();
             }
 
             dbProperties.writeProperties();
@@ -79,7 +88,7 @@ namespace Server
             int maxStorageSize = DbProperties.MaxFieldStorageSize;
             FieldStream = new FileStream[maxStorageSize][];
             FieldDataStream = new FileStream[maxStorageSize][];
-            Fields = new Dictionary<Field, DatabaseLocation>[maxStorageSize];
+            Fields = new Dictionary<Field, int>[maxStorageSize];
 
             for (byte i = 1; i <= DbProperties.MaxFieldStorageSize; i++)
             {
@@ -90,14 +99,14 @@ namespace Server
                 int fileCount = Math.Max(1, DbProperties.getFieldFileCount(i));
                 FieldStream[i - 1] = new FileStream[fileCount];
                 FieldDataStream[i - 1] = new FileStream[fileCount];
-                ConcurrentDictionary<Field, DatabaseLocation> fields = new ConcurrentDictionary<Field, DatabaseLocation>();
+                ConcurrentDictionary<Field, int> fields = new ConcurrentDictionary<Field, int>();
 
                 for (int j = 0; j < fileCount; j++)
                 {
-                    string fPath = DatabaseLocation.getFieldPath(dirPath, j);
+                    string fPath = DatabaseLocation.getFieldPath(dirPath, j, DbProperties);
                     FileStream fStream = new FileStream(fPath, FileMode.OpenOrCreate, FileAccess.ReadWrite);
-                    
-                    string fdPath = DatabaseLocation.getFieldDataPath(dirPath, j);
+
+                    string fdPath = DatabaseLocation.getFieldDataPath(dirPath, j, DbProperties);
                     FileStream fdStream = new FileStream(fdPath, FileMode.OpenOrCreate, FileAccess.ReadWrite);
 
                     byte[] bytes = new byte[fStream.Length];
@@ -109,7 +118,7 @@ namespace Server
                         Buffer.BlockCopy(bytes, k * i, fStorage, 0, i);
                         Field f = fStorage.decompressField();
                         DatabaseLocation dbLoc = new DatabaseLocation(DbProperties, i, j, k);
-                        fields.GetOrAdd(f, dbLoc);
+                        fields.GetOrAdd(f, dbLoc.GlobalLocation);
                     });
 
                     /*for (int k = 0; k < bytes.Length / i; k++)
@@ -125,9 +134,9 @@ namespace Server
                     FieldDataStream[i - 1][j] = fdStream;
                 }
 
-                Fields[i - 1] = new Dictionary<Field, DatabaseLocation>();
+                Fields[i - 1] = new Dictionary<Field, int>();
 
-                foreach (KeyValuePair<Field, DatabaseLocation> pair in fields)
+                foreach (KeyValuePair<Field, int> pair in fields)
                 {
                     Fields[i - 1].Add(pair.Key, pair.Value);
                 }
@@ -156,11 +165,23 @@ namespace Server
             int i = field.compressField().Length;
             bool exists = Fields[i - 1].ContainsKey(field);
             if (exists)
-                dbLocation = Fields[i - 1][field];
+                dbLocation = new DatabaseLocation(DbProperties, i, Fields[i - 1][field]);
             else
                 dbLocation = DatabaseLocation.NonExisting;
 
             return exists;
+        }
+
+        public Field getField(DatabaseLocation dbLocation)
+        {
+            int fieldLength = dbLocation.FieldLength;
+
+            IEnumerable<KeyValuePair<Field, int>> corresponding =  Fields[fieldLength - 1].AsParallel().Where(p => p.Value == dbLocation.GlobalLocation);
+
+            if (corresponding.Count() > 0)
+                return corresponding.First().Key;
+            else
+                throw new DatabaseException($"Can't get field at location. {dbLocation} This location doesn't exist");
         }
 
         /// <summary>
@@ -222,7 +243,7 @@ namespace Server
         {
             //if (!dbLocation.locationExists())
             //    throw new DatabaseException($"Can't write field data at field location. {dbLocation}. This location doesn't exist.");
-
+            
             FileStream fieldDataStream = FieldDataStream[dbLocation.FieldLength - 1][dbLocation.FileIndex];
             int seekPosition = dbLocation.getFieldDataSeekPosition();
 
@@ -300,7 +321,7 @@ namespace Server
             int length = compressed.Length;
             DatabaseLocation dbLoc = allocateNextDatabaseLocation(length);
 
-            Fields[length - 1].Add(field, dbLoc);
+            Fields[length - 1].Add(field, dbLoc.GlobalLocation);
 
             FileStream fieldStream = FieldStream[length - 1][dbLoc.FileIndex];
             fieldStream.Seek(0, SeekOrigin.End);                    // Sets the writing position to the end of the database.
@@ -368,10 +389,12 @@ namespace Server
                     }
                 }
 
-                string fPath = DatabaseLocation.getFieldPath(DbProperties.getFieldDirPath(i), pair.Key);
                 FileStream fieldStream = FieldStream[i - 1][pair.Key];
                 fieldStream.Seek(0, SeekOrigin.End);
                 fieldStream.Write(bytes.ToArray(), 0, bytes.Count);
+
+                fieldStream.Flush();
+                fieldDataStream.Flush();
             }
         }
 
@@ -383,7 +406,7 @@ namespace Server
             foreach (Field f in dictionary.Keys.AsParallel().Where(f => !matches.Contains(f)))
             {
                 DatabaseLocation dbLoc = allocateNextDatabaseLocation(i);
-                Fields[i - 1].Add(f, dbLoc);
+                Fields[i - 1].Add(f, dbLoc.GlobalLocation);
 
                 int fileIndex = dbLoc.FileIndex;
 
@@ -419,7 +442,8 @@ namespace Server
 
                 Parallel.ForEach(Fields[i - 1].AsParallel().Where(f => dictionary.ContainsKey(f.Key)), p =>
                 {
-                    DatabaseLocation dbLoc = p.Value;
+                    DatabaseLocation dbLoc = new DatabaseLocation(DbProperties, i, p.Value);
+                    
                     locations.GetOrAdd(dbLoc.getFieldDataSeekPosition(), dictionary[p.Key]);
                     fList.Add(p.Key);
                 });
@@ -432,7 +456,16 @@ namespace Server
 
             matches = fList.ToList();
         }
-        
+
+        public void setBusy(bool busy)
+        {
+            Busy = busy;
+        }
+
+        public bool isBusy()
+        {
+            return Busy;
+        }
         /*
         /// <summary>
         /// Clears the database item (the field and its corresponding data) of the specified field from the database(s). This function doesn't delete the item, but sets all its values to zero.
