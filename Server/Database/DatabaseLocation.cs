@@ -34,10 +34,11 @@ namespace Server
         public DatabaseLocation(DatabaseProperties dbProperties, int fieldLength, int globalLocation)
         {
             this.DbProperties = dbProperties;
+            this.Path = dbProperties.Path;
             this.FieldLength = fieldLength;
             this.GlobalLocation = globalLocation;
             this.FileIndex = (int)Math.Floor((double)globalLocation / (double)dbProperties.getMaxFieldsInFile(fieldLength));
-            this.Location = globalLocation % fieldLength;
+            this.Location = globalLocation % DbProperties.getMaxFieldsInFile(fieldLength);
         }
 
         /// <summary>
@@ -56,7 +57,7 @@ namespace Server
         /// <returns>Filepath</returns>
         public string getFieldPath()
         {
-            return getFieldPath(Path, FileIndex, DbProperties);
+            return getFieldPath(DbProperties, FieldLength, FileIndex);
         }
 
         /// <summary>
@@ -65,7 +66,7 @@ namespace Server
         /// <returns>Filepath</returns>
         public string getFieldDataPath()
         {
-            return getFieldDataPath(Path, FileIndex, DbProperties);
+            return getFieldDataPath(DbProperties, FieldLength, FileIndex);
         }
 
         /// <summary>
@@ -91,14 +92,14 @@ namespace Server
             return Location * DbProperties.FieldWidth * 8;
         }
 
-        public static string getFieldPath(string path, int fileIndex, DatabaseProperties dbProperties)
+        public static string getFieldPath(DatabaseProperties dbProperties, int fieldLength, int fileIndex)
         {
-            return $"{path}{dbProperties.PathSeparator}Fields{fileIndex}.db";
+            return $"{dbProperties.getFieldDirPath(fieldLength)}{dbProperties.PathSeparator}Fields{fileIndex}.db";
         }
 
-        public static string getFieldDataPath(string path, int fileIndex, DatabaseProperties dbProperties)
+        public static string getFieldDataPath(DatabaseProperties dbProperties, int fieldLength, int fileIndex)
         {
-            return $"{path}{dbProperties.PathSeparator}FieldData{fileIndex}.db";
+            return $"{dbProperties.getFieldDirPath(fieldLength)}{dbProperties.PathSeparator}FieldData{fileIndex}.db";
         }
 
         public static DatabaseLocation operator +(DatabaseLocation dbLoc, int i)
@@ -133,7 +134,7 @@ namespace Server
 
         public override string ToString()
         {
-            return $"Path = {Path}; FileIndex = {FileIndex}; GlobalLocation = {GlobalLocation}";
+            return $"FieldLength = {FieldLength}; FileIndex = {FileIndex}; GlobalLocation = {GlobalLocation}";
         }
     }
 }
