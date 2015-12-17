@@ -38,7 +38,7 @@ namespace Simulator
             width = (byte)Args_processor.parse_int_arg(args, "w", "width", 2, 20, 7);
             height = (byte)Args_processor.parse_int_arg(args, "h", "height", 2, 20, 6);
             max_games = Args_processor.parse_int_arg(args, "g", "maximum of games", 1, uint.MaxValue, 1);
-            cycle_length = Args_processor.parse_int_arg(args, "l", "cycle length", 1, 1, max_games);
+            cycle_length = Args_processor.parse_int_arg(args, "l", "cycle length", 1, max_games, max_games);
             random_alice = (byte)Args_processor.parse_int_arg(args, "ra", "random_alice", 0, 100, 0);
             random_bob = (byte)Args_processor.parse_int_arg(args, "rb", "random_bob", 0, 100, 0);
             try
