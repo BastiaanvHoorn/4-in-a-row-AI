@@ -6,12 +6,14 @@ using System.Linq;
 using System.Threading;
 using Util;
 using System.Diagnostics;
+using NLog;
 
 namespace Server
 {
     public static class RequestHandler
     {
         static Random rnd = new Random();
+        private static Logger logger = LogManager.GetCurrentClassLogger();
 
         /*public static byte get_column(Field field)
         {
@@ -27,11 +29,11 @@ namespace Server
         /// </summary>
         /// <param name="field">Current field</param>
         /// <returns>The best move (column) to do</returns>
-        public static byte get_column(Field field, Database db, Logger logger)
+        public static byte get_column(Field field, Database db)
         {
             if (db.isBusy())
             {
-                logger.log("Can't get column, because database is busy! Waiting...", log_modes.essential);
+                logger.Info("Can't get column, because database is busy! Waiting...");
                 while (db.isBusy())
                     Thread.Sleep(100);
             }
@@ -111,9 +113,9 @@ namespace Server
             }
         }*/
 
-        public static int receive_game_history(byte[][] gameHistories, Database db, Logger logger)
+        public static int receive_game_history(byte[][] gameHistories, Database db)
         {
-            logger.log($"Processing {gameHistories.Length} games...", log_modes.essential);
+            logger.Info($"Processing {gameHistories.Length} games...");
             Stopwatch sw = new Stopwatch();
             sw.Start();
 
@@ -160,7 +162,7 @@ namespace Server
             if (db.isBusy())
             {
                 sw.Stop();
-                logger.log("Can't process game history, because database is busy! Waiting...", log_modes.essential);
+                logger.Info("Can't process game history, because database is busy! Waiting...");
                 while (db.isBusy())
                     Thread.Sleep(100);
             }
@@ -174,7 +176,7 @@ namespace Server
             sw.Stop();
 
             string deltaTime = sw.Elapsed.Minutes + "m and " + sw.Elapsed.Seconds + "s";
-            logger.log($"{history.Count} fields processed in {deltaTime}", log_modes.essential);
+            logger.Info($"{history.Count} fields processed in {deltaTime}");
 
             return history.Count;
         }

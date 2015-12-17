@@ -5,11 +5,8 @@ using Engine;
 using System.Text;
 using System.Threading.Tasks;
 using Util;
-<<<<<<< HEAD
-=======
 using NLog;
 using Logger = NLog.Logger;
->>>>>>> 27c49b51ee6211a2d29fb2f46f4dfb1039c39fc3
 
 namespace Botclient
 {

@@ -27,17 +27,6 @@ namespace Server
 
     public class AsynchronousSocketListener
     {
-<<<<<<< HEAD
-        private Logger logger;
-        private Database db;
-        // Thread signal.
-        public static ManualResetEvent allDone = new ManualResetEvent(false);
-
-        public AsynchronousSocketListener(log_modes log_mode, Database db)
-        {
-            this.db = db;
-            this.logger = new Logger(log_mode);
-=======
 
         private static Logger logger = LogManager.GetCurrentClassLogger();
         private Database db;
@@ -49,7 +38,6 @@ namespace Server
         {
             this.db = db;
             this.port = port;
->>>>>>> 27c49b51ee6211a2d29fb2f46f4dfb1039c39fc3
         }
         public void StartListening()
         {
@@ -162,32 +150,20 @@ namespace Server
                 {
                     byte[] _field = data.Skip(1).TakeWhile(b => b != (byte)network_codes.end_of_stream).ToArray();
                     Field field = new Field(_field);
-<<<<<<< HEAD
-                    byte[] send_data = new[] { RequestHandler.get_column(field, db, logger) };
-=======
                     byte[] send_data = new[] { RequestHandler.get_column(field, db) };
                     logger.Debug($"Sending column {send_data[0]}");
->>>>>>> 27c49b51ee6211a2d29fb2f46f4dfb1039c39fc3
                     Send(handler, send_data);
                 }
                 //If the array is marked as a game-history-array, process the array.
                 else if (data[0] == (byte)network_codes.game_history_array)
                 {
-<<<<<<< HEAD
-                    logger.log("Received game_history", log_modes.essential);
-=======
+                    
                     logger.Debug("Recieved game_history");
->>>>>>> 27c49b51ee6211a2d29fb2f46f4dfb1039c39fc3
                     Send(handler, new[] { (byte)0 });
                     Stopwatch sw = new Stopwatch();
                     sw.Start();
                     byte[][] game_history = linear_to_parrallel_game_history(data);
-<<<<<<< HEAD
-                    RequestHandler.receive_game_history(game_history, db, logger);
-=======
                     RequestHandler.receive_game_history(game_history, db);
-                    logger.Info($"Processed game history in {sw.ElapsedMilliseconds}ms");
->>>>>>> 27c49b51ee6211a2d29fb2f46f4dfb1039c39fc3
                 }
 
                 //Clear the data array
@@ -269,16 +245,7 @@ namespace Server
                 Database.prepareNew(dbProps);  // Creates a new database
                 Console.WriteLine("New database created");
             }
-
-            Console.WriteLine("Initializing database");
-            using (Database db = new Database(Properties.Settings.Default.DbPath))
-            {
-                AsynchronousSocketListener listener = new AsynchronousSocketListener(log_modes.essential, db);
-                Console.WriteLine("Starting server");
-                listener.StartListening();
-            }
-<<<<<<< HEAD
-=======
+            
 
             using (Database db = new Database(Properties.Settings.Default.DbPath))
             {
@@ -286,7 +253,6 @@ namespace Server
                 AsynchronousSocketListener listener = new AsynchronousSocketListener(db, 11000);
                 listener.StartListening();
             }
->>>>>>> 27c49b51ee6211a2d29fb2f46f4dfb1039c39fc3
         }
     }
 }

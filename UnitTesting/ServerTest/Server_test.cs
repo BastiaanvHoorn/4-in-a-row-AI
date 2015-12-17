@@ -324,7 +324,6 @@ namespace UnitTesting.ServerTest
             using (var db = new Database(dbDir))
             {
                 Stopwatch sw = new Stopwatch();
-                Util.Logger logger = new Util.Logger(Util.log_modes.essential);
 
                 int times = 0;
                 int dbLength = db.DbProperties.getTotalLength();
@@ -356,7 +355,7 @@ namespace UnitTesting.ServerTest
                                 //{
                                 if (rnd.NextDouble() <= 0.8)
                                 {
-                                    column = RequestHandler.get_column(g.get_field(), db, logger);
+                                    column = RequestHandler.get_column(g.get_field(), db);
                                 }
                                 else
                                 {
@@ -393,7 +392,7 @@ namespace UnitTesting.ServerTest
                     var simulationTime = sw.Elapsed;
                     sw.Restart();
 
-                    int fieldsProc = RequestHandler.receive_game_history(histories, db, logger);
+                    int fieldsProc = RequestHandler.receive_game_history(histories, db);
 
                     var processingTime = sw.Elapsed;
                     iterationTime = simulationTime + processingTime;

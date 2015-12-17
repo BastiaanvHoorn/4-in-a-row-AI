@@ -18,11 +18,8 @@ namespace Server
         private FileStream[][] FieldStream;
         private FileStream[][] FieldDataStream;
         private Dictionary<Field, int>[] Fields;
-<<<<<<< HEAD
 
         private bool Busy;
-=======
->>>>>>> 27c49b51ee6211a2d29fb2f46f4dfb1039c39fc3
 
         /// <summary>
         /// Creates a new database instance from the given path.
@@ -32,24 +29,18 @@ namespace Server
         {
             if (!Directory.Exists(path))
                 throw new DatabaseException($"Database doesn't exist. The given database directory doesn´t exist ({path})");
-
-<<<<<<< HEAD
-            string[] files = Directory.GetFiles(path);
             
+            string[] files = Directory.GetFiles(path);
+
             if (files.Length > 0)
             {
                 string propertiesPath = files[0];
-                if (propertiesPath.EndsWith("Properties") && !File.Exists(propertiesPath))
+                if (!propertiesPath.EndsWith("Properties") || !File.Exists(propertiesPath))
                     throw new DatabaseException($"Database incomplete. Properties file not found in: {path}");
             }
             else
-=======
-            string propertiesPath = path + Path.DirectorySeparatorChar + "Properties";
-
-            if (!File.Exists(propertiesPath))
->>>>>>> 27c49b51ee6211a2d29fb2f46f4dfb1039c39fc3
                 throw new DatabaseException($"Database incomplete. Properties file not found in: {path}");
-
+            
             DbProperties = new DatabaseProperties(path);
             loadStreams();
         }
@@ -439,14 +430,10 @@ namespace Server
                 FileStream fieldDataStream = FieldDataStream[i - 1][j];
 
                 ConcurrentDictionary<int, FieldData> locations = new ConcurrentDictionary<int, FieldData>();
-
+                
                 Parallel.ForEach(Fields[i - 1].AsParallel().Where(f => dictionary.ContainsKey(f.Key)), p =>
                 {
                     DatabaseLocation dbLoc = new DatabaseLocation(DbProperties, i, p.Value);
-<<<<<<< HEAD
-                    
-=======
->>>>>>> 27c49b51ee6211a2d29fb2f46f4dfb1039c39fc3
                     locations.GetOrAdd(dbLoc.getFieldDataSeekPosition(), dictionary[p.Key]);
                     fList.Add(p.Key);
                 });
