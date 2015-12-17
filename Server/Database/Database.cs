@@ -18,8 +18,11 @@ namespace Server
         private FileStream[][] FieldStream;
         private FileStream[][] FieldDataStream;
         private Dictionary<Field, int>[] Fields;
+<<<<<<< HEAD
 
         private bool Busy;
+=======
+>>>>>>> 27c49b51ee6211a2d29fb2f46f4dfb1039c39fc3
 
         /// <summary>
         /// Creates a new database instance from the given path.
@@ -30,6 +33,7 @@ namespace Server
             if (!Directory.Exists(path))
                 throw new DatabaseException($"Database doesn't exist. The given database directory doesn´t exist ({path})");
 
+<<<<<<< HEAD
             string[] files = Directory.GetFiles(path);
             
             if (files.Length > 0)
@@ -39,6 +43,11 @@ namespace Server
                     throw new DatabaseException($"Database incomplete. Properties file not found in: {path}");
             }
             else
+=======
+            string propertiesPath = path + Path.DirectorySeparatorChar + "Properties";
+
+            if (!File.Exists(propertiesPath))
+>>>>>>> 27c49b51ee6211a2d29fb2f46f4dfb1039c39fc3
                 throw new DatabaseException($"Database incomplete. Properties file not found in: {path}");
 
             DbProperties = new DatabaseProperties(path);
@@ -120,15 +129,6 @@ namespace Server
                         DatabaseLocation dbLoc = new DatabaseLocation(DbProperties, i, j, k);
                         fields.GetOrAdd(f, dbLoc.GlobalLocation);
                     });
-
-                    /*for (int k = 0; k < bytes.Length / i; k++)
-                    {
-                        byte[] fStorage = new byte[i];
-                        Buffer.BlockCopy(bytes, k * i, fStorage, 0, i);
-                        Field f = fStorage.decompressField();
-                        DatabaseLocation dbLoc = new DatabaseLocation(DbProperties, i, j, k);
-                        Fields[i - 1].Add(f, dbLoc);
-                    }*/
 
                     FieldStream[i - 1][j] = fStream;
                     FieldDataStream[i - 1][j] = fdStream;
@@ -443,7 +443,10 @@ namespace Server
                 Parallel.ForEach(Fields[i - 1].AsParallel().Where(f => dictionary.ContainsKey(f.Key)), p =>
                 {
                     DatabaseLocation dbLoc = new DatabaseLocation(DbProperties, i, p.Value);
+<<<<<<< HEAD
                     
+=======
+>>>>>>> 27c49b51ee6211a2d29fb2f46f4dfb1039c39fc3
                     locations.GetOrAdd(dbLoc.getFieldDataSeekPosition(), dictionary[p.Key]);
                     fList.Add(p.Key);
                 });

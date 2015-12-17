@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.23107.0
+VisualStudioVersion = 14.0.24720.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Connect4", "GUI\Connect4.csproj", "{2A750F31-5DCB-4A72-B95A-D9CA8FF31505}"
 EndProject
@@ -16,6 +16,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Simulator", "Simulator\Simulator.csproj", "{29F23F11-4390-47EB-8355-9AB22CA0B75E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Util", "Util\Util.csproj", "{1366D929-7282-4FAA-8349-095B67DF5A1D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Database manager", "Database manager\Database manager.csproj", "{E19FE85E-2109-4554-9863-329B0D34A1AB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -51,6 +53,10 @@ Global
 		{1366D929-7282-4FAA-8349-095B67DF5A1D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1366D929-7282-4FAA-8349-095B67DF5A1D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1366D929-7282-4FAA-8349-095B67DF5A1D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E19FE85E-2109-4554-9863-329B0D34A1AB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E19FE85E-2109-4554-9863-329B0D34A1AB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E19FE85E-2109-4554-9863-329B0D34A1AB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E19FE85E-2109-4554-9863-329B0D34A1AB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

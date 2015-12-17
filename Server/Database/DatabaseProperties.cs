@@ -142,7 +142,11 @@ namespace Server
         {
             string path = this.Path;
             string subDir = "FieldLength" + storageLength;
+<<<<<<< HEAD
             return path + PathSeparator + subDir;
+=======
+            return path + System.IO.Path.DirectorySeparatorChar + subDir;
+>>>>>>> 27c49b51ee6211a2d29fb2f46f4dfb1039c39fc3
         }
 
         /// <summary>

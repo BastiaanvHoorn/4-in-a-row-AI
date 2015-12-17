@@ -12,6 +12,7 @@ namespace Server
         public readonly int FieldLength;
         public readonly int GlobalLocation;
         public readonly int Location;
+        public readonly int GlobalLocation;
 
         private DatabaseLocation() { Location = -1; }
 
@@ -30,14 +31,24 @@ namespace Server
             this.FileIndex = fileIndex;
             this.Location = location;
         }
+<<<<<<< HEAD
 
+=======
+        
+>>>>>>> 27c49b51ee6211a2d29fb2f46f4dfb1039c39fc3
         public DatabaseLocation(DatabaseProperties dbProperties, int fieldLength, int globalLocation)
         {
             this.DbProperties = dbProperties;
             this.FieldLength = fieldLength;
             this.GlobalLocation = globalLocation;
+<<<<<<< HEAD
             this.FileIndex = (int)Math.Floor((double)globalLocation / (double)dbProperties.getMaxFieldsInFile(fieldLength));
             this.Location = globalLocation % fieldLength;
+=======
+            int maxFieldsInFile = DbProperties.getMaxFieldsInFile(fieldLength);
+            this.FileIndex = globalLocation / maxFieldsInFile;
+            this.Location = globalLocation % maxFieldsInFile;
+>>>>>>> 27c49b51ee6211a2d29fb2f46f4dfb1039c39fc3
         }
 
         /// <summary>
