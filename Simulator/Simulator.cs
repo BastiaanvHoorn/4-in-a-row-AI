@@ -82,7 +82,8 @@ namespace Simulator
             }
             if (finished)
                 logger.Info("Finished simulating all games");
-            logger.Info($"Simulation took ${sw.Elapsed}");
+            logger.Info($"Simulation took {sw.Elapsed}");
+
         }
         private void send_history(List<List<byte>> histories)
         {

@@ -151,14 +151,11 @@ namespace Server
                     byte[] _field = data.Skip(1).TakeWhile(b => b != (byte)network_codes.end_of_stream).ToArray();
                     Field field = new Field(_field);
                     byte[] send_data = new[] { RequestHandler.get_column(field, db) };
-                    logger.Debug($"Sending column {send_data[0]}");
                     Send(handler, send_data);
                 }
                 //If the array is marked as a game-history-array, process the array.
                 else if (data[0] == (byte)network_codes.game_history_array)
                 {
-                    
-                    logger.Debug("Recieved game_history");
                     Send(handler, new[] { (byte)0 });
                     Stopwatch sw = new Stopwatch();
                     sw.Start();
@@ -237,19 +234,37 @@ namespace Server
 
     public class server
     {
+        private static Logger logger = LogManager.GetCurrentClassLogger();
+
         public static void Main(String[] args)
         {
-            if (!System.IO.Directory.Exists(Properties.Settings.Default.DbPath))    // Checks if the database already exists
+            string dbDir = string.Empty;
+
+            if (args.Length > 0)
+                dbDir = args[0];
+            else
+                dbDir = Properties.Settings.Default.DbPath;
+
+            if (!System.IO.Directory.Exists(dbDir))    // Checks if the database already exists
             {
-                DatabaseProperties dbProps = new DatabaseProperties(Properties.Settings.Default.DbPath, 7, 6, Properties.Settings.Default.DbMaxFileSize);
-                Database.prepareNew(dbProps);  // Creates a new database
-                Console.WriteLine("New database created");
+                logger.Info($"No database found in {dbDir}!");
+                Console.Write("Do you want to create a new database in that folder? [Y/N] ");
+                if (Console.ReadKey().KeyChar == 'y')
+                {
+                    DatabaseProperties dbProps = new DatabaseProperties(dbDir, 7, 6, Properties.Settings.Default.DbMaxFileSize);
+                    Database.prepareNew(dbProps);
+                }
+                else
+                    Console.WriteLine();
+                    Environment.Exit(0);
+
+                logger.Info("Succesfully created a new database");
             }
-            
 
-            using (Database db = new Database(Properties.Settings.Default.DbPath))
+            logger.Info("Initializing database");
+
+            using (Database db = new Database(dbDir))
             {
-
                 AsynchronousSocketListener listener = new AsynchronousSocketListener(db, 11000);
                 listener.StartListening();
             }

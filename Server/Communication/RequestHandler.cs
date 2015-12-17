@@ -33,7 +33,7 @@ namespace Server
         {
             if (db.isBusy())
             {
-                logger.Info("Can't get column, because database is busy! Waiting...");
+                logger.Debug("Can't get column, because database is busy! Waiting...");
                 while (db.isBusy())
                     Thread.Sleep(100);
             }
@@ -70,11 +70,16 @@ namespace Server
                     }
                 }
 
+                logger.Debug("Returning column based on database");
+
                 return bestColumn;
             }
             else
             {
                 db.setBusy(false);
+
+                logger.Debug("Returning random column");
+
                 return (byte)rnd.Next(7); //Returns a value between 0 and 6
             }
         }
@@ -162,7 +167,7 @@ namespace Server
             if (db.isBusy())
             {
                 sw.Stop();
-                logger.Info("Can't process game history, because database is busy! Waiting...");
+                logger.Debug("Can't process game history, because database is busy! Waiting...");
                 while (db.isBusy())
                     Thread.Sleep(100);
             }

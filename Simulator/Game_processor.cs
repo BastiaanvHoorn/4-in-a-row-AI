@@ -60,15 +60,15 @@ namespace Simulator
                     case players.Alice:
                         games_won_alice++;
                         histories.Add(history);
-                        logger.Info($"Alice won her {victory_message((int) games_won_alice)}{games_left_message}");
+                        logger.Debug($"Alice won her {victory_message((int) games_won_alice)}{games_left_message}");
                         break;
                     case players.Bob:
                         games_won_bob++;
                         histories.Add(history);
-                        logger.Info($"Bob won his {victory_message((int)games_won_bob)}{games_left_message}");
+                        logger.Debug($"Bob won his {victory_message((int)games_won_bob)}{games_left_message}");
                         break;
                     default:
-                        logger.Info($"The game was a tie\t\t\t\t\t{games_left_message}");
+                        logger.Debug($"The game was a tie\t\t\t\t\t{games_left_message}");
                         break;
                 }
             }
