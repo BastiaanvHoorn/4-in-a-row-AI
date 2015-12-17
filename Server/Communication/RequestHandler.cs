@@ -80,7 +80,7 @@ namespace Server
 
                 logger.Debug("Returning random column");
 
-                return (byte)rnd.Next(7); //Returns a value between 0 and 6
+                return field.getRandomColumn();
             }
         }
 

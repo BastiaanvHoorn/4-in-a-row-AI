@@ -30,21 +30,20 @@ namespace Botclient
         public byte get_turn(Field field)
         {
             if ((byte)r.Next(100) < random_chance)
-                return (byte)r.Next(7);
-            for (byte x = 0; x < field.Width; x++)
-            {
-                byte y = field.getEmptyCell(x);
+                return field.getRandomColumn();
 
-                if (field.check_for_win(x, y, player))
-                {
-
-                    logger.Debug($"Placing a stone in column {x} because this turn was randomized (random chance is {random_chance}%");
-                    return x;
-
-                }
-            }
             if (smart_moves)
             {
+                for (byte x = 0; x < field.Width; x++)
+                {
+                    byte y = field.getEmptyCell(x);
+
+                    if (field.check_for_win(x, y, player))
+                    {
+                        logger.Debug($"Placing a stone in column {x} because this turn was randomized (random chance is {random_chance}%");
+                        return x;
+                    }
+                }
 
                 players opponent = player == players.Alice ? players.Bob : players.Alice;
                 for (byte x = 0; x < field.Width; x++)
@@ -57,8 +56,8 @@ namespace Botclient
                         return x;
                     }
                 }
-
             }
+
             var column = Requester.send(field.getStorage(), network_codes.column_request)[0];
             logger.Debug($"Placing a stone in column {column} because of a response from the server");
             return column;

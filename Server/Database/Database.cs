@@ -165,7 +165,7 @@ namespace Server
         }
 
         /// <summary>
-        /// Returns the content of a specified range in the database for the given fieldLength.
+        /// Returns the content of a specified range (of fields) in the database for the given fieldLength.
         /// </summary>
         /// <param name="fieldLength"></param>
         /// <param name="beginRange">Startpoint of the range</param>
@@ -179,11 +179,10 @@ namespace Server
             DatabaseLocation beginLoc = new DatabaseLocation(DbProperties, fieldLength, beginRange);
             DatabaseLocation endLoc = new DatabaseLocation(DbProperties, fieldLength, endRange);
 
-            int globalLoc = beginLoc.GlobalLocation;
-            int endGlobalLoc = endLoc.GlobalLocation;
+            int globalLoc = beginRange;
             int maxFieldsInFile = DbProperties.getMaxFieldsInFile(fieldLength);
 
-            while (globalLoc < endGlobalLoc)
+            while (globalLoc < endRange)
             {
                 DatabaseLocation dbLoc = new DatabaseLocation(DbProperties, fieldLength, globalLoc);
 

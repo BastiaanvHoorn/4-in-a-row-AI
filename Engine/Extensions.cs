@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 
@@ -6,6 +7,8 @@ namespace Engine
 {
     public static class Extensions
     {
+        private static Random rnd = new Random();
+
         /// <summary>
         /// fieldExists function for a specific stream, instead of a database Stream. (For unittesting)
         /// </summary>
@@ -175,6 +178,27 @@ namespace Engine
             }
 
             return f;
+        }
+
+        /// <summary>
+        /// Returns a valid, random move. (No moves that don't fit the fields height)
+        /// </summary>
+        /// <param name="field"></param>
+        /// <returns>Valid random column</returns>
+        public static byte getRandomColumn(this Field field)
+        {
+            List<byte> columns = new List<byte>();
+
+            for (byte i = 0; i < field.Width; i++)
+            {
+                if (field.getEmptyCell(i) < field.Height)
+                    columns.Add(i);
+            }
+
+            int random = rnd.Next(columns.Count);
+            byte column = columns[random];
+            
+            return columns[random];
         }
 
         /// <summary>
