@@ -23,9 +23,7 @@
             <xctk:ByteUpDown Value="{Binding ElementName=difficulty_slider, Path=Value}" IsEnabled="{Binding ElementName=AI_checkbox, Path=IsChecked}" HorizontalAlignment="Left" Margin="260,200,0,0" VerticalAlignment="Top" Width="60"/>
         </Grid>
         <Grid Name="game_grid" Visibility="Visible">
-            <Grid Name="label_grid" Margin="0,0,136,0">
-                
-            </Grid>
+            <Grid Name="label_grid" Margin="0,0,136,0"/>
             <Label Name="message_label" HorizontalAlignment="Left" Margin="335,20,0,0" VerticalAlignment="Top"/>
             <Button Name="rematch_button" Content="rematch" HorizontalAlignment="Left" Margin="345,55,0,0" VerticalAlignment="Top" Width="75" Visibility="Visible" Click="rematch_button_Click"/>
             <Button Name="settings_button" Content="settings" HorizontalAlignment="Left" Margin="345,80,0,0" VerticalAlignment="Top" Width="75" Visibility="Visible" Click="settings_button_Click"/>
