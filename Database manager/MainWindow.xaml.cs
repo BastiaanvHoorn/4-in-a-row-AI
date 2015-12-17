@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -27,19 +28,40 @@ namespace Database_manager
 
         private void button_Click(object sender, RoutedEventArgs e)
         {
-            if (address_textbox.Text == string.Empty)
-            {
-                address_textbox.BorderBrush = new SolidColorBrush(Colors.Red);
-            }
-            if (port_textbox.Text == string.Empty)
-            {
-                port_textbox.BorderBrush = new SolidColorBrush(Colors.Red);
-            }
         }
 
         private void address_textbox_TextChanged(object sender, TextChangedEventArgs e)
         {
+            string[] s = address_textbox.Text.Split('.');
+            if (s.Length != 4)
+            {
+                address_textbox.Background = new SolidColorBrush(Color.FromRgb(225, 110, 110));
+                return;
+            }
 
+            foreach (var n in s)
+            {
+                byte b;
+                if (byte.TryParse(n, out b)) continue;
+                address_textbox.Background = new SolidColorBrush(Color.FromRgb(225, 110, 110));
+                return;
+            }
+            address_textbox.Background = new SolidColorBrush(Colors.White);
+
+        }
+
+        private void port_textbox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            int i;
+            if (int.TryParse(port_textbox.Text, out i))
+            {
+                if (i > 0 && i < 100000)
+                {
+                    port_textbox.Background = new SolidColorBrush(Colors.White);
+                    return;
+                }
+            }
+            port_textbox.Background = new SolidColorBrush(Color.FromRgb(225, 110, 110));
         }
     }
 }

@@ -11,9 +11,9 @@ namespace connect4
 
     public class GUI_player : IPlayer
     {
-        private readonly game_interface gui;
+        private readonly MainWindow gui;
         public players player { get; }
-        public GUI_player(game_interface gui, players player)
+        public GUI_player(MainWindow gui, players player)
         {
             this.gui = gui;
             this.player = player;
@@ -34,7 +34,7 @@ namespace connect4
         /// </summary>
         /// <param name="gui"></param>
         /// <returns></returns>
-        private bool wait_for_button(game_interface gui)
+        private bool wait_for_button(MainWindow gui)
         {
             System.Threading.Thread.Sleep(5);
             bool button = gui.get_button_pressed(player);

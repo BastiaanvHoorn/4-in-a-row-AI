@@ -44,7 +44,7 @@ namespace connect4
         }
         private void Form1_Load(object sender, EventArgs e)
         {
-            alice = new GUI_player(this, Engine.players.Alice);
+            //alice = new GUI_player(this, Engine.players.Alice);
             if (players == 1)
             {
                 bob = new Bot(Engine.players.Bob, 0);
@@ -53,7 +53,7 @@ namespace connect4
             }
             else
             {
-                bob = new GUI_player(this, Engine.players.Bob);
+                //bob = new GUI_player(this, Engine.players.Bob);
             }
             create_field();
         }

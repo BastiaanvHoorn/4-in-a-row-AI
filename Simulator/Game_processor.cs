@@ -50,7 +50,7 @@ namespace Simulator
 
                 //The amount of turns this game lasted. 1 is subtracted for the winner indication at the start.
                 int turns = history.Count - 1;
-
+                
                 //Log a nice message for the winner
                 victory_message victory_message =
                     games_won => $"\t\t{games_won}th game after \t{(games_won < 10 ? "\t" : "")}{turns} turns";

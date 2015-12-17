@@ -12,23 +12,23 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         <DockPanel Height="30" LastChildFill="true" Margin="5,5,5,0" VerticalAlignment="Top">
-            <Button x:Name="button" Content="Connect" DockPanel.Dock="Right" Margin="5" Width="56" Click="button_Click"/>
+            <Button Name="button" Content="Connect" DockPanel.Dock="Right" Margin="5" Width="56" Click="button_Click"/>
             <Grid Margin="0,0,0,0" Grid.Row="1">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="0*"/>
                     <ColumnDefinition Width="295*"/>
                     <ColumnDefinition Width="149*"/>
                 </Grid.ColumnDefinitions>
-                <TextBox x:Name="address_textbox" Margin="5" TextWrapping="Wrap" Grid.ColumnSpan="2" TextChanged="address_textbox_TextChanged"/>
-                <TextBox x:Name="port_textbox" Margin="5" TextWrapping="Wrap" Grid.Column="2"/>
+                <TextBox Name="address_textbox" Margin="5" TextWrapping="Wrap" Grid.ColumnSpan="2" TextChanged="address_textbox_TextChanged"/>
+                <TextBox Name="port_textbox" Margin="5" TextWrapping="Wrap" Grid.Column="2" TextChanged="port_textbox_TextChanged" Background="White"/>
             </Grid>
         </DockPanel>
-        <TabControl x:Name="tabControl" Margin="10,0,10,10" Grid.Row="1">
+        <TabControl Name="tabControl" Margin="10,0,10,10" Grid.Row="1">
             <TabItem Header="Explorer" Height="22" VerticalAlignment="Bottom">
-                <Grid Background="#FFE5E5E5"/>
+                <Grid Name="Explorer" Background="#FFE5E5E5"/>
             </TabItem>
             <TabItem Header="Analyzer" HorizontalAlignment="Right" Width="61">
-                <Grid Background="#FFE5E5E5"/>
+                <Grid Name="Analyzer"  Background="#FFE5E5E5"/>
             </TabItem>
         </TabControl>
     </Grid>
