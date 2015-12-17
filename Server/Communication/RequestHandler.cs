@@ -50,13 +50,6 @@ namespace Server
                 float bestChance = -1;
                 byte bestColumn = 0;
 
-                float[] chances = new float[field.Width];
-
-                for (byte i = 0; i < field.Width; i++)
-                {
-                    chances[i] = fieldData.getWinningChance(i);
-                }
-
                 for (byte i = 0; i < field.Width; i++)
                 {
                     if (field.getEmptyCell(i) < field.Height)

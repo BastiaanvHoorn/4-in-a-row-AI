@@ -251,17 +251,20 @@ namespace Server
                 Console.Write("Do you want to create a new database in that folder? [Y/N] ");
                 if (Console.ReadKey().KeyChar == 'y')
                 {
+                    Console.WriteLine();
                     DatabaseProperties dbProps = new DatabaseProperties(dbDir, 7, 6, Properties.Settings.Default.DbMaxFileSize);
                     Database.prepareNew(dbProps);
                 }
                 else
+                {
                     Console.WriteLine();
                     Environment.Exit(0);
+                }
 
                 logger.Info("Succesfully created a new database");
             }
 
-            logger.Info("Initializing database");
+            logger.Info($"Initializing database at => {dbDir}");
 
             using (Database db = new Database(dbDir))
             {
