@@ -1,6 +1,7 @@
 ﻿using System;
 using System.CodeDom;
 using System.Collections.Generic;
+using System.Net;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -24,22 +25,6 @@ namespace connect4
         public MainWindow()
         {
             InitializeComponent();
-        }
-
-        private void Start_Click(object sender, RoutedEventArgs e)
-        {
-            game = new Game((byte)Width.Value, (byte)Height.Value);
-            _players.Add(new GUI_player(this, players.Alice));
-            if (AI_checkbox.IsChecked.Value)
-            {
-                _players.Add(new Bot(players.Bob, (byte)difficulty_slider.Value));
-            }
-            else
-            {
-                _players.Add(new GUI_player(this, players.Bob));
-            }
-            settings_grid.Visibility = Visibility.Collapsed;
-            game_grid.Visibility = Visibility.Visible;
             for (int i = 0; i < Width.Value; i++)
             {
                 var coldef = new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) };
@@ -71,6 +56,22 @@ namespace connect4
             }
         }
 
+        private void Start_Click(object sender, RoutedEventArgs e)
+        {
+            game = new Game((byte)Width.Value, (byte)Height.Value);
+            _players.Add(new GUI_player(this, players.Alice));
+            if (AI_checkbox.IsChecked.Value)
+            {
+                _players.Add(new Bot(players.Bob, (byte)difficulty_slider.Value));
+            }
+            else
+            {
+                _players.Add(new GUI_player(this, players.Bob));
+            }
+            settings_grid.Visibility = Visibility.Collapsed;
+            game_grid.Visibility = Visibility.Visible;
+        }
+
         internal bool get_button_pressed(players player)
         {
             throw new NotImplementedException();
@@ -83,46 +84,68 @@ namespace connect4
 
         private void label_click(object sender, MouseEventArgs e)
         {
-            byte y = ((byte[])((Label)sender).Tag)[1];
+            byte x = ((byte[])((Label)sender).Tag)[0];
             string s = string.Empty;
-            while (!game.add_stone(y, game.next_player, ref s))
+            if(!game.add_stone(x, game.next_player, ref s))
             {
                 Console.WriteLine(s);
             }
 
+            if (game.has_won(players.Alice) || game.has_won(players.Bob))
+            {
+                game_grid.Visibility = Visibility.Collapsed;
+                settings_grid.Visibility = Visibility.Visible;
+            }
+            update_field(((byte[])((Label)sender).Tag)[0], ((byte[])((Label)sender).Tag)[1]);
+
         }
         private void label_enter(object sender, MouseEventArgs e)
         {
-            paint_black();
+            //paint_black();
             byte[] coords = (byte[])((Label)sender).Tag;
             update_field(coords[0], coords[1]);
         }
 
-        private void update_field(byte? x = null, byte? y = null)
+        private void update_field(int? mousex = null, int? mousey = null)
         {
-            if (x != null)
+            Field field = game.get_field();
+            for (int x = 0; x < field.Width; x++)
             {
-                for (int _y = 0; _y < labels[0].Length; _y++)
+                for (int y = 0; y < field.Height; y++)
                 {
-                    labels[(byte)x][_y].Background = new SolidColorBrush(Colors.Blue);
-                }
-            }
-            if (y != null)
-            {
-                for (int _x = 0; _x < labels.Length; _x++)
-                {
-                    labels[_x][(byte)y].Background = new SolidColorBrush(Colors.Blue);
-                }
-            }
-        }
-
-        private void paint_black()
-        {
-            foreach (Label[] _labels in labels)
-            {
-                foreach (Label label in _labels)
-                {
-                    label.Background = new SolidColorBrush(Colors.Black);
+                    switch (field.getCellPlayer(x, field.Height - 1 - y))
+                    {
+                        case players.Alice:
+                            if (mousex == x || mousey == y)
+                            {
+                                labels[x][y].Background = new SolidColorBrush(Colors.Alice.highlight);
+                            }
+                            else
+                            {
+                                labels[x][y].Background = new SolidColorBrush(Colors.Alice.standard);
+                            }
+                            break;
+                        case players.Bob:
+                            if (mousex == x || mousey == y)
+                            {
+                                labels[x][y].Background = new SolidColorBrush(Colors.Bob.highlight);
+                            }
+                            else
+                            {
+                                labels[x][y].Background = new SolidColorBrush(Colors.Bob.standard);
+                            }
+                            break;
+                        default:
+                            if (mousex == x || mousey == y)
+                            {
+                                labels[x][y].Background = new SolidColorBrush((game.next_player == players.Alice) ? Colors.Alice.ghost : Colors.Bob.ghost);
+                            }
+                            else
+                            {
+                                labels[x][y].Background = new SolidColorBrush(Colors.empty);
+                            }
+                            break;
+                    }
                 }
             }
         }

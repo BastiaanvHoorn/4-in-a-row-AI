@@ -22,7 +22,7 @@
             <Button x:Name="Start" Content="Start" HorizontalAlignment="Left" Margin="245,235,0,0" VerticalAlignment="Top" Width="75" Click="Start_Click"/>
             <xctk:ByteUpDown Value="{Binding ElementName=difficulty_slider, Path=Value}" IsEnabled="{Binding ElementName=AI_checkbox, Path=IsChecked}" HorizontalAlignment="Left" Margin="260,200,0,0" VerticalAlignment="Top" Width="60"/>
         </Grid>
-        <Grid Name="game_grid">
+        <Grid Name="game_grid" Visibility="Collapsed">
         </Grid>
     </Grid>
 </Window>
