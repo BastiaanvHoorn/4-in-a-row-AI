@@ -14,14 +14,15 @@ namespace Simulator
 {
     public class Game_processor
     {
-        private static Logger logger = LogManager.GetCurrentClassLogger();
+        private static readonly Logger logger = LogManager.GetCurrentClassLogger();
+        private static readonly Logger games_logger = LogManager.GetLogger("game_logger");
         private readonly byte width = 7;
         private readonly byte height = 6;
         public uint games_won_alice;
         public uint games_won_bob;
-        private byte random_alice;
-        private byte random_bob;
-        private uint games;
+        private readonly byte random_alice;
+        private readonly byte random_bob;
+        private readonly uint games;
         private delegate string victory_message(int games_won);
 
         public Game_processor(byte width, byte height, uint max_games, byte random_alice, byte random_bob)
@@ -61,11 +62,13 @@ namespace Simulator
                         games_won_alice++;
                         histories.Add(history);
                         logger.Debug($"Alice won her {victory_message((int) games_won_alice)}{games_left_message}");
+                        games_logger.Info("A {1}",turns);
                         break;
                     case players.Bob:
                         games_won_bob++;
                         histories.Add(history);
                         logger.Debug($"Bob won his {victory_message((int)games_won_bob)}{games_left_message}");
+                        games_logger.Info("B {1}", turns);
                         break;
                     default:
                         logger.Debug($"The game was a tie\t\t\t\t\t{games_left_message}");

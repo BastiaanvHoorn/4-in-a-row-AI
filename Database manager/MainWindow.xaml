@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:Database_manager"
         xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit" x:Class="Database_manager.MainWindow"
         mc:Ignorable="d"
-        Title="MainWindow" Height="350" Width="464">
+        Title="MainWindow" Height="417" Width="624">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="40"/>
@@ -31,6 +31,10 @@
                         <ColumnDefinition/>
                         <ColumnDefinition Width="118"/>
                     </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition/>
+                        <RowDefinition Height="73"/>
+                    </Grid.RowDefinitions>
                     <ScrollViewer  Margin="2,0,0,0">
                         <WrapPanel Name="scrollwrapper" Margin="0,0,0,0" Orientation="Horizontal" RenderTransformOrigin="0.887,-0.096">
                         </WrapPanel>
@@ -44,7 +48,32 @@
                         <Label Content="Length"/>
                         <xctk:IntegerUpDown Margin="5"/>
                         <Slider Name="slider" Margin="5" Minimum="30" Maximum="150" TickFrequency="1" ValueChanged="slider_ValueChanged"/>
+                        <Button Name="get_data_button" Content="Get data" Margin="5" VerticalAlignment="Top" IsEnabled="False" Click="get_data_button_Click"/>
                     </StackPanel>
+                    <Border BorderBrush="LightGray" BorderThickness="1" Grid.Row="1" Grid.ColumnSpan="2">
+                        <Grid Name="data_grid">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="29*"/>
+                                <RowDefinition Height="42*"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Label Content="Winning chance" HorizontalContentAlignment="Center"/>
+                            <Border Grid.Column="0" Grid.RowSpan="2" BorderBrush="LightGray" BorderThickness="1"/>
+                            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Grid.Row="1">
+                                <StackPanel Name="Winning_chances" Orientation="Horizontal">
+                                </StackPanel>
+                            </ScrollViewer>
+                            <Border Grid.Column="1" Grid.RowSpan="2" BorderBrush="LightGray" BorderThickness="1"/>
+                            <Border Grid.Column="2" Grid.RowSpan="2" BorderBrush="LightGray" BorderThickness="1"/>
+                            <Label Content="Total games" Grid.Column="1" HorizontalContentAlignment="Center"/>
+                            <Label Content="Last occurence" Grid.Column="2" HorizontalContentAlignment="Center"/>
+
+                        </Grid>
+                    </Border>
                 </Grid>
             </TabItem>
             <TabItem Header="Analyzer" HorizontalAlignment="Right" Width="61">

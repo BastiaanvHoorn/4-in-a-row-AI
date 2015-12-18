@@ -12,7 +12,7 @@ namespace Botclient
 {
     public class Bot : IPlayer
     {
-        private static Logger logger = LogManager.GetCurrentClassLogger();
+        private static readonly Logger logger = LogManager.GetCurrentClassLogger();
         public players player { get; }
         public byte random_chance { get; }
         public bool smart_moves { get; }
@@ -29,7 +29,7 @@ namespace Botclient
 
         public byte get_turn(Field field)
         {
-            if ((byte)r.Next(100) < random_chance)
+            if ((byte)r.Next(100) > random_chance)
                 return field.getRandomColumn();
 
             if (smart_moves)
