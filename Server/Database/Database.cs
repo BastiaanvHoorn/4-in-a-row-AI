@@ -103,7 +103,7 @@ namespace Server
                 int fileCount = Math.Max(1, DbProperties.getFieldFileCount(i));
                 FieldStream[i - 1] = new List<FileStream>();
                 FieldDataStream[i - 1] = new List<FileStream>();
-                ConcurrentDictionary<Field, int> fields = new ConcurrentDictionary<Field, int>();
+                Fields[i - 1] = new Dictionary<Field, int>();
 
                 for (int j = 0; j < fileCount; j++)
                 {
@@ -116,24 +116,17 @@ namespace Server
                     byte[] bytes = new byte[fStream.Length];
                     fStream.Read(bytes, 0, bytes.Length);
 
-                    Parallel.For(0, bytes.Length / i, k =>
+                    for (int k = 0; k < bytes.Length / i; k++)
                     {
                         byte[] fStorage = new byte[i];
                         Buffer.BlockCopy(bytes, k * i, fStorage, 0, i);
                         Field f = fStorage.decompressField();
                         DatabaseLocation dbLoc = new DatabaseLocation(DbProperties, i, j, k);
-                        fields.GetOrAdd(f, dbLoc.GlobalLocation);
-                    });
+                        Fields[i - 1].Add(f, dbLoc.GlobalLocation);
+                    }
 
                     FieldStream[i - 1].Add(fStream);
                     FieldDataStream[i - 1].Add(fdStream);
-                }
-
-                Fields[i - 1] = new Dictionary<Field, int>();
-
-                foreach (KeyValuePair<Field, int> pair in fields)
-                {
-                    Fields[i - 1].Add(pair.Key, pair.Value);
                 }
             }
         }
@@ -385,38 +378,19 @@ namespace Server
             {
                 // Processes the fielddata of all fields that are already included in the database.
                 Dictionary<Field, FieldData> newFields;
-                updateExistingFieldData(cData[i - 1], i, out newFields);
-
-                // Determination of the fields that need to be added to the database.
-                //Dictionary<int, List<Field>> newFields = getNewFieldsDictionary(i + 1, cData[i], toAdd);
+                updateExistingFieldData(i, cData[i - 1], out newFields);
 
                 // Addition of new fields.
                 if (newFields.Any())
-                    addFields(i, cData[i - 1], newFields);
+                    addFields(i, newFields);
             }
 
             DbProperties.writeProperties();
+            flushFileStreams();
         }
 
-        private void addFields(int i, Dictionary<Field, FieldData> dictionary, Dictionary<Field, FieldData> newFields)
+        private void addFields(int i, Dictionary<Field, FieldData> newFields)
         {
-            //logger.Info("Adding fields");
-            /*int newestFile = newFields.Max(p => p.Key);
-
-            int streamCount = FieldStream[i - 1].Count;
-
-            while (streamCount <= newestFile)
-            {
-                string newFieldPath = DatabaseLocation.getFieldPath(DbProperties, i, streamCount);
-                FileStream fStream = new FileStream(newFieldPath, FileMode.OpenOrCreate, FileAccess.ReadWrite);
-                FieldStream[i - 1].Add(fStream);
-
-                string newDataPath = DatabaseLocation.getFieldDataPath(DbProperties, i, streamCount);
-                FileStream fdStream = new FileStream(newDataPath, FileMode.OpenOrCreate, FileAccess.ReadWrite);
-                FieldDataStream[i - 1].Add(fdStream);
-                streamCount++;
-            }*/
-
             int fileIndex = FieldStream[i - 1].Count - 1;
 
             List<byte> fields = new List<byte>();
@@ -425,6 +399,8 @@ namespace Server
             foreach (KeyValuePair<Field, FieldData> pair in newFields)
             {
                 DatabaseLocation newLoc = allocateNextDatabaseLocation(pair.Key);
+
+                Fields[i - 1].Add(pair.Key, newLoc.GlobalLocation);
 
                 if (fileIndex < newLoc.FileIndex)
                 {
@@ -506,44 +482,25 @@ namespace Server
             return sorted;
         }*/
 
-        private void updateExistingFieldData(Dictionary<Field, FieldData> dictionary, int i, out Dictionary<Field, FieldData> newFields)
+        private void updateExistingFieldData(int i, Dictionary<Field, FieldData> dictionary, out Dictionary<Field, FieldData> newFields)
         {
-            Dictionary<Field, FieldData> toAdd = new Dictionary<Field, FieldData>();
-            /*Parallel.ForEach(dictionary, p =>
-            {
-                toAdd.GetOrAdd(p.Key, p.Value);
-            });*/
+            newFields = new Dictionary<Field, FieldData>();
 
             foreach (KeyValuePair<Field, FieldData> p in dictionary)
-                toAdd.Add(p.Key, p.Value);
+                newFields.Add(p.Key, p.Value);
 
             int fileCount = DbProperties.getFieldFileCount(i);
 
             for (int j = 0; j < fileCount; j++)
             {
                 FileStream fieldDataStream = FieldDataStream[i - 1][j];
-
-                /*Parallel.ForEach(Fields[i - 1].AsParallel().Where(f => dictionary.ContainsKey(f.Key)), p =>
-                {
-                    FieldData data;
-                    toAdd.TryRemove(p.Key, out data);
-                    DatabaseLocation dbLoc = new DatabaseLocation(DbProperties, i, p.Value);
-                    locations.GetOrAdd(dbLoc.getFieldDataSeekPosition(), data);
-                });*/
                 
                 foreach (KeyValuePair<Field, FieldData> p in dictionary.AsParallel().Where(f => Fields[i - 1].ContainsKey(f.Key)))
                 {
                     int loc = Fields[i - 1][p.Key];
                     processFieldData(i, loc, p.Value);
-                    toAdd.Remove(p.Key);
+                    newFields.Remove(p.Key);
                 }
-            }
-
-            newFields = new Dictionary<Field, FieldData>();
-
-            foreach (KeyValuePair<Field, FieldData> pair in toAdd)
-            {
-                newFields.Add(pair.Key, pair.Value);
             }
         }
 
@@ -587,6 +544,35 @@ namespace Server
             string newDataPath = DatabaseLocation.getFieldDataPath(DbProperties, fieldLength, fileIndex);
             FileStream fdStream = new FileStream(newDataPath, FileMode.OpenOrCreate, FileAccess.ReadWrite);
             FieldDataStream[fieldLength - 1].Add(fdStream);
+        }
+
+        private void flushFileStreams()
+        {
+            for (int i = 0; i < FieldStream.Length; i++)
+            {
+                foreach (FileStream fs in FieldStream[i])
+                {
+                    fs.Flush();
+                }
+
+                foreach (FileStream fs in FieldDataStream[i])
+                {
+                    fs.Flush();
+                }
+            }
+        }
+
+        private void flushFileStreams(byte fieldLength)
+        {
+            foreach (FileStream fs in FieldStream[fieldLength - 1])
+            {
+                fs.Flush();
+            }
+
+            foreach (FileStream fs in FieldDataStream[fieldLength - 1])
+            {
+                fs.Flush();
+            }
         }
 
         public void Dispose()
