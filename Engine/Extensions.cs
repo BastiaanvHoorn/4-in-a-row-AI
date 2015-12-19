@@ -198,7 +198,7 @@ namespace Engine
             int random = rnd.Next(columns.Count);
             byte column = columns[random];
             
-            return columns[random];
+            return column;
         }
 
         /// <summary>

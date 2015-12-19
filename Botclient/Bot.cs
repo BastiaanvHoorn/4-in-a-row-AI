@@ -14,10 +14,10 @@ namespace Botclient
     {
         private static readonly Logger logger = LogManager.GetCurrentClassLogger();
         public players player { get; }
-        public byte random_chance { get; }
+        public int random_chance { get; }
         public bool smart_moves { get; }
         Random r = new Random();
-        public Bot(players player, byte random_chance, bool smart_moves = true)
+        public Bot(players player, int random_chance, bool smart_moves = true)
         {
             this.player = player;
             if (random_chance > 100)
@@ -29,7 +29,7 @@ namespace Botclient
 
         public byte get_turn(Field field)
         {
-            if ((byte)r.Next(100) > random_chance)
+            if (r.Next(100) < random_chance)
                 return field.getRandomColumn();
 
             if (smart_moves)
