@@ -7,6 +7,7 @@ using System.Threading;
 using Util;
 using System.Diagnostics;
 using NLog;
+using System.IO;
 
 namespace Server
 {
@@ -31,10 +32,10 @@ namespace Server
         /// <returns>The best move (column) to do</returns>
         public static byte get_column(Field field, Database db)
         {
-            if (db.isBusy())
+            if (db.isBusy() || db.BufferMgr.isProcessing())
             {
                 logger.Debug("Can't get column, because database is busy! Waiting...");
-                while (db.isBusy())
+                while (db.isBusy() || db.BufferMgr.isProcessing())
                     Thread.Sleep(100);
             }
 
@@ -111,8 +112,49 @@ namespace Server
             }
         }*/
 
-        public static int receive_game_history(byte[][] gameHistories, Database db)
+        internal static byte[][] linear_to_parrallel_game_history(List<byte> history)
         {
+
+            history = history.SkipWhile(b => b == (byte)network_codes.game_history_array).TakeWhile(b => b != (byte)network_codes.end_of_stream).ToList();
+            history.Add((byte)network_codes.end_of_stream);
+            //Count the amount of games that is in this byte-array
+            int game_counter = history.Count(b => b == (byte)network_codes.game_history_alice || b == (byte)network_codes.game_history_bob);
+
+            //Create an array of arrays with the count of games
+            byte[][] game_history = new byte[game_counter][];
+            for (int game = 0; game < game_history.Length; game++)
+            {
+                for (int turn = 1; turn < history.Count; turn++)
+                {
+                    if (history[turn] == (byte)network_codes.game_history_alice ||
+                        history[turn] == (byte)network_codes.game_history_bob ||
+                        history[turn] == (byte)network_codes.end_of_stream)
+                    {
+
+                        game_history[game] = new byte[turn];
+                        break;
+                    }
+                }
+
+                for (int turn = 0; turn < game_history[game].Count(); turn++)
+                {
+                    game_history[game][turn] = history[turn];
+                }
+                history = history.Skip(game_history[game].Count()).ToList();
+            }
+            return game_history;
+        }
+
+        public static void receive_game_history(byte[] gameHistories, Database db)
+        {
+            logger.Info($"Received game history ({db.BufferMgr.getBufferCount() + 1} items in buffer)");
+            db.BufferMgr.addToBuffer(gameHistories);
+        }
+
+        public static int process_game_history(byte[] rawHistory, Database db)
+        {
+            byte[][] gameHistories = linear_to_parrallel_game_history(rawHistory.ToList());
+
             logger.Info($"Processing {gameHistories.Length} games...");
             Stopwatch sw = new Stopwatch();
             sw.Start();
@@ -157,7 +199,7 @@ namespace Server
                 }
             }
 
-            if (db.isBusy())
+            if (db.isBusy() || db.BufferMgr.isProcessing())
             {
                 sw.Stop();
                 logger.Debug("Can't process game history, because database is busy! Waiting...");

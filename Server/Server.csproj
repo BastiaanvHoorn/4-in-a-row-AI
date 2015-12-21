@@ -65,6 +65,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Communication\RequestHandler.cs" />
+    <Compile Include="Database\BufferManager.cs" />
     <Compile Include="Database\Database.cs" />
     <Compile Include="Database\DatabaseLocation.cs" />
     <Compile Include="Database\DatabaseProperties.cs" />

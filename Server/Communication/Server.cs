@@ -144,6 +144,8 @@ namespace Server
             }
             else
             {
+                db.BufferMgr.justRequested();
+
                 // Echo the data back to the client.
                 // If the array is marked as a column_request, respond with a column
                 if (data[0] == (byte)network_codes.column_request)
@@ -157,48 +159,13 @@ namespace Server
                 else if (data[0] == (byte)network_codes.game_history_array)
                 {
                     Send(handler, new[] { (byte)0 });
-                    Stopwatch sw = new Stopwatch();
-                    sw.Start();
-                    byte[][] game_history = linear_to_parrallel_game_history(data);
-                    RequestHandler.receive_game_history(game_history, db);
+                    //byte[][] game_history = linear_to_parrallel_game_history(data);
+                    RequestHandler.receive_game_history(data.ToArray(), db);
                 }
 
                 //Clear the data array
                 data = null;
             }
-        }
-
-        internal static byte[][] linear_to_parrallel_game_history(List<byte> history)
-        {
-
-            history = history.SkipWhile(b => b == (byte)network_codes.game_history_array).TakeWhile(b => b != (byte)network_codes.end_of_stream).ToList();
-            history.Add((byte)network_codes.end_of_stream);
-            //Count the amount of games that is in this byte-array
-            int game_counter = history.Count(b => b == (byte)network_codes.game_history_alice || b == (byte)network_codes.game_history_bob);
-
-            //Create an array of arrays with the count of games
-            byte[][] game_history = new byte[game_counter][];
-            for (int game = 0; game < game_history.Length; game++)
-            {
-                for (int turn = 1; turn < history.Count; turn++)
-                {
-                    if (history[turn] == (byte)network_codes.game_history_alice ||
-                        history[turn] == (byte)network_codes.game_history_bob ||
-                        history[turn] == (byte)network_codes.end_of_stream)
-                    {
-
-                        game_history[game] = new byte[turn];
-                        break;
-                    }
-                }
-
-                for (int turn = 0; turn < game_history[game].Count(); turn++)
-                {
-                    game_history[game][turn] = history[turn];
-                }
-                history = history.Skip(game_history[game].Count()).ToList();
-            }
-            return game_history;
         }
 
         private void Send(Socket handler, byte[] data)
@@ -238,6 +205,8 @@ namespace Server
 
         public static void Main(String[] args)
         {
+            Console.Clear();
+
             string dbDir = string.Empty;
 
             if (args.Length > 0)

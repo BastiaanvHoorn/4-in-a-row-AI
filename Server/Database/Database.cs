@@ -19,6 +19,7 @@ namespace Server
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
         public DatabaseProperties DbProperties;
+        public BufferManager BufferMgr;
         private List<FileStream>[] FieldStream;
         private List<FileStream>[] FieldDataStream;
         private Dictionary<Field, int>[] Fields;    // Used to store database fields in RAM for faster access.
@@ -47,6 +48,8 @@ namespace Server
             
             DbProperties = new DatabaseProperties(path);
             loadStreams();
+
+            BufferMgr = new BufferManager(this);
         }
 
         /// <summary>
