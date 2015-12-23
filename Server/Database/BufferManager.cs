@@ -15,12 +15,13 @@ namespace Server
 
         private Database Db;
         private string BufferPath;
+        private string TempBufferPath;
         private Timer Timer;
         private DateTime LastRequest;
 
         private const int IdleTimeout = 120000; // 2 minutes
         private const int UpdateInterval = 30000;
-        private const int MaxBufferCount = 20;
+        private const int MaxBufferCount = 8;
 
         private bool Processing;
 
@@ -28,6 +29,7 @@ namespace Server
         {
             Db = db;
             BufferPath = db.DbProperties.Path + db.DbProperties.PathSeparator + "Buffer";
+            TempBufferPath = BufferPath + "Temp";
             LastRequest = DateTime.Now;
             Timer = new Timer(UpdateInterval);
             Timer.Start();
@@ -37,6 +39,9 @@ namespace Server
 
             if (!Directory.Exists(BufferPath))
                 Directory.CreateDirectory(BufferPath);
+
+            if (!Directory.Exists(TempBufferPath))
+                Directory.CreateDirectory(TempBufferPath);
         }
 
         private void TimerElapsed(object sender, ElapsedEventArgs e)
@@ -54,18 +59,39 @@ namespace Server
             }
         }
 
-        public void addToBuffer(byte[] gameHistory)
+        public string addToBuffer(byte[] gameHistory)
         {
+            string bufferPath = Processing ? TempBufferPath : BufferPath;
+
             string fileName = DateTime.Now.ToFileTime().ToString();
-            string filePath = BufferPath + Db.DbProperties.PathSeparator + fileName;
+            string filePath = bufferPath + Db.DbProperties.PathSeparator + fileName;
 
-            using (FileStream fs = File.Create(filePath))
-                fs.Write(gameHistory, 0, gameHistory.Length);
+            File.WriteAllBytes(filePath, gameHistory);
 
-            int bufferCount = Directory.GetFiles(BufferPath).Length;
+            if (!Processing)
+            {
+                logger.Info($"Added game history to buffer ({getBufferCount()} items)");
+                int bufferCount = Directory.GetFiles(BufferPath).Length;
 
-            if (bufferCount >= MaxBufferCount && !Processing)
-                processBuffers();
+                if (bufferCount >= MaxBufferCount)
+                    processBuffers();
+            }
+            else
+            {
+                logger.Info("New game history added to temporary buffer (Database is processing)");
+            }
+
+            return filePath;
+        }
+
+        public byte[] getBufferContent(string bufferPath)
+        {
+            using (FileStream fs = new FileStream(bufferPath, FileMode.Open, FileAccess.Read))
+            {
+                byte[] bytes = new byte[fs.Length];
+                fs.Read(bytes, 0, (int)fs.Length);
+                return bytes;
+            }
         }
 
         public bool processBuffers()
@@ -77,21 +103,32 @@ namespace Server
             
             string[] queueMembers = Directory.GetFiles(BufferPath);
 
-            logger.Info($"Processing {queueMembers.Length} buffer items...");
+            logger.Info($"Starting processing of {queueMembers.Length} buffer items...");
 
             foreach (string member in queueMembers)
             {
-                using (FileStream fs = new FileStream(member, FileMode.Open, FileAccess.Read))
-                {
-                    byte[] content = new byte[fs.Length];
-                    fs.Read(content, 0, (int)fs.Length);
-                    RequestHandler.process_game_history(content, Db);
-                }
+                RequestHandler.process_game_history(member, Db);
 
                 File.Delete(member);
             }
 
             Processing = false;
+
+            logger.Info($"Buffer is empty");
+
+            string[] tempBuffers = Directory.GetFiles(TempBufferPath);
+
+            if (tempBuffers.Length > 0)
+            {
+                logger.Info($"Moving {tempBuffers.Length} buffers from temporary folder to buffer folder");
+
+                foreach (string file in tempBuffers)
+                {
+                    string newFileName = Path.GetFileName(file);
+                    string newPath = BufferPath + Db.DbProperties.PathSeparator + newFileName;
+                    File.Move(file, newPath);
+                }
+            }
 
             return true;
         }

@@ -145,19 +145,20 @@ namespace Server
             return game_history;
         }
 
-        public static void receive_game_history(byte[] gameHistories, Database db)
+        public static string receive_game_history(byte[] gameHistories, Database db)
         {
-            logger.Info($"Received game history ({db.BufferMgr.getBufferCount() + 1} items in buffer)");
-            db.BufferMgr.addToBuffer(gameHistories);
+            return db.BufferMgr.addToBuffer(gameHistories);
         }
 
-        public static int process_game_history(byte[] rawHistory, Database db)
+        public static int process_game_history(string bufferPath, Database db)
         {
-            byte[][] gameHistories = linear_to_parrallel_game_history(rawHistory.ToList());
-
-            logger.Info($"Processing {gameHistories.Length} games...");
             Stopwatch sw = new Stopwatch();
             sw.Start();
+
+            byte[] rawHistory = db.BufferMgr.getBufferContent(bufferPath);
+            byte[][] gameHistories = linear_to_parrallel_game_history(rawHistory.ToList());
+
+            string bufferName = Path.GetFileName(bufferPath);
 
             Dictionary<Field, FieldData> history = new Dictionary<Field, FieldData>();
 
@@ -199,7 +200,7 @@ namespace Server
                 }
             }
 
-            if (db.isBusy() || db.BufferMgr.isProcessing())
+            if (db.isBusy())
             {
                 sw.Stop();
                 logger.Debug("Can't process game history, because database is busy! Waiting...");
@@ -216,7 +217,7 @@ namespace Server
             sw.Stop();
 
             string deltaTime = sw.Elapsed.Minutes + "m and " + sw.Elapsed.Seconds + "s";
-            logger.Info($"{history.Count} fields processed in {deltaTime}");
+            logger.Info($"Processed \t{gameHistories.Length} games \t{history.Count} fields \t in {deltaTime}");
 
             return history.Count;
         }

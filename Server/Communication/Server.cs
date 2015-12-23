@@ -159,7 +159,6 @@ namespace Server
                 else if (data[0] == (byte)network_codes.game_history_array)
                 {
                     Send(handler, new[] { (byte)0 });
-                    //byte[][] game_history = linear_to_parrallel_game_history(data);
                     RequestHandler.receive_game_history(data.ToArray(), db);
                 }
 
