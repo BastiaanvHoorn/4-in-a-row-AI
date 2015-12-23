@@ -89,8 +89,8 @@ namespace Simulator
             //logger.log($"Created new game of {game.get_field().Width} by {game.get_field().Height}", log_modes.per_game);
             var _players = new List<IPlayer>() //A fancy list to prevent the use of if-statements
             {
-                new Bot(players.Alice, random_alice),
-                new Bot(players.Bob, random_bob)
+                new Bot(players.Alice, random_alice, false),
+                new Bot(players.Bob, random_bob, false)
             };
 
             while (true)
@@ -107,7 +107,7 @@ namespace Simulator
                 }
                 if (game.has_won(players.Bob))
                 {
-                    history.Add((byte)network_codes.game_history_alice);
+                    history.Add((byte)network_codes.game_history_bob);
                     history.AddRange(game.history);
                     return players.Bob;
                 }
