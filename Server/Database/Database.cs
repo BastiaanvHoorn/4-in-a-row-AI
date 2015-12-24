@@ -221,7 +221,26 @@ namespace Server
         }
 
         /// <summary>
-        /// Reads the field data from of the given field the database.
+        /// Returns the field stored at the specified database location.
+        /// </summary>
+        /// <param name="dbLocation"></param>
+        /// <returns>The requested field</returns>
+        public Field readField(DatabaseLocation dbLocation)
+        {
+            int seekPosition = dbLocation.getFieldsSeekPosition();
+            int fieldLength = dbLocation.FieldLength;
+            int fileIndex = dbLocation.FileIndex;
+
+            FieldStream[fieldLength - 1][fileIndex].Seek(seekPosition, SeekOrigin.Begin);
+
+            byte[] compressed = new byte[fieldLength];
+            FieldStream[fieldLength - 1][fieldLength].Read(compressed, 0, fieldLength);
+
+            return compressed.decompressField();
+        }
+
+        /// <summary>
+        /// Reads the field data of the given field from the database.
         /// </summary>
         /// <param name="field">Field to read the data from</param>
         /// <returns></returns>

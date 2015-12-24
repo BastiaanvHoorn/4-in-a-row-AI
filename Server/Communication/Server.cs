@@ -152,14 +152,14 @@ namespace Server
                 {
                     byte[] _field = data.Skip(1).TakeWhile(b => b != (byte)network_codes.end_of_stream).ToArray();
                     Field field = new Field(_field);
-                    byte[] send_data = new[] { RequestHandler.get_column(field, db) };
+                    byte[] send_data = new[] { db.get_column(field) };
                     Send(handler, send_data);
                 }
                 //If the array is marked as a game-history-array, process the array.
                 else if (data[0] == (byte)network_codes.game_history_array)
                 {
                     Send(handler, new[] { (byte)0 });
-                    RequestHandler.receive_game_history(data.ToArray(), db);
+                    db.receive_game_history(data.ToArray());
                 }
 
                 //Clear the data array
