@@ -30,21 +30,21 @@ namespace connect4
             InitializeComponent();
             settings_grid.Visibility = Visibility.Visible;
             game_grid.Visibility = Visibility.Collapsed;
-            for (int i = 0; i < Width.Value; i++)
+            for (int i = 0; i < Width_up_down.Value; i++)
             {
                 var coldef = new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) };
                 label_grid.ColumnDefinitions.Add(coldef);
             }
-            for (int i = 0; i < Height.Value; i++)
+            for (int i = 0; i < Height_up_down.Value; i++)
             {
                 var rowdef = new RowDefinition { Height = new GridLength(1, GridUnitType.Star) };
                 label_grid.RowDefinitions.Add(rowdef);
             }
-            labels = new Label[(uint)Width.Value][];
-            for (int x = 0; x < Width.Value; x++)
+            labels = new Label[(uint)Width_up_down.Value][];
+            for (int x = 0; x < Width_up_down.Value; x++)
             {
-                labels[x] = new Label[(uint)Height.Value];
-                for (int y = 0; y < Height.Value; y++)
+                labels[x] = new Label[(uint)Height_up_down.Value];
+                for (int y = 0; y < Height_up_down.Value; y++)
                 {
 
                     Label label = new Label();
@@ -68,7 +68,7 @@ namespace connect4
 
         private void start_game()
         {
-            game = new Game((byte)Width.Value, (byte)Height.Value);
+            game = new Game((byte)Width_up_down.Value, (byte)Height_up_down.Value);
             settings_button.Visibility = Visibility.Hidden;
             rematch_button.Visibility = Visibility.Hidden;
             message_label.Content = string.Empty;

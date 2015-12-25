@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -46,7 +47,7 @@ namespace Util
                     // Release the socket.
                     sender.Shutdown(SocketShutdown.Both);
                     sender.Close();
-
+                    bytes = bytes.TakeWhile(b => b != (byte)network_codes.end_of_stream).ToArray();
                     return bytes;
 
                 }

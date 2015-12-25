@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:Database_manager"
         xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit" x:Class="Database_manager.MainWindow"
         mc:Ignorable="d"
-        Title="MainWindow" Height="417" Width="624">
+        Title="MainWindow" Height="542" Width="609">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="40"/>
@@ -41,14 +41,15 @@
                     </ScrollViewer>
                     <StackPanel Grid.Column="1" Margin="0">
                         <Button x:Name="retrieve_button" Content="Retrieve range" Margin="5" Click="retrieve_clicked"/>
-                        <Label>
-                            Starting index
-                        </Label>
-                        <xctk:IntegerUpDown Margin="5"/>
-                        <Label Content="Length"/>
-                        <xctk:IntegerUpDown Margin="5"/>
+                        <Label Content="Field length"/>
+                        <xctk:IntegerUpDown Name="length_up_down"  Margin="5"/>
+                        <Label Content="Starting index"/>
+                        <xctk:IntegerUpDown Name="start_up_down" Margin="5"/>
+                        <Label Content="End index"/>
+                        <xctk:IntegerUpDown Name="end_up_down" Margin="5"/>
                         <Slider Name="slider" Margin="5" Minimum="30" Maximum="150" TickFrequency="1" ValueChanged="slider_ValueChanged"/>
-                        <Button Name="get_data_button" Content="Get data" Margin="5" VerticalAlignment="Top" IsEnabled="False" Click="get_data_button_Click"/>
+                        <Button x:Name="get_data_button" Content="Get data" Margin="5" VerticalAlignment="Top" IsEnabled="False" Click="get_data_button_Click"/>
+                        <Button x:Name="remove_button" Content="Remove" Margin="5" Click="retrieve_clicked" IsEnabled="False"/>
                     </StackPanel>
                     <Border BorderBrush="LightGray" BorderThickness="1" Grid.Row="1" Grid.ColumnSpan="2">
                         <Grid Name="data_grid">

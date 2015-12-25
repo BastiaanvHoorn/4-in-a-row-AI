@@ -14,8 +14,9 @@
             <Label Content="Hints allowed" HorizontalAlignment="Left" Margin="10,125,0,0" VerticalAlignment="Top" Height="30" Width="100"/>
             <Label Content="Against AI" HorizontalAlignment="Left" Margin="10,160,0,0" VerticalAlignment="Top" Height="30" Width="100"/>
             <Label Content="Difficulty" HorizontalAlignment="Left" Margin="10,195,0,0" VerticalAlignment="Top" Height="30" Width="100"/>
-            <xctk:ByteUpDown Name="Width" Value="7" Minimum="1" HorizontalAlignment="Left" Margin="115,55,0,0" VerticalAlignment="Top" Width="125" Height="25"/>
-            <xctk:ByteUpDown Name="Height" Value="6" Minimum="1" HorizontalAlignment="Left" Margin="115,90,0,0" VerticalAlignment="Top" Width="125" Height="25"/>
+            <xctk:ByteUpDown Name="Length_up_down" Value="7" Minimum="1" HorizontalAlignment="Left" Margin="115,55,0,0" VerticalAlignment="Top" Width="125" Height="25"/>
+            <xctk:ByteUpDown Name="Width_up_down" Value="7" Minimum="1" HorizontalAlignment="Left" Margin="115,55,0,0" VerticalAlignment="Top" Width="125" Height="25"/>
+            <xctk:ByteUpDown Name="Height_up_down" Value="6" Minimum="1" HorizontalAlignment="Left" Margin="115,90,0,0" VerticalAlignment="Top" Width="125" Height="25"/>
             <CheckBox x:Name="hints_checkbox" Content="CheckBox" HorizontalAlignment="Left" Margin="225,131,0,0" VerticalAlignment="Top" Width="15"/>
             <CheckBox x:Name="AI_checkbox" Content="CheckBox" HorizontalAlignment="Left" Margin="225,166,0,0" VerticalAlignment="Top" Width="15" />
             <Slider x:Name="difficulty_slider" IsEnabled="{Binding ElementName=AI_checkbox, Path=IsChecked}" HorizontalAlignment="Left" Margin="115,200,0,0" VerticalAlignment="Top" Width="125" Maximum="100" TickFrequency="10"/>

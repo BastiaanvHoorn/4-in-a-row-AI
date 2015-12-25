@@ -28,7 +28,7 @@ namespace UnitTesting.ServerTest
             initial.Add((byte)network_codes.end_of_stream);
             initial.AddRange(game2);
 
-            byte[][] actual = AsynchronousSocketListener.linear_to_parrallel_game_history(initial);
+            byte[][] actual = RequestHandler.linear_to_parrallel_game_history(initial);
             for (int i = 0; i < expected.Length; i++)
             {
                 CollectionAssert.AreEqual(expected[i], actual[i]);
