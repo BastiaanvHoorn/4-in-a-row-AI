@@ -28,8 +28,8 @@ namespace Server
     public class AsynchronousSocketListener
     {
 
-        private static Logger logger = LogManager.GetCurrentClassLogger();
-        private Database db;
+        private static readonly Logger logger = LogManager.GetCurrentClassLogger();
+        private readonly Database db;
         public int port;
         // Thread signal.
         public static ManualResetEvent allDone = new ManualResetEvent(false);
@@ -39,7 +39,7 @@ namespace Server
             this.db = db;
             this.port = port;
         }
-        public void StartListening()
+        public void start_listening()
         {
             // Establish the local endpoint for the socket.
             // The DNS name of the computer
@@ -66,7 +66,7 @@ namespace Server
                     // Start an asynchronous socket to listen for connections.
                     logger.Debug("Waiting for a connection...");
                     listener.BeginAccept(
-                        new AsyncCallback(AcceptCallback),
+                        new AsyncCallback(accept_callback),
                         listener);
 
                     // Wait until a connection is made before continuing.
@@ -83,8 +83,7 @@ namespace Server
             Console.Read();
 
         }
-
-        public void AcceptCallback(IAsyncResult ar)
+        private void accept_callback(IAsyncResult ar)
         {
             // Signal the main thread to continue.
             allDone.Set();
@@ -97,10 +96,9 @@ namespace Server
             StateObject state = new StateObject();
             state.workSocket = handler;
             handler.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0,
-                new AsyncCallback(ReadCallback), state);
+                new AsyncCallback(read_callback), state);
         }
-
-        public void ReadCallback(IAsyncResult ar)
+        private void read_callback(IAsyncResult ar)
         {
 
             // Retrieve the state object and the handler socket
@@ -121,61 +119,72 @@ namespace Server
                 {
                     // Not all data received. Get more.
                     handler.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0,
-                        new AsyncCallback(ReadCallback), state);
+                        new AsyncCallback(read_callback), state);
 
                 }
                 else
                 {
-                    process_data(handler, state.data);
+                    process_callback(handler, state.data);
                 }
             }
         }
-
-        private void process_data(Socket handler, List<byte> data)
+        private void process_callback(Socket handler, List<byte> data)
         {
             if (data[0] != (byte)network_codes.column_request &&
-                data[0] != (byte)network_codes.game_history_array)
+                data[0] != (byte)network_codes.game_history_array &&
+                data[0] != (byte)network_codes.range_request &&
+                data[0] != (byte)network_codes.details_request)
             {
 
                 logger.Warn("Found no header in data array, will not process data");
                 logger.Trace(data);
                 data = null;
-                Send(handler, new[] { (byte)0 });
+                send(handler, new[] { (byte)0 });
+                return;
             }
-            else
+
+            db.BufferMgr.justRequested();
+
+            // Echo the data back to the client.
+            // If the array is marked as a column_request, respond with a column
+            if (data[0] == (byte)network_codes.column_request)
             {
-                db.BufferMgr.justRequested();
+                byte[] _field = data.Skip(1).TakeWhile(b => b != (byte)network_codes.end_of_stream).ToArray();
+                Field field = new Field(_field);
+                byte[] send_data = new[] { RequestHandler.get_column(field, db) };
+                send(handler, send_data);
+            }
+            //If the array is marked as a game-history-array, process the array.
+            else if (data[0] == (byte)network_codes.game_history_array)
+            {
+                send(handler, new[] { (byte)0 });
+                RequestHandler.receive_game_history(data.ToArray(), db);
+            }
 
-                // Echo the data back to the client.
-                // If the array is marked as a column_request, respond with a column
-                if (data[0] == (byte)network_codes.column_request)
-                {
-                    byte[] _field = data.Skip(1).TakeWhile(b => b != (byte)network_codes.end_of_stream).ToArray();
-                    Field field = new Field(_field);
-                    byte[] send_data = new[] { RequestHandler.get_column(field, db) };
-                    Send(handler, send_data);
-                }
-                //If the array is marked as a game-history-array, process the array.
-                else if (data[0] == (byte)network_codes.game_history_array)
-                {
-                    Send(handler, new[] { (byte)0 });
-                    RequestHandler.receive_game_history(data.ToArray(), db);
-                }
-
-                //Clear the data array
-                data = null;
+            else if (data[0] == (byte) network_codes.range_request)
+            {
+                byte[] _data = data.ToArray();
+                int file = BitConverter.ToInt32(_data, 1);  //1,2,3,4
+                int begin = BitConverter.ToInt32(_data, 5); //5,6,7,8
+                int end = BitConverter.ToInt32(_data, 9);   //9,10,11,12
+                send(handler, db.getFieldFileContent(file, begin, end));
+            }
+            else if (data[0] == (byte) network_codes.details_request)
+            {
+                throw new NotImplementedException();
             }
         }
-
-        private void Send(Socket handler, byte[] data)
+        private void send(Socket handler, byte[] data)
         {
             // Begin sending the data to the remote device.
             //Console.WriteLine($"Sent column {data[0]}");
-            handler.BeginSend(data, 0, data.Length, 0,
-                new AsyncCallback(SendCallback), handler);
+            byte[] _data = new byte[data.Length+1];
+            data.CopyTo(_data, 0);
+            _data[_data.Length - 1] = (byte) network_codes.end_of_stream;
+            handler.BeginSend(_data, 0, _data.Length, 0,
+                new AsyncCallback(send_callback), handler);
         }
-
-        private void SendCallback(IAsyncResult ar)
+        private void send_callback(IAsyncResult ar)
         {
             try
             {
@@ -237,7 +246,7 @@ namespace Server
             using (Database db = new Database(dbDir))
             {
                 AsynchronousSocketListener listener = new AsynchronousSocketListener(db, 11000);
-                listener.StartListening();
+                listener.start_listening();
             }
         }
     }
