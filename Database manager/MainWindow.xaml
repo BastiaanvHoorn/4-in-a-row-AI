@@ -48,21 +48,17 @@
                         <Label Content="End index"/>
                         <xctk:IntegerUpDown Name="end_up_down" Margin="5"/>
                         <Slider Name="slider" Margin="5" Minimum="30" Maximum="150" TickFrequency="1" ValueChanged="slider_ValueChanged"/>
-                        <Button x:Name="get_data_button" Content="Get data" Margin="5" VerticalAlignment="Top" IsEnabled="False" Click="get_data_button_Click"/>
                         <Button x:Name="remove_button" Content="Remove" Margin="5" Click="retrieve_clicked" IsEnabled="False"/>
                     </StackPanel>
                     <Border BorderBrush="LightGray" BorderThickness="1" Grid.Row="1" Grid.ColumnSpan="2">
                         <Grid Name="data_grid">
                             <Grid.RowDefinitions>
-                                <RowDefinition Height="29*"/>
-                                <RowDefinition Height="42*"/>
+                                <RowDefinition Height="71"/>
                             </Grid.RowDefinitions>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition/>
                                 <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <Label Content="Winning chance" HorizontalContentAlignment="Center"/>
                             <Border Grid.Column="0" Grid.RowSpan="2" BorderBrush="LightGray" BorderThickness="1"/>
                             <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Grid.Row="1">
                                 <StackPanel Name="Winning_chances" Orientation="Horizontal">
@@ -70,7 +66,6 @@
                             </ScrollViewer>
                             <Border Grid.Column="1" Grid.RowSpan="2" BorderBrush="LightGray" BorderThickness="1"/>
                             <Border Grid.Column="2" Grid.RowSpan="2" BorderBrush="LightGray" BorderThickness="1"/>
-                            <Label Content="Total games" Grid.Column="1" HorizontalContentAlignment="Center"/>
                             <Label Content="Last occurence" Grid.Column="2" HorizontalContentAlignment="Center"/>
 
                         </Grid>

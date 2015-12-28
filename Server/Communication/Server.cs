@@ -100,7 +100,6 @@ namespace Server
         }
         private void read_callback(IAsyncResult ar)
         {
-
             // Retrieve the state object and the handler socket
             // from the asynchronous state object.
             StateObject state = (StateObject)ar.AsyncState;
@@ -130,19 +129,6 @@ namespace Server
         }
         private void process_callback(Socket handler, List<byte> data)
         {
-            if (data[0] != (byte)network_codes.column_request &&
-                data[0] != (byte)network_codes.game_history_array &&
-                data[0] != (byte)network_codes.range_request &&
-                data[0] != (byte)network_codes.details_request)
-            {
-
-                logger.Warn("Found no header in data array, will not process data");
-                logger.Trace(data);
-                data = null;
-                send(handler, new[] { (byte)0 });
-                return;
-            }
-
             db.BufferMgr.justRequested();
             // Echo the data back to the client.
             // If the array is marked as a column_request, respond with a column
@@ -153,24 +139,43 @@ namespace Server
                 byte[] send_data = new[] { db.get_column(field) };
                 send(handler, send_data);
             }
-            //If the array is marked as a game-history-array, process the array.
+            //If the array is marked as a game-history-array, reply with nothing and process the array.
             else if (data[0] == (byte)network_codes.game_history_array)
             {
                 send(handler, new[] { (byte)0 });
                 db.receive_game_history(data.ToArray());
             }
-
+            //If the array is marked as a request for a range of games, get the range of games and return them
             else if (data[0] == (byte)network_codes.range_request)
             {
-                byte[] _data = data.ToArray();
-                int file = BitConverter.ToInt32(_data, 1);  //1,2,3,4
-                int begin = BitConverter.ToInt32(_data, 5); //5,6,7,8
-                int end = BitConverter.ToInt32(_data, 9);   //9,10,11,12
+                byte[] _data = data.ToArray();              //Convert the list to an array so it can be passed to the Bitconverter class (which doesnt eat lists)
+                int file = BitConverter.ToInt32(_data, 1);  //bytes 1, 2, 3 and 4 are the file indication
+                int begin = BitConverter.ToInt32(_data, 5); //bytes 5, 6, 7 and 8 are the indication for the beginning of the range
+                int end = BitConverter.ToInt32(_data, 9);   //bytes 9, 10, 11 and 12 are the indication for the end of the range
                 send(handler, db.getFieldFileContent(file, begin, end));
             }
+            //If the array is marked as a request for details about a game, get the details and return them
             else if (data[0] == (byte)network_codes.details_request)
             {
-                throw new NotImplementedException();
+                Field field = new Field(data.Skip(1).TakeWhile(b=> b != (byte)network_codes.end_of_stream).ToArray());
+                FieldData field_data = db.readFieldData(field);
+                byte[] send_data = new byte[2*7*4]; //2 arrays of 7 32-bit(=4 bytes) integers
+                for (int i = 0; i < 7; i++)
+                {
+                    BitConverter.GetBytes(field_data.TotalCounts[i]).CopyTo(send_data, i*4);
+                }
+                for (int i = 0; i < 7; i++)
+                {
+                    BitConverter.GetBytes(field_data.WinningCounts[i]).CopyTo(send_data, 28 + i*4);
+                }
+                send(handler, send_data);
+            }
+            else
+            {
+                logger.Warn("Found no header in data array, will not process data");
+                logger.Trace(data);
+                data = null;
+                send(handler, new[] { (byte)0 });
             }
         }
         private void send(Socket handler, byte[] data)
