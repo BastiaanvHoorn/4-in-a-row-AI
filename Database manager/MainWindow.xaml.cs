@@ -2,6 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Net;
+using System.Net.NetworkInformation;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -27,6 +30,8 @@ namespace Database_manager
         private List<Grid> grids = new List<Grid>();
         private int size = 30; // Width and height of the rendered field_grids
         private Grid selected_grid;
+        private IPAddress address;
+        private short port;
 
         public MainWindow()
         {
@@ -35,24 +40,16 @@ namespace Database_manager
 
         private void address_textbox_TextChanged(object sender, TextChangedEventArgs e)
         {
-            // Split the string with dots since an IPv4 address is seperated by dots
-            string[] s = address_textbox.Text.Split('.');
-            // If there aren't 4 elements in the array, we don't have a valid IPv4 address
-            if (s.Length != 4)
+            IPAddress _address;
+            if (IPAddress.TryParse(address_textbox.Text, out _address))
+            {
+                address_textbox.Background = Brushes.White;
+                address = _address;
+            }
+            else
             {
                 address_textbox.Background = new SolidColorBrush(Color.FromRgb(225, 110, 110));
-                return;
             }
-
-            // Try to parse each element of the array to a byte. If all succeed we have a valid IPv4 address
-            foreach (var n in s)
-            {
-                byte b;
-                if (byte.TryParse(n, out b)) continue;
-                address_textbox.Background = new SolidColorBrush(Color.FromRgb(225, 110, 110));
-                return;
-            }
-            address_textbox.Background = Brushes.White;
         }
 
         private void port_textbox_TextChanged(object sender, TextChangedEventArgs e)
@@ -64,6 +61,7 @@ namespace Database_manager
             if (short.TryParse(port_textbox.Text, out s))
             {
                 port_textbox.Background = new SolidColorBrush(Colors.White);
+                port = s;
                 return;
             }
             port_textbox.Background = new SolidColorBrush(Color.FromRgb(225, 110, 110));
@@ -79,21 +77,21 @@ namespace Database_manager
 
             //Parse the input to one byte-array
             byte[] data = new byte[12];
-            byte[] length = BitConverter.GetBytes((int) length_up_down.Value);
-            byte[] start = BitConverter.GetBytes((int) start_up_down.Value);
-            byte[] amount = BitConverter.GetBytes((int) end_up_down.Value);
+            byte[] length = BitConverter.GetBytes((int)length_up_down.Value);
+            byte[] start = BitConverter.GetBytes((int)start_up_down.Value);
+            byte[] amount = BitConverter.GetBytes((int)end_up_down.Value);
             length.CopyTo(data, 0);
             start.CopyTo(data, 4);
             amount.CopyTo(data, 8);
 
             //Get the fields
-            byte[] field_data = Requester.send(data, network_codes.range_request);
+            byte[] field_data = Requester.send(data, Network_codes.range_request, address, port);
 
             //The amount of bytes one field takes up (required for parsing the fields
-            int field_length = (int) length_up_down.Value;
+            int field_length = (int)length_up_down.Value;
 
             //Loop through the total amount of fields
-            for (int i = 0; i < field_data.Length/field_length; i++)
+            for (int i = 0; i < field_data.Length / field_length; i++)
             {
 
                 Grid grid = new Grid(); // Grid in which we will put all stones
@@ -101,12 +99,12 @@ namespace Database_manager
                 // Add 7 colums and 6 rows
                 for (int j = 0; j < 7; j++)
                 {
-                    var coldef = new ColumnDefinition {Width = new GridLength(1, GridUnitType.Star)};
+                    var coldef = new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) };
                     grid.ColumnDefinitions.Add(coldef);
                 }
                 for (int j = 0; j < 6; j++)
                 {
-                    var rowdef = new RowDefinition {Height = new GridLength(1, GridUnitType.Star)};
+                    var rowdef = new RowDefinition { Height = new GridLength(1, GridUnitType.Star) };
                     grid.RowDefinitions.Add(rowdef);
                 }
 
@@ -124,7 +122,7 @@ namespace Database_manager
                 #endregion
                 // Get the right bytes for the current field and parse that array to a field
                 byte[] field_bytes = new byte[field_length];
-                Buffer.BlockCopy(field_data, field_length*i, field_bytes, 0, field_length);
+                Buffer.BlockCopy(field_data, field_length * i, field_bytes, 0, field_length);
                 Field field = field_bytes.decompressField();
                 container.Tag = fields.Count;
                 fields.Add(field);
@@ -165,18 +163,18 @@ namespace Database_manager
         private void field_select(object sender, MouseEventArgs e)
         {
             // Change the previous selected grid to transparent and the current one to darkblue
-            if (selected_grid != null) 
+            if (selected_grid != null)
                 selected_grid.Background = Brushes.Transparent;
-            selected_grid = (Grid) sender;
-            (selected_grid).Background = Brushes.DarkBlue; 
+            selected_grid = (Grid)sender;
+            (selected_grid).Background = Brushes.DarkBlue;
 
             // Get the associated field of the grid
-            int index = (int) (selected_grid).Tag;
+            int index = (int)(selected_grid).Tag;
             Field field = fields[index];
             Winning_chances.Children.Clear();
 
             // Get the data of that field and parse it
-            byte[] data = Requester.send(field.getStorage(), network_codes.details_request);
+            byte[] data = Requester.send(field.getStorage(), Network_codes.details_request, address, port);
             if (data.Length % 4 != 0)
                 throw new FormatException("Byte array not dividable by 4 and thus cannot contain only integers");
 
@@ -208,7 +206,7 @@ namespace Database_manager
             {
                 StackPanel panel = new StackPanel();
                 Winning_chances.Children.Add(panel);
-                panel.Children.Add(new Label { Content = $"Col {i+1}", FontSize = 9 });
+                panel.Children.Add(new Label { Content = $"Col {i + 1}", FontSize = 9 });
                 panel.Children.Add(new Label { Content = wins[i] });
                 panel.Children.Add(new Label { Content = total[i] });
             }
@@ -217,13 +215,38 @@ namespace Database_manager
         private void slider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             // Set the global size to the new value so all new field_grids will have this size too
-            size = (int) slider.Value;
+            size = (int)slider.Value;
 
             // Change the size of all existing field_grids
             foreach (var grid in grids)
             {
                 grid.Width = size;
                 grid.Height = size;
+            }
+        }
+
+        private void button_Click(object sender, RoutedEventArgs e)
+        {
+            message_label.Content = $"Pinging {address} at port {port}";
+            Ping ping_sender = new Ping();
+            PingReply reply = ping_sender.Send(address);
+            if (reply.Status == IPStatus.Success)
+            {
+                try
+                {
+                    byte[] data = Requester.send(new byte[0], Network_codes.ping, address, port);
+                    byte b = data[0];
+                    if (b == Network_codes.ping_respond)
+                    {
+                        message_label.Content = $"Server is online. Ping took {reply.RoundtripTime} ms";
+                    }
+                }
+                catch (SocketException se)
+                {
+                    message_label.Content =
+                        $"The address that was specified is valid but the request was rejected at the specified port (maybe there is no server running)";
+                }
+
             }
         }
     }

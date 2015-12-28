@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using Botclient;
@@ -24,14 +25,18 @@ namespace Simulator
         private readonly byte random_bob;
         private readonly uint games;
         private delegate string victory_message(int games_won);
+        public IPAddress address { get; }
+        public short port { get; }
 
-        public Game_processor(byte width, byte height, uint max_games, byte random_alice, byte random_bob)
+        public Game_processor(byte width, byte height, uint max_games, byte random_alice, byte random_bob, IPAddress address, short port)
         {
             this.width = width;
             this.height = height;
             this.random_alice = random_alice;
             this.random_bob = random_bob;
             this.games = max_games;
+            this.address = address;
+            this.port = port;
         }
         /// <summary>
         /// Loop through the given amount of games, and log some stuff in the meantime
@@ -89,8 +94,8 @@ namespace Simulator
             //logger.log($"Created new game of {game.get_field().Width} by {game.get_field().Height}", log_modes.per_game);
             var _players = new List<IPlayer>() //A fancy list to prevent the use of if-statements
             {
-                new Bot(players.Alice, random_alice, false),
-                new Bot(players.Bob, random_bob, false)
+                new Bot(players.Alice, random_alice, address, port, false),
+                new Bot(players.Bob, random_bob, address, port, false)
             };
 
             while (true)
@@ -101,13 +106,13 @@ namespace Simulator
                 //Then add the history itself
                 if (game.has_won(players.Alice))
                 {
-                    history.Add((byte)network_codes.game_history_alice);
+                    history.Add(Network_codes.game_history_alice);
                     history.AddRange(game.history);
                     return players.Alice;
                 }
                 if (game.has_won(players.Bob))
                 {
-                    history.Add((byte)network_codes.game_history_bob);
+                    history.Add(Network_codes.game_history_bob);
                     history.AddRange(game.history);
                     return players.Bob;
                 }

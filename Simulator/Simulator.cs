@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Net;
 using NLog;
 using Logger = NLog.Logger;
 using Util;
@@ -19,6 +20,8 @@ namespace Simulator
         private readonly byte random_bob = 0;
         private readonly DateTime end_time;
         private static readonly Logger logger = LogManager.GetCurrentClassLogger();
+        private IPAddress address;
+        private short port;
         /// <summary>
         /// Initializes the simulator
         /// </summary>
@@ -70,7 +73,7 @@ namespace Simulator
             for (int i = 1; i <= cycles; i++)
             {
                 logger.Info($"Starting {i}/{cycles} cycle");
-                Game_processor gp = new Game_processor(width, height, cycle_length, random_alice, random_bob);
+                Game_processor gp = new Game_processor(width, height, cycle_length, random_alice, random_bob, address, port);
                 List<List<byte>> history = gp.loop_games();
                 send_history(history);
                 if (end_time < DateTime.Now)
@@ -95,7 +98,7 @@ namespace Simulator
             }
             Stopwatch sw = new Stopwatch();
             //logger.log($"Created game_history in {sw.ElapsedMilliseconds}ms. Starting to send now", log_modes.essential);
-            Requester.send(data.ToArray(), network_codes.game_history_array);
+            Requester.send(data.ToArray(), Network_codes.game_history_array, Dns.Resolve(Dns.GetHostName()).AddressList[0], 11000);
 
         }
         private static void Main(string[] args)

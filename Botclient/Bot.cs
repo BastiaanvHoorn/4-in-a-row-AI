@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Net;
 using System.Net.Sockets;
+using System.Reflection;
 using Engine;
 using System.Text;
 using System.Threading.Tasks;
@@ -16,13 +17,17 @@ namespace Botclient
         public players player { get; }
         public int random_chance { get; }
         public bool smart_moves { get; }
+        public IPAddress address { get; }
+        public short port { get; }
         Random r = new Random();
-        public Bot(players player, int random_chance, bool smart_moves = true)
+        public Bot(players player, int random_chance, IPAddress address, short port, bool smart_moves = true)
         {
             this.player = player;
             if (random_chance > 100)
                 throw new NotSupportedException("Cannot use a random_chance that is bigger then 100");
             this.random_chance = random_chance;
+            this.address = address;
+            this.port = port;
             this.smart_moves = smart_moves;
 
         }
@@ -58,7 +63,7 @@ namespace Botclient
                 }
             }
 
-            var column = Requester.send(field.getStorage(), network_codes.column_request)[0];
+            var column = Requester.send(field.getStorage(), Network_codes.column_request, address, port)[0];
             logger.Debug($"Placing a stone in column {column} because of a response from the server");
             return column;
         }

@@ -25,6 +25,8 @@ namespace connect4
         private Label[][] labels;
         private Game game;
         public byte? col_clicked;
+        private IPAddress address;
+        private short port;
         public MainWindow()
         {
             InitializeComponent();
@@ -75,7 +77,7 @@ namespace connect4
             alice = new GUI_player(this, players.Alice);
             if (AI_checkbox.IsChecked.Value)
             {
-                bob = new Bot(players.Bob, (byte)difficulty_slider.Value);
+                bob = new Bot(players.Bob, (byte)difficulty_slider.Value, address, port);
             }
             else
             {
@@ -193,5 +195,35 @@ namespace connect4
             game_grid.Visibility = Visibility.Collapsed;
             settings_grid.Visibility = Visibility.Visible;
         }
+
+        private void address_textbox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            IPAddress _address;
+            if (IPAddress.TryParse(address_textbox.Text, out _address))
+            {
+                address_textbox.Background = Brushes.White;
+                address = _address;
+            }
+            else
+            {
+                address_textbox.Background = new SolidColorBrush(Color.FromRgb(225, 110, 110));
+            }
+        }
+
+        private void port_textbox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            short s;
+
+            // If the text is parseable as a short, it is a valid port number
+
+            if (short.TryParse(port_textbox.Text, out s))
+            {
+                port_textbox.Background = new SolidColorBrush(Color.FromRgb(255,255,255));
+                port = s;
+                return;
+            }
+            port_textbox.Background = new SolidColorBrush(Color.FromRgb(225, 110, 110));
+        }
+
     }
 }

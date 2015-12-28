@@ -80,10 +80,10 @@ namespace connect4
             //Send the game-history to the server
             var data = new List<byte>
             {
-                (byte) network_codes.game_history_array
+                 Network_codes.game_history_array
             };
             data.AddRange(game.history);
-            Requester.send(data.ToArray(), network_codes.game_history_array);
+            Requester.send(data.ToArray(), Network_codes.game_history_array);
         }
         /// <summary>
         /// Tries to get a column from the given IPlayer and puts a stone in that column

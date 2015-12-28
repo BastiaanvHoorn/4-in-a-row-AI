@@ -107,9 +107,9 @@ namespace Server
                 players turn = players.Alice;
                 players winner = players.Empty;
 
-                if (h[0] == (byte)Util.network_codes.game_history_alice)
+                if (h[0] == (byte)Util.Network_codes.game_history_alice)
                     winner = players.Alice;
-                else if (h[0] == (byte)Util.network_codes.game_history_bob)
+                else if (h[0] == (byte)Util.Network_codes.game_history_bob)
                     winner = players.Bob;
 
                 for (int j = 1; j < h.Length; j++)
@@ -168,10 +168,10 @@ namespace Server
         internal static byte[][] linear_to_parrallel_game_history(List<byte> history)
         {
 
-            history = history.SkipWhile(b => b == (byte)network_codes.game_history_array).TakeWhile(b => b != (byte)network_codes.end_of_stream).ToList();
-            history.Add((byte)network_codes.end_of_stream);
+            history = history.SkipWhile(b => b == Network_codes.game_history_array).TakeWhile(b => b != Network_codes.end_of_stream).ToList();
+            history.Add(Network_codes.end_of_stream);
             //Count the amount of games that is in this byte-array
-            int game_counter = history.Count(b => b == (byte)network_codes.game_history_alice || b == (byte)network_codes.game_history_bob);
+            int game_counter = history.Count(b => b == Network_codes.game_history_alice || b == Network_codes.game_history_bob);
 
             //Create an array of arrays with the count of games
             byte[][] game_history = new byte[game_counter][];
@@ -179,9 +179,9 @@ namespace Server
             {
                 for (int turn = 1; turn < history.Count; turn++)
                 {
-                    if (history[turn] == (byte)network_codes.game_history_alice ||
-                        history[turn] == (byte)network_codes.game_history_bob ||
-                        history[turn] == (byte)network_codes.end_of_stream)
+                    if (history[turn] == Network_codes.game_history_alice ||
+                        history[turn] == Network_codes.game_history_bob ||
+                        history[turn] == Network_codes.end_of_stream)
                     {
 
                         game_history[game] = new byte[turn];

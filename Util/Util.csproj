@@ -47,7 +47,7 @@
     <Content Include="NLog.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Compile Include="Enums.cs" />
+    <Compile Include="Network_codes.cs" />
     <Compile Include="Requester.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

@@ -375,15 +375,15 @@ namespace UnitTesting.ServerTest
                             if (g.has_won(players.Alice))
                             {
                                 aliceWon++;
-                                data[0] = (byte)Util.network_codes.game_history_alice;
+                                data[0] = (byte)Util.Network_codes.game_history_alice;
                             }
                             else
                             {
                                 bobWon++;
-                                data[0] = (byte)Util.network_codes.game_history_bob;
+                                data[0] = (byte)Util.Network_codes.game_history_bob;
                             }
 
-                            data[0] = g.has_won(players.Alice) ? (byte)Util.network_codes.game_history_alice : (byte)Util.network_codes.game_history_bob;
+                            data[0] = g.has_won(players.Alice) ? (byte)Util.Network_codes.game_history_alice : (byte)Util.Network_codes.game_history_bob;
                             Buffer.BlockCopy(g.history, 0, data, 1, g.stones_count);
                             histories[j * gameCount + i] = data;
                         }

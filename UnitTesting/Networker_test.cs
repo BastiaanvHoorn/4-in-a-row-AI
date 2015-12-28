@@ -16,12 +16,12 @@ namespace UnitTesting
         {
             var expected = new byte[]
             {
-                (byte) network_codes.column_request,
+                 Network_codes.column_request,
                 0,
-                (byte) network_codes.end_of_stream
+                 Network_codes.end_of_stream
             };
             var actual = new byte[] {0};
-            actual = Requester.add_header_footer(actual, network_codes.column_request);
+            actual = Requester.add_header_footer(actual, Network_codes.column_request);
             CollectionAssert.AreEqual(expected, actual);
         }
     }

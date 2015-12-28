@@ -11,7 +11,7 @@ namespace Util
     public static class Requester
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();
-        public static byte[] send(byte[] data, network_codes type)
+        public static byte[] send(byte[] data, byte type, IPAddress ip_address, short port)
         {
             // Data buffer for incoming data.
             byte[] bytes = new byte[1024];
@@ -21,9 +21,9 @@ namespace Util
             {
                 // Establish the remote endpoint for the socket.
                 // This example uses port 11000 on the local computer.
-                IPHostEntry ipHostInfo = Dns.Resolve(Dns.GetHostName());
-                IPAddress ipAddress = ipHostInfo.AddressList[0];
-                IPEndPoint remoteEP = new IPEndPoint(ipAddress, 11000);
+                //IPHostEntry ipHostInfo = Dns.Resolve(Dns.GetHostName());
+                //ip_address = ipHostInfo.AddressList[0];
+                IPEndPoint remoteEP = new IPEndPoint(ip_address, port);
 
                 // Create a TCP/IP  socket.
                 Socket sender = new Socket(AddressFamily.InterNetwork,
@@ -47,7 +47,7 @@ namespace Util
                     // Release the socket.
                     sender.Shutdown(SocketShutdown.Both);
                     sender.Close();
-                    bytes = bytes.TakeWhile(b => b != (byte)network_codes.end_of_stream).ToArray();
+                    bytes = bytes.TakeWhile(b => b != Network_codes.end_of_stream).ToArray();
                     return bytes;
 
                 }
@@ -72,15 +72,15 @@ namespace Util
             return new byte[0];
         }
 
-        internal static byte[] add_header_footer(byte[] data, network_codes type)
+        internal static byte[] add_header_footer(byte[] data, byte type)
         {
             //Create a byte-array that is 2 larger then the data that must be send so there is room for a header and a footer
             byte[] msg = new byte[data.Length + 2];
             //Add a header based on the given signal-type
-            msg[0] = (byte)type;
+            msg[0] = type;
 
             //Add a footer witn an end-of-stream token
-            msg[msg.Length - 1] = (byte)network_codes.end_of_stream;
+            msg[msg.Length - 1] = Network_codes.end_of_stream;
             
             //Copy all the data to the middle part of the array
             data.CopyTo(msg, 1);

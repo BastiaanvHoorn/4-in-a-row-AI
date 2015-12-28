@@ -114,7 +114,7 @@ namespace Server
                 state.data.AddRange(state.buffer);
 
                 // Check for end-of-file tag. If it is not there, read more data.
-                if (!state.data.Contains((byte)network_codes.end_of_stream))
+                if (!state.data.Contains(Network_codes.end_of_stream))
                 {
                     // Not all data received. Get more.
                     handler.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0,
@@ -132,21 +132,25 @@ namespace Server
             db.BufferMgr.justRequested();
             // Echo the data back to the client.
             // If the array is marked as a column_request, respond with a column
-            if (data[0] == (byte)network_codes.column_request)
+            if (data[0] ==  Network_codes.ping)
             {
-                byte[] _field = data.Skip(1).TakeWhile(b => b != (byte)network_codes.end_of_stream).ToArray();
+                send(handler, new byte[] {0});
+            }
+            else if (data[0] == Network_codes.column_request)
+            {
+                byte[] _field = data.Skip(1).TakeWhile(b => b != Network_codes.end_of_stream).ToArray();
                 Field field = new Field(_field);
                 byte[] send_data = new[] { db.get_column(field) };
                 send(handler, send_data);
             }
             //If the array is marked as a game-history-array, reply with nothing and process the array.
-            else if (data[0] == (byte)network_codes.game_history_array)
+            else if (data[0] == Network_codes.game_history_array)
             {
                 send(handler, new[] { (byte)0 });
                 db.receive_game_history(data.ToArray());
             }
             //If the array is marked as a request for a range of games, get the range of games and return them
-            else if (data[0] == (byte)network_codes.range_request)
+            else if (data[0] == Network_codes.range_request)
             {
                 byte[] _data = data.ToArray();              //Convert the list to an array so it can be passed to the Bitconverter class (which doesnt eat lists)
                 int file = BitConverter.ToInt32(_data, 1);  //bytes 1, 2, 3 and 4 are the file indication
@@ -155,9 +159,9 @@ namespace Server
                 send(handler, db.getFieldFileContent(file, begin, end));
             }
             //If the array is marked as a request for details about a game, get the details and return them
-            else if (data[0] == (byte)network_codes.details_request)
+            else if (data[0] == Network_codes.details_request)
             {
-                Field field = new Field(data.Skip(1).TakeWhile(b=> b != (byte)network_codes.end_of_stream).ToArray());
+                Field field = new Field(data.Skip(1).TakeWhile(b=> b != Network_codes.end_of_stream).ToArray());
                 FieldData field_data = db.readFieldData(field);
                 byte[] send_data = new byte[2*7*4]; //2 arrays of 7 32-bit(=4 bytes) integers
                 for (int i = 0; i < 7; i++)
@@ -184,7 +188,7 @@ namespace Server
             //Console.WriteLine($"Sent column {data[0]}");
             byte[] _data = new byte[data.Length + 1];
             data.CopyTo(_data, 0);
-            _data[_data.Length - 1] = (byte)network_codes.end_of_stream;
+            _data[_data.Length - 1] = Network_codes.end_of_stream;
             handler.BeginSend(_data, 0, _data.Length, 0,
                 new AsyncCallback(send_callback), handler);
         }
