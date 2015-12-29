@@ -62,9 +62,9 @@ namespace Simulator
 
             if (!IPAddress.TryParse(
                 Args_processor.parse_arg(args, "ip", "ip-address",
-                    Dns.GetHostEntry(Dns.GetHostName()).AddressList[0].ToString()), out address))
+                    Dns.Resolve(Dns.GetHostName()).AddressList[0].ToString()), out address))
             {
-                address = Dns.GetHostEntry(Dns.GetHostName()).AddressList[0];
+                address = Dns.Resolve(Dns.GetHostName()).AddressList[0];
             }
             logger.Info($"Width is set to {width}");
             logger.Info($"Height is set to {height}");
