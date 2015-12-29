@@ -78,20 +78,11 @@
       <DependentUpon>App.xaml</DependentUpon>
     </Compile>
     <Compile Include="Enums.cs" />
-    <Compile Include="Game_interface.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="Game_interface.Designer.cs">
-      <DependentUpon>Game_interface.cs</DependentUpon>
-    </Compile>
     <Compile Include="GUI_player.cs" />
     <Compile Include="MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <EmbeddedResource Include="Game_interface.resx">
-      <DependentUpon>Game_interface.cs</DependentUpon>
-    </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>

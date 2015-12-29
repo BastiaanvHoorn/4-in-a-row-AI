@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 using NLog;
 using Logger = NLog.Logger;
 
-namespace Simulator
+namespace Util
 {
-    static class Args_processor
+    public static class Args_processor
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();
         /// <summary>

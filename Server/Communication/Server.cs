@@ -30,11 +30,11 @@ namespace Server
 
         private static readonly Logger logger = LogManager.GetCurrentClassLogger();
         private readonly Database db;
-        public int port;
+        public ushort port;
         // Thread signal.
         public static ManualResetEvent allDone = new ManualResetEvent(false);
 
-        public AsynchronousSocketListener(Database db, int port)
+        public AsynchronousSocketListener(Database db, ushort port)
         {
             this.db = db;
             this.port = port;
@@ -44,10 +44,10 @@ namespace Server
             // Establish the local endpoint for the socket.
             // The DNS name of the computer
             // running the listener is "host.contoso.com".
-            IPHostEntry ipHostInfo = Dns.Resolve(Dns.GetHostName());
-            IPAddress ipAddress = ipHostInfo.AddressList[0];
-            IPEndPoint localEndPoint = new IPEndPoint(ipAddress, port);
-            logger.Info($"Starting server at port {port}");
+            IPHostEntry ip_host_info = Dns.GetHostEntry(Dns.GetHostName());
+            IPAddress ip_address = ip_host_info.AddressList[1];
+            IPEndPoint local_end_point = new IPEndPoint(ip_address, port);
+            logger.Info($"Starting server at port {ip_address}:{port}");
             // Create a TCP/IP socket.
             Socket listener = new Socket(AddressFamily.InterNetwork,
                 SocketType.Stream, ProtocolType.Tcp);
@@ -55,7 +55,7 @@ namespace Server
             // Bind the socket to the local endpoint and listen for incoming connections.
             try
             {
-                listener.Bind(localEndPoint);
+                listener.Bind(local_end_point);
                 listener.Listen(100);
 
                 while (true)
@@ -215,21 +215,24 @@ namespace Server
         }
     }
 
+    /// <summary>
+    /// Initializes the simulator
+    /// </summary>
+    /// <param name="_args">The command-line arguments
+    /// -db [path]      The path of the database
+    /// -p  [ushort >0] The port the server should be listening to
+    /// </param>
     public class server
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
-        public static void Main(String[] args)
+        public static void Main(String[] _args)
         {
+            List<string> args = _args.ToList();
             Console.Clear();
 
-            string dbDir = string.Empty;
-
-            if (args.Length > 0)
-                dbDir = args[0];
-            else
-                dbDir = Properties.Settings.Default.DbPath;
-
+            string dbDir = Args_processor.parse_arg(args, "db", "Database path", Properties.Settings.Default.DbPath);
+            ushort port = (ushort) Args_processor.parse_int_arg(args, "p", "port", 0, ushort.MaxValue, 11000);
             if (!System.IO.Directory.Exists(dbDir))    // Checks if the database already exists
             {
                 logger.Info($"No database found in {dbDir}!");
@@ -253,7 +256,7 @@ namespace Server
 
             using (Database db = new Database(dbDir))
             {
-                AsynchronousSocketListener listener = new AsynchronousSocketListener(db, 11000);
+                AsynchronousSocketListener listener = new AsynchronousSocketListener(db, port);
                 listener.start_listening();
             }
         }

@@ -62,9 +62,9 @@ namespace Simulator
 
             if (!IPAddress.TryParse(
                 Args_processor.parse_arg(args, "ip", "ip-address",
-                    Dns.Resolve(Dns.GetHostName()).AddressList[0].ToString()), out address))
+                    Dns.GetHostEntry(Dns.GetHostName()).AddressList[1].ToString()), out address))
             {
-                address = Dns.Resolve(Dns.GetHostName()).AddressList[0];
+                address = Dns.GetHostEntry(Dns.GetHostName()).AddressList[1];
             }
             logger.Info($"Width is set to {width}");
             logger.Info($"Height is set to {height}");
@@ -109,7 +109,7 @@ namespace Simulator
             }
             Stopwatch sw = new Stopwatch();
             //logger.log($"Created game_history in {sw.ElapsedMilliseconds}ms. Starting to send now", log_modes.essential);
-            Requester.send(data.ToArray(), Network_codes.game_history_array, Dns.Resolve(Dns.GetHostName()).AddressList[0], 11000);
+            Requester.send(data.ToArray(), Network_codes.game_history_array, address, port);
 
         }
         private static void Main(string[] args)

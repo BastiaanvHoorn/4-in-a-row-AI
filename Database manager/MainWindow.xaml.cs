@@ -31,7 +31,7 @@ namespace Database_manager
         private int size = 30; // Width and height of the rendered field_grids
         private Grid selected_grid;
         private IPAddress address;
-        private short port;
+        private ushort port;
 
         public MainWindow()
         {
@@ -54,11 +54,11 @@ namespace Database_manager
 
         private void port_textbox_TextChanged(object sender, TextChangedEventArgs e)
         {
-            short s;
+            ushort s;
 
             // If the text is parseable as a short, it is a valid port number
 
-            if (short.TryParse(port_textbox.Text, out s))
+            if (ushort.TryParse(port_textbox.Text, out s))
             {
                 port_textbox.Background = new SolidColorBrush(Colors.White);
                 port = s;
@@ -241,7 +241,7 @@ namespace Database_manager
                         message_label.Content = $"Server is online. Ping took {reply.RoundtripTime} ms";
                     }
                 }
-                catch (SocketException se)
+                catch (SocketException)
                 {
                     message_label.Content =
                         $"The address that was specified is valid but the request was rejected at the specified port (maybe there is no server running)";

@@ -26,7 +26,7 @@ namespace connect4
         private Game game;
         public byte? col_clicked;
         private IPAddress address;
-        private short port;
+        private ushort port;
         public MainWindow()
         {
             InitializeComponent();
@@ -212,11 +212,11 @@ namespace connect4
 
         private void port_textbox_TextChanged(object sender, TextChangedEventArgs e)
         {
-            short s;
+            ushort s;
 
             // If the text is parseable as a short, it is a valid port number
 
-            if (short.TryParse(port_textbox.Text, out s))
+            if (ushort.TryParse(port_textbox.Text, out s))
             {
                 port_textbox.Background = new SolidColorBrush(Color.FromRgb(255,255,255));
                 port = s;
