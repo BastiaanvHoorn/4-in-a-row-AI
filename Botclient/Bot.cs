@@ -18,9 +18,9 @@ namespace Botclient
         public int random_chance { get; }
         public bool smart_moves { get; }
         public IPAddress address { get; }
-        public short port { get; }
+        public ushort port { get; }
         Random r = new Random();
-        public Bot(players player, int random_chance, IPAddress address, short port, bool smart_moves = true)
+        public Bot(players player, int random_chance, IPAddress address, ushort port, bool smart_moves = true)
         {
             this.player = player;
             if (random_chance > 100)

@@ -26,9 +26,9 @@ namespace Simulator
         private readonly uint games;
         private delegate string victory_message(int games_won);
         public IPAddress address { get; }
-        public short port { get; }
+        public ushort port { get; }
 
-        public Game_processor(byte width, byte height, uint max_games, byte random_alice, byte random_bob, IPAddress address, short port)
+        public Game_processor(byte width, byte height, uint max_games, byte random_alice, byte random_bob, IPAddress address, ushort port)
         {
             this.width = width;
             this.height = height;

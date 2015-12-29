@@ -11,7 +11,7 @@ namespace Util
     public static class Requester
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();
-        public static byte[] send(byte[] data, byte type, IPAddress ip_address, short port)
+        public static byte[] send(byte[] data, byte type, IPAddress ip_address, ushort port)
         {
             // Data buffer for incoming data.
             byte[] bytes = new byte[1024];

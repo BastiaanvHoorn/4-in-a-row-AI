@@ -21,46 +21,57 @@ namespace Simulator
         private readonly DateTime end_time;
         private static readonly Logger logger = LogManager.GetCurrentClassLogger();
         private IPAddress address;
-        private short port;
+        private ushort port;
         /// <summary>
         /// Initializes the simulator
         /// </summary>
         /// <param name="_args">The command-line arguments
         /// -l  [0-5]                   log _modes (default 2) <see cref="log_modes"/>
-        /// -w  [>0]                    width  of the playing field (default 7)
-        /// -h  [>0]                    height of the playing field (default 6)
-        /// -g  [>0]                    amount of games to simulate (default 1)
+        /// -w  [byte >0]               width  of the playing field (default 7)
+        /// -h  [byte >0]               height of the playing field (default 6)
+        /// -g  [int >0]                amount of games to simulate (default 1)
         /// -e  [date in the future]    date at which the simulation will be cutt off (default null)
         /// -l  [0-g]                   Length of a sub-simulation of games
         /// -ra [0-100]                 The chance for alice to random a turn
         /// -rb [0-100]                 The chance for bob to random a turn
+        /// -ip [ip-address]            The ip-address of the server
+        /// -p  [ushort >0]              The port the server should be listening to
         /// </param>
         public Simulator(string[] _args)
         {
             List<string> args = _args.ToList();
-            width = (byte)Args_processor.parse_int_arg(args, "w", "width", 2, 20, 7);
-            height = (byte)Args_processor.parse_int_arg(args, "h", "height", 2, 20, 6);
-            max_games = Args_processor.parse_int_arg(args, "g", "maximum of games", 1, uint.MaxValue, 1);
-            cycle_length = Args_processor.parse_int_arg(args, "l", "cycle length", 1, max_games, max_games);
+            width =        (byte)Args_processor.parse_int_arg(args, "w",  "width",        2, 20, 7);
+            height =       (byte)Args_processor.parse_int_arg(args, "h",  "height",       2, 20, 6);
+            max_games =          Args_processor.parse_int_arg(args, "g",  "max games",    1, uint.MaxValue, 1);
+            cycle_length =       Args_processor.parse_int_arg(args, "l",  "cycle length", 1, max_games, max_games);
             random_alice = (byte)Args_processor.parse_int_arg(args, "ra", "random_alice", 0, 100, 0);
-            random_bob = (byte)Args_processor.parse_int_arg(args, "rb", "random_bob", 0, 100, 0);
-            try
+            random_bob =   (byte)Args_processor.parse_int_arg(args, "rb", "random_bob",   0, 100, 0);
+            port =       (ushort)Args_processor.parse_int_arg(args, "p",  "port",         0, ushort.MaxValue, 11000);
+            if (DateTime.TryParse(
+                Args_processor.parse_arg(args, "e", "end time",
+                    DateTime.MaxValue.ToString()), out end_time))
             {
-                end_time = DateTime.Parse(Args_processor.parse_arg(args, "e", "end time", DateTime.MaxValue.ToString()));
+
+                if (end_time < DateTime.Now)
+                    end_time = DateTime.MaxValue;
             }
-            catch (Exception)
+            else
             {
                 end_time = DateTime.MaxValue;
             }
-            if (end_time < DateTime.Now)
+
+            if (!IPAddress.TryParse(
+                Args_processor.parse_arg(args, "ip", "ip-address",
+                    Dns.GetHostEntry(Dns.GetHostName()).AddressList[0].ToString()), out address))
             {
-                end_time = DateTime.MaxValue;
+                address = Dns.GetHostEntry(Dns.GetHostName()).AddressList[0];
             }
             logger.Info($"Width is set to {width}");
             logger.Info($"Height is set to {height}");
             logger.Info($"Maximum of games is set to {max_games}");
             logger.Info($"Cycle length is set to {cycle_length}");
             logger.Info($"Ending time set to {end_time}");
+            logger.Info($"The ip-address is set to {address}:{port}");
             Console.WriteLine("Press any key to start the simulation");
             Console.ReadLine();
         }
