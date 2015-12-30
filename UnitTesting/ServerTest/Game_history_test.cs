@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -40,7 +41,7 @@ namespace UnitTesting.ServerTest
         public void linear_to_parrallel_game_history_speed_test()
         {
             List<byte> linear = new List<byte>();
-            for (int i = 0; i < 42*10000; i++)
+            for (int i = 0; i < 42*100000; i++)
             {
                 if (i == 0 || i%42 == 0)
                 {
@@ -51,6 +52,7 @@ namespace UnitTesting.ServerTest
                     linear.Add((byte)((i%42)%6));
                 }
             }
+            Stopwatch sw = new Stopwatch();
             game_history_util.linear_to_parrallel_game_history(linear);
         }
     }
