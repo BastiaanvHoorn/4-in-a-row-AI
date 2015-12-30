@@ -6,12 +6,21 @@ using System.Text;
 using NLog;
 using Logger = NLog.Logger;
 
-namespace Util
+namespace Utility
 {
     public static class Requester
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();
-        public static byte[] send(byte[] data, byte type, IPAddress ip_address, ushort port)
+        /// <summary>
+        /// Send a byte array to the specified address at the specified port
+        /// </summary>
+        /// <param name="data">The data that will be sent</param>
+        /// <param name="type">The type of header that needs te be added to the data</param>
+        /// <param name="ip_address">The address to which it will be sent</param>
+        /// <param name="port">The port at which it will be sent</param>
+        /// <param name="catch_socket_exc">If socket exceptions need to be caught, give false if they will be handled elsewhere</param>
+        /// <returns></returns>
+        public static byte[] send(byte[] data, byte type, IPAddress ip_address, ushort port, bool catch_socket_exc = true)
         {
             // Data buffer for incoming data.
             byte[] bytes = new byte[1024];
@@ -57,7 +66,14 @@ namespace Util
                 }
                 catch (SocketException se)
                 {
-                    logger.Error($"SocketException : {se}");
+                    if (!catch_socket_exc)
+                    {
+                        throw se;
+                    }
+                    else
+                    {
+                        logger.Error($"SocketException : {se}");
+                    }
                 }
                 catch (Exception e)
                 {
@@ -81,7 +97,7 @@ namespace Util
 
             //Add a footer witn an end-of-stream token
             msg[msg.Length - 1] = Network_codes.end_of_stream;
-            
+
             //Copy all the data to the middle part of the array
             data.CopyTo(msg, 1);
             return msg;

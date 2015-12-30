@@ -5,7 +5,7 @@ using System.Linq;
 using System.Net;
 using NLog;
 using Logger = NLog.Logger;
-using Util;
+using Utility;
 
 namespace Simulator
 {

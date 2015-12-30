@@ -14,16 +14,17 @@
             <Label Content="Hints allowed" HorizontalAlignment="Left" Margin="10,125,0,0" VerticalAlignment="Top" Height="30" Width="100"/>
             <Label Content="Against AI" HorizontalAlignment="Left" Margin="10,160,0,0" VerticalAlignment="Top" Height="30" Width="100"/>
             <Label Content="Difficulty" HorizontalAlignment="Left" Margin="10,195,0,0" VerticalAlignment="Top" Height="30" Width="100"/>
+            <Label Content="IP and port" HorizontalAlignment="Left" Margin="10,230,0,0" VerticalAlignment="Top" Height="30" Width="100"/>
             <xctk:ByteUpDown Name="Length_up_down" Value="7" Minimum="1" HorizontalAlignment="Left" Margin="115,55,0,0" VerticalAlignment="Top" Width="125" Height="25"/>
             <xctk:ByteUpDown Name="Width_up_down" Value="7" Minimum="1" HorizontalAlignment="Left" Margin="115,55,0,0" VerticalAlignment="Top" Width="125" Height="25"/>
             <xctk:ByteUpDown Name="Height_up_down" Value="6" Minimum="1" HorizontalAlignment="Left" Margin="115,90,0,0" VerticalAlignment="Top" Width="125" Height="25"/>
-            <CheckBox x:Name="hints_checkbox" Content="CheckBox" HorizontalAlignment="Left" Margin="225,131,0,0" VerticalAlignment="Top" Width="15"/>
-            <CheckBox x:Name="AI_checkbox" Content="CheckBox" HorizontalAlignment="Left" Margin="225,166,0,0" VerticalAlignment="Top" Width="15" />
-            <Slider x:Name="difficulty_slider" IsEnabled="{Binding ElementName=AI_checkbox, Path=IsChecked}" HorizontalAlignment="Left" Margin="115,200,0,0" VerticalAlignment="Top" Width="125" Maximum="100" TickFrequency="10"/>
-            <Button x:Name="Start" Content="Start" HorizontalAlignment="Left" Margin="245,235,0,0" VerticalAlignment="Top" Width="75" Click="Start_Click"/>
+            <CheckBox Name="hints_checkbox" Content="CheckBox" HorizontalAlignment="Left" Margin="225,131,0,0" VerticalAlignment="Top" Width="15"/>
+            <CheckBox Name="AI_checkbox" Content="CheckBox" HorizontalAlignment="Left" Margin="225,166,0,0" VerticalAlignment="Top" Width="15" />
+            <Slider Name="difficulty_slider" IsEnabled="{Binding ElementName=AI_checkbox, Path=IsChecked}" HorizontalAlignment="Left" Margin="115,200,0,0" VerticalAlignment="Top" Width="125" Maximum="100" TickFrequency="10"/>
+            <Button Name="Start" Content="Start" HorizontalAlignment="Left" Margin="310,55,0,0" VerticalAlignment="Top" Width="75" Click="Start_Click"/>
             <xctk:ByteUpDown Value="{Binding ElementName=difficulty_slider, Path=Value}" IsEnabled="{Binding ElementName=AI_checkbox, Path=IsChecked}" HorizontalAlignment="Left" Margin="260,200,0,0" VerticalAlignment="Top" Width="60"/>
-            <TextBox x:Name="address_textbox" Margin="60,280,256,22" TextWrapping="Wrap" TextChanged="address_textbox_TextChanged"/>
-            <TextBox x:Name="port_textbox" Margin="205,280,105,22" TextWrapping="Wrap" TextChanged="port_textbox_TextChanged" Background="White"/>
+            <TextBox Name="address_textbox" IsEnabled="{Binding ElementName=AI_checkbox, Path=IsChecked}" Margin="115,240,216,62" TextWrapping="Wrap" TextChanged="address_textbox_TextChanged"/>
+            <TextBox Name="port_textbox" IsEnabled="{Binding ElementName=AI_checkbox, Path=IsChecked}" Margin="260,240,136,62" TextWrapping="Wrap" TextChanged="port_textbox_TextChanged" Background="White"/>
         </Grid>
         <Grid Name="game_grid" Visibility="Collapsed">
             <Grid Name="label_grid" Margin="0,0,136,0"/>

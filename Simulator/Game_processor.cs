@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using Botclient;
 using Engine;
 using NLog;
-using Util;
+using Utility;
 using Logger = NLog.Logger;
 
 namespace Simulator

@@ -3,11 +3,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using Util;
+using Utility;
 using System.Diagnostics;
 using NLog;
 using System.IO;
-using Util;
 
 namespace Server
 {
@@ -108,9 +107,9 @@ namespace Server
                 players turn = players.Alice;
                 players winner = players.Empty;
 
-                if (h[0] == (byte)Util.Network_codes.game_history_alice)
+                if (h[0] == (byte)Utility.Network_codes.game_history_alice)
                     winner = players.Alice;
-                else if (h[0] == (byte)Util.Network_codes.game_history_bob)
+                else if (h[0] == (byte)Utility.Network_codes.game_history_bob)
                     winner = players.Bob;
 
                 for (int j = 1; j < h.Length; j++)

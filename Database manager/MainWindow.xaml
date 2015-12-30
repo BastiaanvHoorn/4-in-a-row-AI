@@ -14,15 +14,16 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
         <DockPanel Height="30" LastChildFill="true" Margin="5,5,5,0" VerticalAlignment="Top">
-            <Button x:Name="ping_button" Content="Ping" DockPanel.Dock="Right" Margin="5" Width="56" Click="button_Click"/>
+            <Button x:Name="ping_button" Content="Ping" DockPanel.Dock="Right" Margin="5" Click="ping_button_Click"/>
+            <Button x:Name="localhost_button" Content="Local address" DockPanel.Dock="Right" Margin="5"  Click="localhost_button_Click"/>
+
             <Grid Margin="0,0,0,0" Grid.Row="1">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="0*"/>
                     <ColumnDefinition Width="295*"/>
                     <ColumnDefinition Width="149*"/>
                 </Grid.ColumnDefinitions>
-                <TextBox x:Name="address_textbox" Margin="5" TextWrapping="Wrap" Grid.ColumnSpan="2" TextChanged="address_textbox_TextChanged"/>
-                <TextBox x:Name="port_textbox" Margin="5" TextWrapping="Wrap" Grid.Column="2" TextChanged="port_textbox_TextChanged" Background="White"/>
+                <TextBox x:Name="address_textbox" Margin="5" TextWrapping="Wrap" Grid.Column="0" TextChanged="address_textbox_TextChanged" Tag="0"/>
+                <TextBox x:Name="port_textbox" Margin="5" TextWrapping="Wrap" Grid.Column="1" TextChanged="port_textbox_TextChanged" Tag="0"/>
             </Grid>
         </DockPanel>
         <TabControl Name="tabControl" Margin="10,0,10,10" Grid.Row="1">

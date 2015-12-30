@@ -8,7 +8,7 @@ using System.Diagnostics;
 using Engine;
 using NLog;
 using Logger = NLog.Logger;
-using Util;
+using Utility;
 
 namespace Server
 {
@@ -134,7 +134,7 @@ namespace Server
             // If the array is marked as a column_request, respond with a column
             if (data[0] ==  Network_codes.ping)
             {
-                send(handler, new byte[] {0});
+                send(handler, new byte[] {Network_codes.ping_respond});
             }
             else if (data[0] == Network_codes.column_request)
             {
@@ -231,8 +231,8 @@ namespace Server
             List<string> args = _args.ToList();
             Console.Clear();
 
-            string dbDir = Args_processor.parse_arg(args, "db", "Database path", Properties.Settings.Default.DbPath);
-            ushort port = (ushort) Args_processor.parse_int_arg(args, "p", "port", 0, ushort.MaxValue, 11000);
+            string dbDir = Util.parse_arg(args, "db", "Database path", Properties.Settings.Default.DbPath);
+            ushort port = (ushort) Util.parse_int_arg(args, "p", "port", 0, ushort.MaxValue, 11000);
             if (!System.IO.Directory.Exists(dbDir))    // Checks if the database already exists
             {
                 logger.Info($"No database found in {dbDir}!");

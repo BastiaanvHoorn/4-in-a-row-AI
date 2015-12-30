@@ -18,7 +18,7 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using Xceed.Wpf.AvalonDock.Controls;
 using Engine;
-using Util;
+using Utility;
 namespace Database_manager
 {
     /// <summary>
@@ -45,10 +45,12 @@ namespace Database_manager
             {
                 address_textbox.Background = Brushes.White;
                 address = _address;
+                address_textbox.Tag = ui_codes.valid;
             }
             else
             {
                 address_textbox.Background = new SolidColorBrush(Color.FromRgb(225, 110, 110));
+                address_textbox.Tag = ui_codes.invalid;
             }
         }
 
@@ -62,19 +64,49 @@ namespace Database_manager
             {
                 port_textbox.Background = new SolidColorBrush(Colors.White);
                 port = s;
-                return;
+                port_textbox.Tag = ui_codes.valid;
             }
-            port_textbox.Background = new SolidColorBrush(Color.FromRgb(225, 110, 110));
+            else
+            {
+
+                port_textbox.Background = new SolidColorBrush(Color.FromRgb(225, 110, 110));
+                port_textbox.Tag = ui_codes.invalid;
+            }
         }
 
+        private bool check_network_input_validity()
+        {
+            if ((string)port_textbox.Tag == ui_codes.invalid)
+            {
+                message_label.Content = "The entered port is invalid";
+                port_textbox.Background = new SolidColorBrush(Color.FromRgb(225, 110, 110));
+                return false;
+            }
+            if ((string)address_textbox.Tag == ui_codes.invalid)
+            {
+                message_label.Content = "The entered address is invalid";
+                address_textbox.Background = new SolidColorBrush(Color.FromRgb(225, 110, 110));
+                return false;
+            }
+            return true;
+
+        }
         private void retrieve_clicked(object sender, RoutedEventArgs e)
         {
             //Return immediatly if the input isn't correct
-            if (length_up_down.Value == null || end_up_down.Value == null || start_up_down.Value == null || start_up_down.Value > end_up_down.Value)
+            if (length_up_down.Value == null || end_up_down.Value == null || start_up_down.Value == null)
             {
+                message_label.Content = "Please fill out all the iput fields";
                 return;
             }
-
+            if (check_network_input_validity())
+                return;
+            string s;
+            if (!Util.ping(address, port, out s))
+            {
+                message_label.Content = s;
+                return;
+            }
             //Parse the input to one byte-array
             byte[] data = new byte[12];
             byte[] length = BitConverter.GetBytes((int)length_up_down.Value);
@@ -225,29 +257,25 @@ namespace Database_manager
             }
         }
 
-        private void button_Click(object sender, RoutedEventArgs e)
+        private void ping_button_Click(object sender, RoutedEventArgs e)
         {
+            if (!check_network_input_validity())
+                return;
             message_label.Content = $"Pinging {address} at port {port}";
-            Ping ping_sender = new Ping();
-            PingReply reply = ping_sender.Send(address);
-            if (reply.Status == IPStatus.Success)
-            {
-                try
-                {
-                    byte[] data = Requester.send(new byte[0], Network_codes.ping, address, port);
-                    byte b = data[0];
-                    if (b == Network_codes.ping_respond)
-                    {
-                        message_label.Content = $"Server is online. Ping took {reply.RoundtripTime} ms";
-                    }
-                }
-                catch (SocketException)
-                {
-                    message_label.Content =
-                        $"The address that was specified is valid but the request was rejected at the specified port (maybe there is no server running)";
-                }
-
-            }
+            string s;
+            Util.ping(address, port, out s);
+            message_label.Content = s;
         }
+
+        private void localhost_button_Click(object sender, RoutedEventArgs e)
+        {
+            address_textbox.Text = Dns.GetHostEntry(Dns.GetHostName()).AddressList[1].ToString();
+            message_label.Content = $"Set the address to localhost";
+        }
+    }
+    static class ui_codes
+    {
+        public static string valid = "1";
+        public static string invalid = "0";
     }
 }
