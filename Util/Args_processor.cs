@@ -5,7 +5,7 @@ using Logger = NLog.Logger;
 
 namespace Utility
 {
-    public static class Util
+    public static class Args_parser
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();
         /// <summary>

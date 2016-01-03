@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Utility
 {
-    public class game_history_util
+    public class Game_history
     {
         /// <summary>
         /// Converts the linear game history representation (passed through network connection) into a parallel representation (which can be read by the process_game_history function).
