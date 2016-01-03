@@ -231,8 +231,8 @@ namespace Server
             List<string> args = _args.ToList();
             Console.Clear();
 
-            string dbDir = Util.parse_arg(args, "db", "Database path", Properties.Settings.Default.DbPath);
-            ushort port = (ushort) Util.parse_int_arg(args, "p", "port", 0, ushort.MaxValue, 11000);
+            string dbDir = Args_parser.parse_arg(args, "db", "Database path", Properties.Settings.Default.DbPath);
+            ushort port = (ushort) Args_parser.parse_int_arg(args, "p", "port", 0, ushort.MaxValue, 11000);
             if (!System.IO.Directory.Exists(dbDir))    // Checks if the database already exists
             {
                 logger.Info($"No database found in {dbDir}!");

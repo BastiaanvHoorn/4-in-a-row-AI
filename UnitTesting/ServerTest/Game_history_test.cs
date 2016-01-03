@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Util;
+using Utility;
 using Server;
 
 namespace UnitTesting.ServerTest
@@ -29,7 +29,7 @@ namespace UnitTesting.ServerTest
             initial.Add(Network_codes.end_of_stream);
             initial.AddRange(game2);
 
-            byte[][] actual = game_history_util.linear_to_parrallel_game_history(initial);
+            byte[][] actual = Game_history.linear_to_parrallel_game_history(initial);
             for (int i = 0; i < expected.Length; i++)
             {
                 CollectionAssert.AreEqual(expected[i], actual[i]);
@@ -53,7 +53,7 @@ namespace UnitTesting.ServerTest
                 }
             }
             Stopwatch sw = new Stopwatch();
-            game_history_util.linear_to_parrallel_game_history(linear);
+            Game_history.linear_to_parrallel_game_history(linear);
         }
     }
 }

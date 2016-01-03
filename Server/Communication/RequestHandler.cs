@@ -94,7 +94,7 @@ namespace Server
             sw.Start();
 
             byte[] rawHistory = db.BufferMgr.getBufferContent(bufferPath);
-            byte[][] gameHistories = game_history_util.linear_to_parrallel_game_history(rawHistory.ToList());
+            byte[][] gameHistories = Game_history.linear_to_parrallel_game_history(rawHistory.ToList());
 
             string bufferName = Path.GetFileName(bufferPath);
 

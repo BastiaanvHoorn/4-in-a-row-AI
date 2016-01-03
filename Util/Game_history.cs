@@ -25,24 +25,30 @@ namespace Utility
 
             //Create an array of arrays with the count of games
             byte[][] game_history = new byte[game_counter][];
+
+            // Index of the start of the next game to process in the history list
             int index = 0;
             for (int game = 0; game < game_history.Length; game++)
             {
+                // Count the amount of turns till the next game indicator
                 for (int turn = 1+  index; turn < history.Count; turn++)
                 {
                     if (history[turn] == Network_codes.game_history_alice ||
                         history[turn] == Network_codes.game_history_bob ||
                         history[turn] == Network_codes.end_of_stream)
                     {
-
+                        // Create an array of the size of the next game
                         game_history[game] = new byte[turn-index];
                         break;
                     }
                 }
+
+                // Add all the turns to the next game
                 for (int turn = 0; turn < game_history[game].Count(); turn++)
                 {
                     game_history[game][turn] = history[turn+index];
                 }
+                // Update the index so we can contiue where we left
                 index += game_history[game].Count();
             }
             return game_history;

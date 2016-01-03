@@ -102,7 +102,7 @@ namespace Database_manager
             if (check_network_input_validity())
                 return;
             string s;
-            if (!Util.ping(address, port, out s))
+            if (!Requester.ping(address, port, out s))
             {
                 message_label.Content = s;
                 return;
@@ -263,7 +263,7 @@ namespace Database_manager
                 return;
             message_label.Content = $"Pinging {address} at port {port}";
             string s;
-            Util.ping(address, port, out s);
+            Requester.ping(address, port, out s);
             message_label.Content = s;
         }
 

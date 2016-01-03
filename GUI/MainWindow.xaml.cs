@@ -2,6 +2,7 @@
 using System.CodeDom;
 using System.Collections.Generic;
 using System.Net;
+using System.Net.NetworkInformation;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -9,6 +10,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using Engine;
 using Botclient;
+using Utility;
 using Label = System.Windows.Controls.Label;
 using players = Engine.players;
 
@@ -30,8 +32,12 @@ namespace connect4
         public MainWindow()
         {
             InitializeComponent();
+
+            // Make sure the right controls are visible
             settings_grid.Visibility = Visibility.Visible;
             game_grid.Visibility = Visibility.Collapsed;
+
+            // Create the grid for the game
             for (int i = 0; i < Width_up_down.Value; i++)
             {
                 var coldef = new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) };
@@ -42,13 +48,15 @@ namespace connect4
                 var rowdef = new RowDefinition { Height = new GridLength(1, GridUnitType.Star) };
                 label_grid.RowDefinitions.Add(rowdef);
             }
-            labels = new Label[(uint)Width_up_down.Value][];
+            labels = new Label[(uint) Width_up_down.Value][];
+
+            // TODO: add circle labels for the stones
+            // Add some properties to all the labels
             for (int x = 0; x < Width_up_down.Value; x++)
             {
                 labels[x] = new Label[(uint)Height_up_down.Value];
                 for (int y = 0; y < Height_up_down.Value; y++)
                 {
-
                     Label label = new Label();
                     label_grid.Children.Add(label);
 
@@ -58,6 +66,8 @@ namespace connect4
                     label.SetValue(Grid.ColumnProperty, x);
                     label.SetValue(Grid.RowProperty, y);
                     labels[x][y] = label;
+
+                    // Add a tag so we can retrieve the label later again
                     label.Tag = new byte[] { (byte)x, (byte)y };
                 }
             }
@@ -73,11 +83,21 @@ namespace connect4
             game = new Game((byte)Width_up_down.Value, (byte)Height_up_down.Value);
             settings_button.Visibility = Visibility.Hidden;
             rematch_button.Visibility = Visibility.Hidden;
-            message_label.Content = string.Empty;
             alice = new GUI_player(this, players.Alice);
             if (AI_checkbox.IsChecked.Value)
             {
-                bob = new Bot(players.Bob, (byte)difficulty_slider.Value, address, port);
+                string s;
+                if (!check_network_input_validity())
+                    return;
+                if (Requester.ping(address, port, out s))
+                {
+                    bob = new Bot(players.Bob, (byte) difficulty_slider.Value, address, port, (bool)smart_moves_checkbox.IsChecked);
+                }
+                else
+                {
+                    message_label.Content = "Cannot connect to server and thus cannot use AI";
+                    return;
+                }
             }
             else
             {
@@ -86,6 +106,7 @@ namespace connect4
             settings_grid.Visibility = Visibility.Collapsed;
             game_grid.Visibility = Visibility.Visible;
             update_field();
+            message_label.Content = "Starting game. Good luck!";
             loop();
         }
 
@@ -134,8 +155,6 @@ namespace connect4
         {
             if (game != null)
             {
-
-                //paint_black();
                 byte[] coords = (byte[])((Label)sender).Tag;
                 update_field(coords[0], coords[1]);
             }
@@ -187,11 +206,13 @@ namespace connect4
 
         private void rematch_button_Click(object sender, RoutedEventArgs e)
         {
+            message_label.Content = string.Empty;
             start_game();
         }
 
         private void settings_button_Click(object sender, RoutedEventArgs e)
         {
+            message_label.Content = string.Empty;
             game_grid.Visibility = Visibility.Collapsed;
             settings_grid.Visibility = Visibility.Visible;
         }
@@ -203,27 +224,51 @@ namespace connect4
             {
                 address_textbox.Background = Brushes.White;
                 address = _address;
+                address_textbox.Tag = ui_codes.valid;
             }
             else
             {
                 address_textbox.Background = new SolidColorBrush(Color.FromRgb(225, 110, 110));
+                address_textbox.Tag = ui_codes.invalid;
             }
         }
 
         private void port_textbox_TextChanged(object sender, TextChangedEventArgs e)
         {
             ushort s;
-
-            // If the text is parseable as a short, it is a valid port number
-
             if (ushort.TryParse(port_textbox.Text, out s))
             {
-                port_textbox.Background = new SolidColorBrush(Color.FromRgb(255,255,255));
+                port_textbox.Background = new SolidColorBrush(System.Windows.Media.Colors.White);
                 port = s;
-                return;
+                port_textbox.Tag = ui_codes.valid;
             }
-            port_textbox.Background = new SolidColorBrush(Color.FromRgb(225, 110, 110));
+            else
+            {
+
+                port_textbox.Background = new SolidColorBrush(Color.FromRgb(225, 110, 110));
+                port_textbox.Tag = ui_codes.invalid;
+            }
         }
 
+        private bool check_network_input_validity()
+        {
+            if ((string)port_textbox.Tag == ui_codes.invalid)
+            {
+                port_textbox.Background = new SolidColorBrush(Color.FromRgb(225, 110, 110));
+                return false;
+            }
+            if ((string)address_textbox.Tag == ui_codes.invalid)
+            {
+                address_textbox.Background = new SolidColorBrush(Color.FromRgb(225, 110, 110));
+                return false;
+            }
+            return true;
+
+        }
+    }
+    static class ui_codes
+    {
+        public static string valid = "1";
+        public static string invalid = "0";
     }
 }

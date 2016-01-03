@@ -40,15 +40,15 @@ namespace Simulator
         public Simulator(string[] _args)
         {
             List<string> args = _args.ToList();
-            width =        (byte)Args_processor.parse_int_arg(args, "w",  "width",        2, 20, 7);
-            height =       (byte)Args_processor.parse_int_arg(args, "h",  "height",       2, 20, 6);
-            max_games =          Args_processor.parse_int_arg(args, "g",  "max games",    1, uint.MaxValue, 1);
-            cycle_length =       Args_processor.parse_int_arg(args, "l",  "cycle length", 1, max_games, max_games);
-            random_alice = (byte)Args_processor.parse_int_arg(args, "ra", "random_alice", 0, 100, 0);
-            random_bob =   (byte)Args_processor.parse_int_arg(args, "rb", "random_bob",   0, 100, 0);
-            port =       (ushort)Args_processor.parse_int_arg(args, "p",  "port",         0, ushort.MaxValue, 11000);
+            width =        (byte)Args_parser.parse_int_arg(args, "w",  "width",        2, 20, 7);
+            height =       (byte)Args_parser.parse_int_arg(args, "h",  "height",       2, 20, 6);
+            max_games =          Args_parser.parse_int_arg(args, "g",  "max games",    1, uint.MaxValue, 1);
+            cycle_length =       Args_parser.parse_int_arg(args, "l",  "cycle length", 1, max_games, max_games);
+            random_alice = (byte)Args_parser.parse_int_arg(args, "ra", "random_alice", 0, 100, 0);
+            random_bob =   (byte)Args_parser.parse_int_arg(args, "rb", "random_bob",   0, 100, 0);
+            port =       (ushort)Args_parser.parse_int_arg(args, "p",  "port",         0, ushort.MaxValue, 11000);
             if (DateTime.TryParse(
-                Args_processor.parse_arg(args, "e", "end time",
+                Args_parser.parse_arg(args, "e", "end time",
                     DateTime.MaxValue.ToString()), out end_time))
             {
 
@@ -61,7 +61,7 @@ namespace Simulator
             }
 
             if (!IPAddress.TryParse(
-                Args_processor.parse_arg(args, "ip", "ip-address",
+                Args_parser.parse_arg(args, "ip", "ip-address",
                     Dns.GetHostEntry(Dns.GetHostName()).AddressList[1].ToString()), out address))
             {
                 address = Dns.GetHostEntry(Dns.GetHostName()).AddressList[1];

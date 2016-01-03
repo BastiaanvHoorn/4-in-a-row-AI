@@ -48,7 +48,7 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Compile Include="Args_processor.cs" />
-    <Compile Include="game_history_util.cs" />
+    <Compile Include="Game_history_util.cs" />
     <Compile Include="Network_codes.cs" />
     <Compile Include="Requester.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

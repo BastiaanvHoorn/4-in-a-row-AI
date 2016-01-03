@@ -6,15 +6,16 @@
         xmlns:local="clr-namespace:Database_manager"
         xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit" x:Class="connect4.MainWindow"
         mc:Ignorable="d"
-        Title="MainWindow" Height="350" Width="464">
+        Title="MainWindow" Height="367" Width="464">
     <Grid>
-        <Grid Name="settings_grid" Visibility="Visible">
+        <Grid Name="settings_grid" Visibility="Visible" Margin="0,0,0,29">
             <Label Content="Width" HorizontalAlignment="Left" Margin="10,55,0,0" VerticalAlignment="Top" Height="30" Width="100"/>
             <Label Content="Height" HorizontalAlignment="Left" Margin="10,90,0,0" VerticalAlignment="Top" Height="30" Width="100"/>
             <Label Content="Hints allowed" HorizontalAlignment="Left" Margin="10,125,0,0" VerticalAlignment="Top" Height="30" Width="100"/>
             <Label Content="Against AI" HorizontalAlignment="Left" Margin="10,160,0,0" VerticalAlignment="Top" Height="30" Width="100"/>
             <Label Content="Difficulty" HorizontalAlignment="Left" Margin="10,195,0,0" VerticalAlignment="Top" Height="30" Width="100"/>
-            <Label Content="IP and port" HorizontalAlignment="Left" Margin="10,230,0,0" VerticalAlignment="Top" Height="30" Width="100"/>
+            <Label Content="Smart moves" HorizontalAlignment="Left" Margin="10,225,0,0" VerticalAlignment="Top" Height="30" Width="100"/>
+            <Label Content="IP and port" HorizontalAlignment="Left" Margin="10,260,0,0" VerticalAlignment="Top" Height="30" Width="100" RenderTransformOrigin="0.45,0.167"/>
             <xctk:ByteUpDown Name="Length_up_down" Value="7" Minimum="1" HorizontalAlignment="Left" Margin="115,55,0,0" VerticalAlignment="Top" Width="125" Height="25"/>
             <xctk:ByteUpDown Name="Width_up_down" Value="7" Minimum="1" HorizontalAlignment="Left" Margin="115,55,0,0" VerticalAlignment="Top" Width="125" Height="25"/>
             <xctk:ByteUpDown Name="Height_up_down" Value="6" Minimum="1" HorizontalAlignment="Left" Margin="115,90,0,0" VerticalAlignment="Top" Width="125" Height="25"/>
@@ -23,12 +24,13 @@
             <Slider Name="difficulty_slider" IsEnabled="{Binding ElementName=AI_checkbox, Path=IsChecked}" HorizontalAlignment="Left" Margin="115,200,0,0" VerticalAlignment="Top" Width="125" Maximum="100" TickFrequency="10"/>
             <Button Name="Start" Content="Start" HorizontalAlignment="Left" Margin="310,55,0,0" VerticalAlignment="Top" Width="75" Click="Start_Click"/>
             <xctk:ByteUpDown Value="{Binding ElementName=difficulty_slider, Path=Value}" IsEnabled="{Binding ElementName=AI_checkbox, Path=IsChecked}" HorizontalAlignment="Left" Margin="260,200,0,0" VerticalAlignment="Top" Width="60"/>
-            <TextBox Name="address_textbox" IsEnabled="{Binding ElementName=AI_checkbox, Path=IsChecked}" Margin="115,240,216,62" TextWrapping="Wrap" TextChanged="address_textbox_TextChanged"/>
-            <TextBox Name="port_textbox" IsEnabled="{Binding ElementName=AI_checkbox, Path=IsChecked}" Margin="260,240,136,62" TextWrapping="Wrap" TextChanged="port_textbox_TextChanged" Background="White"/>
+            <TextBox Name="address_textbox" IsEnabled="{Binding ElementName=AI_checkbox, Path=IsChecked}" Margin="115,260,0,0" TextWrapping="Wrap" TextChanged="address_textbox_TextChanged" VerticalAlignment="Top" HorizontalAlignment="Left" Width="125" Height="18"/>
+            <CheckBox Name="smart_moves_checkbox" IsEnabled="{Binding ElementName=AI_checkbox, Path=IsChecked}" Content="CheckBox" HorizontalAlignment="Left" Margin="225,231,0,0" VerticalAlignment="Top" Width="15" />
+            <TextBox Name="port_textbox" IsEnabled="{Binding ElementName=AI_checkbox, Path=IsChecked}" Margin="260,260,136,0" TextWrapping="Wrap" TextChanged="port_textbox_TextChanged" Background="White" VerticalAlignment="Top"/>
         </Grid>
-        <Grid Name="game_grid" Visibility="Collapsed">
+        <Grid Name="game_grid" Visibility="Collapsed" Margin="0,0,0,29">
             <Grid Name="label_grid" Margin="0,0,136,0"/>
-            <Label Name="message_label" HorizontalAlignment="Left" Margin="335,20,0,0" VerticalAlignment="Top"/>
+            <Label Name="message_label" HorizontalAlignment="Left" Margin="15,295,0,-25" VerticalAlignment="Top" Width="431" Height="20"/>
             <Button Name="rematch_button" Content="rematch" HorizontalAlignment="Left" Margin="345,55,0,0" VerticalAlignment="Top" Width="75" Visibility="Visible" Click="rematch_button_Click"/>
             <Button Name="settings_button" Content="settings" HorizontalAlignment="Left" Margin="345,80,0,0" VerticalAlignment="Top" Width="75" Visibility="Visible" Click="settings_button_Click"/>
         </Grid>
