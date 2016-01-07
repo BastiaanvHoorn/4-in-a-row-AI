@@ -69,6 +69,10 @@
     <Compile Include="Database\Database.cs" />
     <Compile Include="Database\DatabaseLocation.cs" />
     <Compile Include="Database\DatabaseProperties.cs" />
+    <Compile Include="Database\DatabaseSegment.cs" />
+    <Compile Include="Database\DatabaseStats.cs" />
+    <Compile Include="Database\SegmentMerger.cs" />
+    <Compile Include="Database\StatsManager.cs" />
     <Compile Include="Database\Indexer.cs" />
     <Compile Include="Exceptions.cs" />
     <Compile Include="Database\FieldData.cs" />

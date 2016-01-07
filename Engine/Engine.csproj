@@ -45,6 +45,7 @@
   <ItemGroup>
     <Compile Include="BitReader.cs" />
     <Compile Include="BitWriter.cs" />
+    <Compile Include="CompressedCompare.cs" />
     <Compile Include="Enums.cs" />
     <Compile Include="Exceptions.cs" />
     <Compile Include="Extensions.cs" />

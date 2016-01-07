@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Engine;
+using System;
+using System.IO;
 
 namespace Server
 {
@@ -6,10 +8,7 @@ namespace Server
     {
         public static DatabaseLocation NonExisting = new DatabaseLocation();
         
-        private DatabaseProperties DbProperties;
-        public readonly int FileIndex;
-        public readonly int FieldLength;
-        public readonly int GlobalLocation;
+        private DatabaseSegment DbSegment;
         public readonly int Location;
 
         private DatabaseLocation() { Location = -1; }
@@ -20,22 +19,10 @@ namespace Server
         /// <param name="path">Path in the database</param>
         /// <param name="fieldLength"></param>
         /// <param name="location">Field location in Fields.db</param>
-        public DatabaseLocation(DatabaseProperties dbProperties, int fieldLength, int fileIndex, int location)
+        public DatabaseLocation(DatabaseSegment dbSegment, int location)
         {
-            this.DbProperties = dbProperties;
-            this.GlobalLocation = fileIndex * dbProperties.getMaxFieldsInFile(fieldLength) + location;
-            this.FieldLength = fieldLength;
-            this.FileIndex = fileIndex;
+            this.DbSegment = dbSegment;
             this.Location = location;
-        }
-
-        public DatabaseLocation(DatabaseProperties dbProperties, int fieldLength, int globalLocation)
-        {
-            this.DbProperties = dbProperties;
-            this.FieldLength = fieldLength;
-            this.GlobalLocation = globalLocation;
-            this.FileIndex = (int)Math.Floor((double)globalLocation / (double)dbProperties.getMaxFieldsInFile(fieldLength));
-            this.Location = globalLocation % DbProperties.getMaxFieldsInFile(fieldLength);
         }
 
         /// <summary>
@@ -45,16 +32,26 @@ namespace Server
         /// <returns></returns>
         public bool locationExists()
         {
-            return Location >= 0 && Location < DbProperties.getMaxFieldsInFile(FieldLength);
+            return DbSegment.locationExists(Location);
+        }
+
+        public DatabaseSegment getDatabaseSegment()
+        {
+            return DbSegment;
+        }
+
+        public int getFieldLength()
+        {
+            return DbSegment.FieldLength;
         }
 
         /// <summary>
         /// Returns the filepath of the file which contains the field belonging to the DatabaseLocation.
         /// </summary>
         /// <returns>Filepath</returns>
-        public string getFieldPath()
+        public string getFieldsPath()
         {
-            return getFieldPath(DbProperties, FieldLength, FileIndex);
+            return DbSegment.getFieldsPath();
         }
 
         /// <summary>
@@ -63,75 +60,29 @@ namespace Server
         /// <returns>Filepath</returns>
         public string getFieldDataPath()
         {
-            return getFieldDataPath(DbProperties, FieldLength, FileIndex);
+            return DbSegment.getFieldDataPath();
         }
 
-        public static string getFieldPath(DatabaseProperties dbProperties, int fieldLength, int fileIndex)
+        public static string getFieldPath(DatabaseSegment dbSegment)
         {
-            return $"{dbProperties.getFieldDirPath(fieldLength)}{dbProperties.PathSeparator}Fields{fileIndex}.db";
+            return dbSegment.getFieldsPath();
         }
 
-        public static string getFieldDataPath(DatabaseProperties dbProperties, int fieldLength, int fileIndex)
+        public static string getFieldDataPath(DatabaseSegment dbSegment)
         {
-            return $"{dbProperties.getFieldDirPath(fieldLength)}{dbProperties.PathSeparator}FieldData{fileIndex}.db";
+            return dbSegment.getFieldDataPath();
         }
-
-        /// <summary>
-        /// Returns the byte position of the location.
-        /// </summary>
-        /// <returns>Seek position</returns>
-        public int getFieldsSeekPosition()
-        {
-            return Location * FieldLength;
-        }
-
-        /// <summary>
-        /// Returns the position (in bytes) in the field data database where the data corresponding to the given field location is stored.
-        /// </summary>
-        /// <param name="fieldLocation">The location of the field</param>
-        /// <param name="fieldDataStream">The field data database stream</param>
-        /// <returns></returns>
-        public int getFieldDataSeekPosition()
-        {
-            if (!locationExists())
-                throw new DatabaseException($"Can't calculate seek position for field location. {ToString()}. This location doesn't exist");
-
-            return Location * DbProperties.FieldWidth * 8;
-        }
-
+        
         public static DatabaseLocation operator +(DatabaseLocation dbLoc, int i)
         {
-            int globalLoc = dbLoc.GlobalLocation + i;
-            int maxFieldsInFile = dbLoc.DbProperties.getMaxFieldsInFile(i);
-            int fileIndex = globalLoc / maxFieldsInFile;
-            int location = globalLoc % maxFieldsInFile;
+            int location = dbLoc.Location + i;
 
-            return new DatabaseLocation(dbLoc.DbProperties, dbLoc.FieldLength, fileIndex, location);
+            return new DatabaseLocation(dbLoc.DbSegment, location);
         }
-
-        public override bool Equals(object obj)
-        {
-            // If parameter is null return false.
-            if (obj == null)
-                return false;
-
-            // If parameter cannot be cast to Point return false.
-            DatabaseLocation p = obj as DatabaseLocation;
-            if ((System.Object)p == null)
-                return false;
-
-            if (DbProperties.Path.Equals(p.DbProperties.Path))
-                return false;
-
-            if (GlobalLocation != p.GlobalLocation)
-                return false;
-
-            return true;
-        }
-
+        
         public override string ToString()
         {
-            return $"FieldLength = {FieldLength}; FileIndex = {FileIndex}; GlobalLocation = {GlobalLocation}";
+            return $"FieldLength = {DbSegment.FieldLength}; Location = {Location}";
         }
     }
 }

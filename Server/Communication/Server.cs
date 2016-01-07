@@ -44,8 +44,8 @@ namespace Server
             // Establish the local endpoint for the socket.
             // The DNS name of the computer
             // running the listener is "host.contoso.com".
-            IPHostEntry ip_host_info = Dns.GetHostEntry(Dns.GetHostName());
-            IPAddress ip_address = ip_host_info.AddressList[1];
+            IPHostEntry ip_host_info = Dns.Resolve(Dns.GetHostName());
+            IPAddress ip_address = ip_host_info.AddressList[0];
             IPEndPoint local_end_point = new IPEndPoint(ip_address, port);
             logger.Info($"Starting server at port {ip_address}:{port}");
             // Create a TCP/IP socket.
@@ -132,9 +132,9 @@ namespace Server
             db.BufferMgr.justRequested();
             // Echo the data back to the client.
             // If the array is marked as a column_request, respond with a column
-            if (data[0] ==  Network_codes.ping)
+            if (data[0] == Network_codes.ping)
             {
-                send(handler, new byte[] {Network_codes.ping_respond});
+                send(handler, new byte[] { Network_codes.ping_respond });
             }
             else if (data[0] == Network_codes.column_request)
             {
@@ -147,7 +147,7 @@ namespace Server
             else if (data[0] == Network_codes.game_history_array)
             {
                 send(handler, new[] { (byte)0 });
-                db.receive_game_history(data.ToArray());
+                db.preprocess_game_history(data.ToArray());
             }
             //If the array is marked as a request for a range of games, get the range of games and return them
             else if (data[0] == Network_codes.range_request)
@@ -156,21 +156,21 @@ namespace Server
                 int file = BitConverter.ToInt32(_data, 1);  //bytes 1, 2, 3 and 4 are the file indication
                 int begin = BitConverter.ToInt32(_data, 5); //bytes 5, 6, 7 and 8 are the indication for the beginning of the range
                 int end = BitConverter.ToInt32(_data, 9);   //bytes 9, 10, 11 and 12 are the indication for the end of the range
-                send(handler, db.getFieldFileContent(file, begin, end));
+                send(handler, db.getCompressedFieldRange(file, begin, end));
             }
             //If the array is marked as a request for details about a game, get the details and return them
             else if (data[0] == Network_codes.details_request)
             {
-                Field field = new Field(data.Skip(1).TakeWhile(b=> b != Network_codes.end_of_stream).ToArray());
+                Field field = new Field(data.Skip(1).TakeWhile(b => b != Network_codes.end_of_stream).ToArray());
                 FieldData field_data = db.readFieldData(field);
-                byte[] send_data = new byte[2*7*4]; //2 arrays of 7 32-bit(=4 bytes) integers
+                byte[] send_data = new byte[2 * 7 * 4]; //2 arrays of 7 32-bit(=4 bytes) integers
                 for (int i = 0; i < 7; i++)
                 {
-                    BitConverter.GetBytes(field_data.TotalCounts[i]).CopyTo(send_data, i*4);
+                    BitConverter.GetBytes(field_data.TotalCounts[i]).CopyTo(send_data, i * 4);
                 }
                 for (int i = 0; i < 7; i++)
                 {
-                    BitConverter.GetBytes(field_data.WinningCounts[i]).CopyTo(send_data, 28 + i*4);
+                    BitConverter.GetBytes(field_data.WinningCounts[i]).CopyTo(send_data, 28 + i * 4);
                 }
                 send(handler, send_data);
             }
@@ -232,7 +232,7 @@ namespace Server
             Console.Clear();
 
             string dbDir = Args_parser.parse_arg(args, "db", "Database path", Properties.Settings.Default.DbPath);
-            ushort port = (ushort) Args_parser.parse_int_arg(args, "p", "port", 0, ushort.MaxValue, 11000);
+            ushort port = (ushort)Args_parser.parse_int_arg(args, "p", "port", 0, ushort.MaxValue, 11000);
             if (!System.IO.Directory.Exists(dbDir))    // Checks if the database already exists
             {
                 logger.Info($"No database found in {dbDir}!");
@@ -240,7 +240,7 @@ namespace Server
                 if (Console.ReadKey().KeyChar == 'y')
                 {
                     Console.WriteLine();
-                    DatabaseProperties dbProps = new DatabaseProperties(dbDir, 7, 6, Properties.Settings.Default.DbMaxFileSize);
+                    DatabaseProperties dbProps = new DatabaseProperties(dbDir, 7, 6);
                     Database.prepareNew(dbProps);
                 }
                 else
