@@ -1,4 +1,5 @@
-﻿using NLog;
+﻿using Engine;
+using NLog;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -24,8 +25,8 @@ namespace Server
 
         private const int IdleTimeout = 120000;     // 2 minutes
         private const int UpdateInterval = 30000;   // The interval to check for database idle mode.
-        private const int MaxBufferCount = 4;       // Maximum amount of buffer files in the Buffer directory. (If amount passes this constant the DatabaseManager will force the database to process the buffers)
-
+        private const int MaxBufferCount = 50;      // Maximum amount of buffer directories in the Buffer directory. (If amount passes this constant the DatabaseManager will force the database to process the buffers)
+        
         private bool Processing;        // Indicates whether the database is processing.
 
         /// <summary>
@@ -66,12 +67,80 @@ namespace Server
                 {
                     logger.Info("Database in idle mode");
 
-                    processBuffers();
+                    processAllBuffers();
                 }
             }
         }
 
         /// <summary>
+        /// Adds the given dictionary of fields to the buffer of database for the specified fieldlength.
+        /// </summary>
+        /// <param name="fieldLength"></param>
+        /// <param name="bufferContent">Dictionary of fields to add</param>
+        public string addBuffer(int fieldLength, Dictionary<Field, FieldData> bufferContent)
+        {
+            string bufferPath = Processing ? TempBufferPath : BufferPath;
+            string bufferName = DateTime.Now.ToFileTime().ToString() + fieldLength.ToString();
+            string bufferDir = bufferPath + Db.DbProperties.PathSeparator + bufferName;
+            
+            DatabaseSegment dbSeg = new DatabaseSegment(bufferDir, Db.DbProperties, fieldLength);
+            DatabaseSegment.prepareNew(dbSeg, bufferContent);
+            dbSeg.Dispose();
+
+            if (getBufferCount() >= MaxBufferCount && !Processing)
+                processAllBuffers();
+            
+            return bufferName;
+        }
+
+        private void processAllBuffers()
+        {
+            Processing = true;
+
+            string[] dirPaths = Directory.GetDirectories(BufferPath);
+            List<DatabaseSegment> bufferSegs = new List<DatabaseSegment>(dirPaths.Length);
+
+            logger.Info($"Processing all buffers ({dirPaths.Length})");
+
+            foreach (string path in dirPaths)
+            {
+                DatabaseSegment dbSeg = new DatabaseSegment(path, Db.DbProperties, false);
+                bufferSegs.Add(dbSeg);
+            }
+
+            for (int i = 1; i <= Db.DbProperties.MaxFieldStorageSize; i++)
+            {
+                DatabaseSegment[] toMerge = bufferSegs.Where(s => s.FieldLength == i).ToArray();
+
+                Db.mergeWithBuffers(toMerge);
+
+                foreach (DatabaseSegment dbSeg in toMerge)
+                {
+                    string segPath = dbSeg.Path;
+                    dbSeg.Dispose();
+                    Directory.Delete(segPath, true);
+                }
+            }
+
+            if (Directory.GetFiles(TempBufferPath).Length > 0)
+            {
+                Directory.Delete(BufferPath);
+                Directory.Move(TempBufferPath, BufferPath);
+                Directory.CreateDirectory(TempBufferPath);
+            }
+
+            logger.Info("Processing done. Buffer is empty");
+
+            Processing = false;
+        }
+
+        /*private void processBuffer(string bufferName)
+        {
+            string bufferDir = BufferPath + Db.DbProperties.PathSeparator + bufferName;
+
+            
+        }*/
+        /*/// <summary>
         /// Adds a game history (packet) to the buffer folder, and starts processing the buffers if MaxBufferCount is passed.
         /// </summary>
         /// <param name="gameHistory">The gamehistory to store in the buffer</param>
@@ -157,7 +226,7 @@ namespace Server
             }
 
             return true;
-        }
+        }*/
 
         /// <summary>
         /// Returns the amount of buffers stored in the Buffer folder
@@ -165,7 +234,7 @@ namespace Server
         /// <returns></returns>
         public int getBufferCount()
         {
-            return Directory.GetFiles(BufferPath).Length;
+            return Directory.GetDirectories(BufferPath).Length;
         }
 
         /// <summary>

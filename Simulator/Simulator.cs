@@ -62,7 +62,7 @@ namespace Simulator
 
             if (!IPAddress.TryParse(
                 Args_parser.parse_arg(args, "ip", "ip-address",
-                    Dns.GetHostEntry(Dns.GetHostName()).AddressList[1].ToString()), out address))
+                    Dns.Resolve(Dns.GetHostName()).AddressList[0].ToString()), out address))
             {
                 address = Dns.GetHostEntry(Dns.GetHostName()).AddressList[1];
             }

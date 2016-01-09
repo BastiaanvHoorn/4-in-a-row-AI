@@ -17,7 +17,7 @@ namespace Server
     {
         static Random rnd = new Random();
         private static Logger logger = LogManager.GetCurrentClassLogger();
-        
+
         /// <summary>
         /// Returns the move (column) that suits best with the given field (given situation). If the field is not included in the database a random column is returned.
         /// </summary>
@@ -25,21 +25,10 @@ namespace Server
         /// <returns>The best move (column) to perform</returns>
         public static byte get_column(this Database db, Field field)
         {
-            if (db.isBusy() || db.BufferMgr.isProcessing())
-            {
-                logger.Debug("Can't get column, because database is busy! Waiting...");
-                while (db.isBusy() || db.BufferMgr.isProcessing())
-                    Thread.Sleep(100);
-            }
-
-            db.setBusy(true);
-
             DatabaseLocation location;
             if (db.fieldExists(field, out location))
             {
                 FieldData fieldData = db.readFieldData(location);
-
-                db.setBusy(false);
 
                 float bestChance = -1;
                 byte bestColumn = 0;
@@ -63,23 +52,10 @@ namespace Server
             }
             else
             {
-                db.setBusy(false);
-
                 logger.Debug("Returning random column");
 
                 return field.getRandomColumn();
             }
-        }
-
-        /// <summary>
-        /// Receives the game history and adds it to the buffer.
-        /// </summary>
-        /// <param name="db"></param>
-        /// <param name="gameHistories"></param>
-        /// <returns>The filepath of the new buffer item</returns>
-        public static string receive_game_history(this Database db, byte[] gameHistories)
-        {
-            return db.BufferMgr.addToBuffer(gameHistories);
         }
 
         /// <summary>
@@ -88,17 +64,19 @@ namespace Server
         /// <param name="db"></param>
         /// <param name="bufferPath"></param>
         /// <returns>The amount of fields processed</returns>
-        public static int process_game_history(this Database db, string bufferPath)
+        public static int preprocess_game_history(this Database db, byte[] rawHistory)
         {
             Stopwatch sw = new Stopwatch();
             sw.Start();
 
-            byte[] rawHistory = db.BufferMgr.getBufferContent(bufferPath);
             byte[][] gameHistories = Game_history.linear_to_parrallel_game_history(rawHistory.ToList());
 
-            string bufferName = Path.GetFileName(bufferPath);
-
-            Dictionary<Field, FieldData> history = new Dictionary<Field, FieldData>();
+            byte maxFS = db.DbProperties.MaxFieldStorageSize;
+            Dictionary<Field, FieldData>[] history = new Dictionary<Field, FieldData>[maxFS];
+            for (byte i = 0; i < maxFS; i++)
+            {
+                history[i] = new Dictionary<Field, FieldData>();
+            }
 
             for (int i = 0; i < gameHistories.Length; i++)
             {
@@ -107,25 +85,27 @@ namespace Server
                 players turn = players.Alice;
                 players winner = players.Empty;
 
-                if (h[0] == (byte)Utility.Network_codes.game_history_alice)
+                if (h[0] == Network_codes.game_history_alice)
                     winner = players.Alice;
-                else if (h[0] == (byte)Utility.Network_codes.game_history_bob)
+                else if (h[0] == Network_codes.game_history_bob)
                     winner = players.Bob;
 
                 for (int j = 1; j < h.Length; j++)
                 {
                     byte column = h[j];
 
+                    int fieldLength = f.compressField().Length;
+
                     FieldData fd = null;
 
-                    if (!history.ContainsKey(f))
+                    if (!history[fieldLength - 1].ContainsKey(f))
                     {
                         fd = new FieldData();
-                        history.Add(new Field(f), fd);
+                        history[fieldLength - 1].Add(new Field(f), fd);
                     }
                     else
                     {
-                        fd = history[f];
+                        fd = history[fieldLength - 1][f];
                     }
 
                     fd.TotalCounts[column]++;
@@ -138,28 +118,18 @@ namespace Server
                 }
             }
 
-            if (db.isBusy())
-            {
-                sw.Stop();
-                logger.Debug("Can't process game history, because database is busy! Waiting...");
-                while (db.isBusy())
-                    Thread.Sleep(100);
-            }
-
-            sw.Start();
-
-            db.setBusy(true);
-            db.processGameHistory(history);
-            db.setBusy(false);
-
             sw.Stop();
 
             string deltaTime = sw.Elapsed.Minutes + "m and " + sw.Elapsed.Seconds + "s";
-            logger.Info($"Processed \t{gameHistories.Length} games \t{history.Count} fields \t in {deltaTime}");
+            int fieldCount = history.Sum(h => h.Count);
+            logger.Info($"Preprocessed \t{gameHistories.Length} games \t{fieldCount} fields \t in {deltaTime}");
 
-            return history.Count;
+            for (int i = 1; i <= maxFS; i++)
+                db.BufferMgr.addBuffer(i, history[i - 1]);
+
+            return fieldCount;
         }
 
-        
+
     }
 }
