@@ -91,7 +91,7 @@ namespace connect4
                     return;
                 if (Requester.ping(address, port, out s))
                 {
-                    bob = new Bot(players.Bob, (byte) difficulty_slider.Value, address, port, (bool)smart_moves_checkbox.IsChecked);
+                    bob = new Database_bot(players.Bob, (byte) difficulty_slider.Value, address, port, (bool)smart_moves_checkbox.IsChecked);
                 }
                 else
                 {
