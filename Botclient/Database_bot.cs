@@ -11,7 +11,7 @@ using Logger = NLog.Logger;
 
 namespace Botclient
 {
-    public class Bot : IPlayer
+    public class Database_bot : IPlayer
     {
         private static readonly Logger logger = LogManager.GetCurrentClassLogger();
         public players player { get; }
@@ -20,7 +20,7 @@ namespace Botclient
         public IPAddress address { get; }
         public ushort port { get; }
         Random r = new Random();
-        public Bot(players player, int random_chance, IPAddress address, ushort port, bool smart_moves = true)
+        public Database_bot(players player, int random_chance, IPAddress address, ushort port, bool smart_moves = true)
         {
             this.player = player;
             if (random_chance > 100)

@@ -94,8 +94,8 @@ namespace Simulator
             //logger.log($"Created new game of {game.get_field().Width} by {game.get_field().Height}", log_modes.per_game);
             var _players = new List<IPlayer>() //A fancy list to prevent the use of if-statements
             {
-                new Bot(players.Alice, random_alice, address, port, false),
-                new Bot(players.Bob, random_bob, address, port, false)
+                new Database_bot(players.Alice, random_alice, address, port, false),
+                new Database_bot(players.Bob, random_bob, address, port, false)
             };
 
             while (true)
