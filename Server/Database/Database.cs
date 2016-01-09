@@ -27,8 +27,6 @@ namespace Server
         //private Dictionary<Field, int>[] Fields;    // Used to store database fields in RAM for faster access.
         private DatabaseSegment[] Segments;
         
-        private bool Busy;  // Indicates whether the database is busy or not. Mainly used by RequestHandler to know if it's possible to start a database operation.
-
         /// <summary>
         /// Creates a new database instance from the given path.
         /// </summary>

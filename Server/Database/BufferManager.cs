@@ -2,6 +2,7 @@
 using NLog;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -25,7 +26,7 @@ namespace Server
 
         private const int IdleTimeout = 120000;     // 2 minutes
         private const int UpdateInterval = 30000;   // The interval to check for database idle mode.
-        private const int MaxBufferCount = 50;      // Maximum amount of buffer directories in the Buffer directory. (If amount passes this constant the DatabaseManager will force the database to process the buffers)
+        private const int MaxBufferCount = 220;     // Maximum amount of buffer directories in the Buffer directory. (If amount passes this constant the DatabaseManager will force the database to process the buffers)
         
         private bool Processing;        // Indicates whether the database is processing.
 
@@ -102,13 +103,16 @@ namespace Server
 
             logger.Info($"Processing all buffers ({dirPaths.Length})");
 
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
+
             foreach (string path in dirPaths)
             {
-                DatabaseSegment dbSeg = new DatabaseSegment(path, Db.DbProperties, false);
+                DatabaseSegment dbSeg = new DatabaseSegment(path, Db.DbProperties, true);
                 bufferSegs.Add(dbSeg);
             }
 
-            for (int i = 1; i <= Db.DbProperties.MaxFieldStorageSize; i++)
+            Parallel.For(1, Db.DbProperties.MaxFieldStorageSize + 1, new ParallelOptions() { MaxDegreeOfParallelism = 3 }, i =>
             {
                 DatabaseSegment[] toMerge = bufferSegs.Where(s => s.FieldLength == i).ToArray();
 
@@ -120,16 +124,18 @@ namespace Server
                     dbSeg.Dispose();
                     Directory.Delete(segPath, true);
                 }
-            }
+            });
 
-            if (Directory.GetFiles(TempBufferPath).Length > 0)
+            if (Directory.GetDirectories(TempBufferPath).Length > 0)
             {
                 Directory.Delete(BufferPath);
                 Directory.Move(TempBufferPath, BufferPath);
                 Directory.CreateDirectory(TempBufferPath);
             }
 
-            logger.Info("Processing done. Buffer is empty");
+            sw.Stop();
+
+            logger.Info($"Processing done in {sw.Elapsed.Minutes}m and {sw.Elapsed.Seconds}s");
 
             Processing = false;
         }
