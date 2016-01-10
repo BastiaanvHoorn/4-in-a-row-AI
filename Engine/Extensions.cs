@@ -267,7 +267,7 @@ namespace Engine
                 {
                     break;
                 }
-                if (field[_x, _y] != (player == players.Alice ? players.Bob : players.Alice) || // If the current cell is occupied by the other player
+                if (field[_x, _y] == (player == players.Alice ? players.Bob : players.Alice) || // If the current cell is occupied by the other player
                     (!count_empty && field[_x, _y] == players.Empty)) // Or if the occupied cell is empty but we're not counting empty ones
                 {
                     break;
