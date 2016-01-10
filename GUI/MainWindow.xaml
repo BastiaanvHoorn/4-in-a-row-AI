@@ -8,7 +8,7 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="367" Width="464">
     <Grid>
-        <Grid Name="settings_grid" Visibility="Visible" Margin="0,0,0,29">
+        <Grid Name="settings_grid" Visibility="Collapsed" Margin="0,0,0,30">
             <Label Content="Width" HorizontalAlignment="Left" Margin="10,55,0,0" VerticalAlignment="Top" Height="30" Width="100"/>
             <Label Content="Height" HorizontalAlignment="Left" Margin="10,90,0,0" VerticalAlignment="Top" Height="30" Width="100"/>
             <Label Content="Hints allowed" HorizontalAlignment="Left" Margin="10,125,0,0" VerticalAlignment="Top" Height="30" Width="100"/>
@@ -28,11 +28,13 @@
             <CheckBox Name="smart_moves_checkbox" IsEnabled="{Binding ElementName=AI_checkbox, Path=IsChecked}" Content="CheckBox" HorizontalAlignment="Left" Margin="225,231,0,0" VerticalAlignment="Top" Width="15" />
             <TextBox Name="port_textbox" IsEnabled="{Binding ElementName=AI_checkbox, Path=IsChecked}" Margin="260,260,136,0" TextWrapping="Wrap" TextChanged="port_textbox_TextChanged" Background="White" VerticalAlignment="Top"/>
         </Grid>
-        <Grid Name="game_grid" Visibility="Collapsed" Margin="0,0,0,29">
+        <Grid Name="game_grid" Visibility="Visible" Margin="0,0,0,30">
             <Grid Name="label_grid" Margin="0,0,136,0"/>
-            <Label Name="message_label" HorizontalAlignment="Left" Margin="15,295,0,-25" VerticalAlignment="Top" Width="431" Height="20"/>
             <Button Name="rematch_button" Content="rematch" HorizontalAlignment="Left" Margin="345,55,0,0" VerticalAlignment="Top" Width="75" Visibility="Visible" Click="rematch_button_Click"/>
             <Button Name="settings_button" Content="settings" HorizontalAlignment="Left" Margin="345,80,0,0" VerticalAlignment="Top" Width="75" Visibility="Visible" Click="settings_button_Click"/>
+            <Button Name="rating_button" Content="Rate field" HorizontalAlignment="Left" Margin="345,105,0,0" VerticalAlignment="Top" Width="75" Click="rating_button_Click"/>
+            <Label Name="rating_label" Content="" HorizontalAlignment="Left" Margin="325,155,0,0" VerticalAlignment="Top" Width="121"/>
         </Grid>
+        <Label Name="message_label" Margin="5,0,5,5" VerticalAlignment="Bottom" Height="20"/>
     </Grid>
 </Window>

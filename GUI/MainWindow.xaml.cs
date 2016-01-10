@@ -265,6 +265,11 @@ namespace connect4
             return true;
 
         }
+
+        private void rating_button_Click(object sender, RoutedEventArgs e)
+        {
+            rating_label.Content = game.get_field().rate();
+        }
     }
     static class ui_codes
     {

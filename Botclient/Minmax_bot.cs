@@ -10,7 +10,7 @@ using Logger = NLog.Logger;
 
 namespace Botclient
 {
-    class Minmax_bot : IPlayer
+    public class Minmax_bot : IPlayer
     {
         public players player { get; }
         public uint depth { get; }
@@ -31,5 +31,57 @@ namespace Botclient
         {
             throw new NotImplementedException();
         }
+    }
+
+    public class game_state
+    {
+        public game_state[] children { get; }
+        public game_state parent { get; }
+        public Field field;
+        public players player;
+        public int depth;
+        public int rating { get; }
+
+        public game_state(Field _field, players _player, int _depth, game_state _parent = null)
+        {
+            field = _field;
+            player = _player;
+            depth = _depth;
+            if (_parent != null)
+            {
+                parent = _parent;
+            }
+            if (depth > 0)
+            {
+                children = set_children(field, player);
+            }
+            else
+            {
+                
+            }
+        }
+
+        private game_state[] set_children(Field field, players _player)
+        {
+            byte width = field.Width;
+            game_state[] children = new game_state[field.get_total_empty_columns()];
+            int child_index = 0;
+            if (_player == players.Alice)
+                _player = players.Bob;
+            else
+                _player = players.Alice;
+            for (int i = 0; i < width; i++)
+            {
+                if (field.getEmptyCell(i) < field.Height)
+                {
+                    Field _field = field;
+                    _field.doMove(i, _player);
+
+                    children[child_index] = new game_state(_field, _player, depth - 1, this);
+                }
+            }
+            return children;
+        }
+
     }
 }

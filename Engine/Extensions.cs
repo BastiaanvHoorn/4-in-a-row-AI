@@ -326,5 +326,32 @@ namespace Engine
 
             return false;
         }
+
+        public static int rate(this Field field)
+        {
+            int rating = 0;
+            Func<players, int> rate_vertical = delegate (players player)
+            {
+                int _rating = 0;
+                byte y = 0;
+                byte x = 0;
+                do
+                {
+                    do
+                    {
+                        byte stones = field.count_stones_direction(x, y, 0, 1, player, true);
+                        y += (byte)(stones + 1);
+                        _rating += stones;
+                        if (field[x, y] == players.Empty)
+                            y = field.Height;
+                    } while (y < field.Height);
+                    x++;
+                } while (x < field.Width);
+                return _rating;
+            };
+            rating += rate_vertical(players.Alice);
+            rating -= rate_vertical(players.Bob);
+            return rating;
+        }
     }
 }
