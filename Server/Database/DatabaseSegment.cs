@@ -16,6 +16,9 @@ namespace Server
         public readonly bool KeepInMemory;
         public int FieldCount;
         private byte[] Fields;
+        private MemoryStream FieldsBuffer;
+        private BinaryWriter FieldDataBuffer;
+        private const int MaxBufferSize = 2000;
 
         private FileStream FieldStream;
         private FileStream FieldDataStream;
@@ -56,6 +59,10 @@ namespace Server
                 FieldStream.Read(Fields, 0, Fields.Length);
             }
 
+            FieldsBuffer = new MemoryStream(getFieldsSeekPosition(MaxBufferSize));
+            MemoryStream fdFileStream = new MemoryStream(getFieldDataSeekPosition(MaxBufferSize));
+            FieldDataBuffer = new BinaryWriter(fdFileStream);
+
             setReading(false);
             setProcessing(false);
         }
@@ -71,6 +78,10 @@ namespace Server
 
             if (keepInMemory)
                 this.Fields = new byte[0];
+
+            FieldsBuffer = new MemoryStream(getFieldsSeekPosition(MaxBufferSize));
+            MemoryStream fdFileStream = new MemoryStream(getFieldDataSeekPosition(MaxBufferSize));
+            FieldDataBuffer = new BinaryWriter(fdFileStream);
 
             setReading(false);
             setProcessing(false);
@@ -247,9 +258,6 @@ namespace Server
         /// <returns></returns>
         public int getFieldDataSeekPosition(int location)
         {
-            if (!locationExists(location))
-                throw new DatabaseException($"Can't calculate seek position for field location. {ToString()}. This location doesn't exist");
-
             return location * getFieldWidth() * 8;
         }
 
@@ -315,27 +323,52 @@ namespace Server
 
         public void appendItem(Field field, FieldData fieldData)
         {
-            FieldStream.Seek(0, SeekOrigin.End);
-            FieldStream.Write(field.compressField(), 0, FieldLength);
+            if (FieldsBuffer.Position < getFieldsSeekPosition(MaxBufferSize))
+            {
+                byte[] fComp = field.compressField();
+                FieldsBuffer.Write(fComp, 0, FieldLength);
 
-            FieldDataStream.Seek(0, SeekOrigin.End);
-
-            BinaryWriter bw = new BinaryWriter(FieldDataStream);
-            uint[] fdStorage = fieldData.getStorage();
-            foreach (uint u in fdStorage)
-                bw.Write(u);
-
-            FieldCount++;
+                uint[] fdStorage = fieldData.getStorage();
+                foreach (uint u in fdStorage)
+                    FieldDataBuffer.Write(u);
+            }
+            else
+            {
+                writeBuffer();
+            }
         }
 
-        public DatabaseLocation allocateNextDatabaseLocation(bool writeToDisk = true)
+        public void writeBuffer()
         {
-            FieldCount++;
+            byte[] fieldArray = new byte[FieldsBuffer.Length];
+            FieldsBuffer.Seek(0, SeekOrigin.Begin);
+            FieldsBuffer.Read(fieldArray, 0, fieldArray.Length);
 
-            if (writeToDisk)
-                writeProperties();
+            FieldStream.Seek(0, SeekOrigin.End);
+            FieldStream.Write(fieldArray, 0, fieldArray.Length);
 
-            return new DatabaseLocation(this, FieldCount - 1);
+            if (KeepInMemory)
+            {
+                int arrayPos = Fields.Length;
+                Array.Resize(ref Fields, Fields.Length + fieldArray.Length);
+                Buffer.BlockCopy(fieldArray, 0, Fields, arrayPos, fieldArray.Length);
+            }
+
+            FieldCount += fieldArray.Length / FieldLength;
+
+            byte[] fdArray = new byte[FieldDataBuffer.BaseStream.Length];
+            FieldDataBuffer.BaseStream.Seek(0, SeekOrigin.Begin);
+            FieldDataBuffer.BaseStream.Read(fdArray, 0, fdArray.Length);
+
+            FieldDataStream.Seek(0, SeekOrigin.End);
+            FieldDataStream.Write(fdArray, 0, fdArray.Length);
+
+            FieldsBuffer.Dispose();
+            FieldsBuffer = new MemoryStream(getFieldsSeekPosition(MaxBufferSize));
+
+            FieldDataBuffer.Dispose();
+            MemoryStream fdStream = new MemoryStream(getFieldDataSeekPosition(MaxBufferSize));
+            FieldDataBuffer = new BinaryWriter(fdStream);
         }
 
         public void writeProperties()
@@ -371,6 +404,7 @@ namespace Server
         public void Dispose()
         {
             writeProperties();
+            writeBuffer();
             FieldStream.Dispose();
             FieldDataStream.Dispose();
         }

@@ -98,6 +98,7 @@ namespace Server
                 destSegment.appendItem(field, fieldData);
             }
 
+            destSegment.writeBuffer();
             destSegment.writeProperties();
         }
 
