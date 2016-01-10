@@ -12,10 +12,10 @@ namespace Engine
         internal byte[] Storage; //The actual array that stores the field.
         readonly public byte Width;
         readonly public byte Height;
-        
-		public Field(byte[] input, byte width = 7, byte height = 6)
-		{
-			Storage = input;
+
+        public Field(byte[] input, byte width = 7, byte height = 6)
+        {
+            Storage = input;
             this.Width = width;
             this.Height = height;
         }
@@ -45,6 +45,12 @@ namespace Engine
             this.Height = f.Height;
         }
 
+        public players this[int x, int y]
+        {
+            get { return getCellPlayer(x, y); }
+            internal set { setCell(x, y, value); }
+        }
+
         /// <summary>
         /// Gets the value of the cell at the specified coordinates
         /// </summary>
@@ -67,46 +73,10 @@ namespace Engine
         /// <param name="y">Y-coordinate (column)</param>
         /// <returns>The player who owns the specified cell</returns>
 		public players getCellPlayer(int x, int y)
-		{
-            return (players)(getCellValue(x, y));    //Converts the cellValue directly into the player enum.
-		}
-
-        /// <summary>
-        /// Gets the first empty cell from the bottom of the given column.
-        /// </summary>
-        /// <param name="column"></param>
-        /// <returns>Returns the Y-coord of the empty cell</returns>
-        public byte getEmptyCell(int column)
         {
-            if (Height == 6)
-            {
-                int value = 0;
-
-                if ((column & 1) == 0)    //% 2. Even or odd.
-                {
-                    int startByte = column / 2 * 3;
-                    value = Storage[startByte] + 256 * (Storage[startByte + 1] & 15); //    We need all cells (4) that are stored in the start byte and the first 2 cells that are stored in the next byte, to get the total column value.
-                }
-                else
-                {
-                    int startByte = column / 2 * 3 + 1;
-                    value = ((Storage[startByte] & 240) >> 4) + 16 * (Storage[startByte + 1]); // We need the 2 last cells stored in the first byte and all cells that are stored in the next byte, to get the total column value.
-                }
-
-                byte cell = 0;
-                while (value > 0) //    Every iteration in the while loop we shift value with 2 bits. When value is 0, we know that every bit in value is 0 and all remaining cells in the column are empty.
-                {
-                    cell++;      //Every iteration row is increased by 1. Cell represents how many bitshifts were necessary to make value 0. This means that cell is the first empty cell in the given column.
-                    value >>= 2; // column2 /= 4. Each bitshift a cell is wiped, and only the cells above remain.
-                }
-
-                return cell;
-            }
-            else
-            {
-                throw new NotImplementedException("No support for fields with a heights other than 6");
-            }
+            return (players)(getCellValue(x, y));    //Converts the cellValue directly into the player enum.
         }
+
 
         /// <summary>
         /// Stores the given player at the given cell coordinates
@@ -115,7 +85,7 @@ namespace Engine
         /// <param name="y">Y-coordinate</param>
         /// <param name="player">The player that needs to be stored in the cell</param>
 		internal void setCell(int x, int y, players player)
-		{
+        {
             int cellIndex = Height * x + y;
             int byteNumber = cellIndex >> 2;
             int bitNumber = cellIndex & 3;
@@ -127,23 +97,9 @@ namespace Engine
             }
             else
             {
-                throw new InvalidMoveException(string.Format("The cell at ({0}, {1}) is already taken", x, y));
+                throw new InvalidMoveException($"The cell at ({x}, {y}) is already taken");
             }
-		}
-
-        /*private void clearCell(int x, int y)
-        {
-            if (x > Width - 1)
-            {
-                throw new InvalidMoveException(String.Format("Column {0} doesn't exist. There are just {1} columns available", x + 1, Width));
-            }
-            else if (y > Height - 1)
-            {
-                throw new InvalidMoveException(String.Format("Cell {0} doesn't exist. Ther are just {1} cells per column", y + 1, Height));
-            }
-
-
-        }*/
+        }
 
         /// <summary>
         /// Performs a move at the given column for the given player
@@ -154,23 +110,22 @@ namespace Engine
         {
             if (column > Width - 1)
             {
-                throw new InvalidMoveException(String.Format("Column {0} doesn't exist. There are just {1} columns available", column + 1, Width));
+                throw new InvalidMoveException($"Column {column + 1} doesn't exist. There are just {Width} columns available");
             }
-            else if (player == players.Empty)
+            if (player == players.Empty)
             {
                 throw new InvalidMoveException("Only real player, like Alice and Bob can do a move. player.Empty isn't able to do that");
             }
 
-            byte emptyCell = getEmptyCell(column);
+            byte emptyCell = this.getEmptyCell(column);
 
             if (emptyCell > Height - 1)
             {
-                throw new InvalidMoveException(String.Format("{0} tries to add a stone to column {1}, but that column is already filled. (Max {2} stones per column)", player, column + 1, Height));
+                throw new InvalidMoveException($"{player} tries to add a stone to column {column + 1}, but that column is already filled. (Max {Height} stones per column)");
             }
-            else
-            {
-                setCell(column, emptyCell, player);
-            }
+
+            this[column, emptyCell] = player;
+
         }
 
         /// <summary>

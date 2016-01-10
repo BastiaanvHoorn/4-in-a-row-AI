@@ -167,7 +167,7 @@ namespace connect4
             {
                 for (int y = 0; y < field.Height; y++)
                 {
-                    switch (field.getCellPlayer(x, field.Height - 1 - y))
+                    switch (field[x, field.Height - 1 - y])
                     {
                         case players.Alice:
                             if (mousex == x || mousey == y)

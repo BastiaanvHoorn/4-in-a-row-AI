@@ -167,7 +167,7 @@ namespace Database_manager
                         Ellipse ellipse = new Ellipse();
                         grid.Children.Add(ellipse);
                         Color color;
-                        switch (field.getCellPlayer(x, field.Height - y - 1))
+                        switch (field[x, field.Height - y - 1])
                         {
                             case players.Alice:
                                 color = Colors.Red;

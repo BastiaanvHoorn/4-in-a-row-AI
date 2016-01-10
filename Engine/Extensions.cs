@@ -181,6 +181,50 @@ namespace Engine
         }
 
         /// <summary>
+        /// Gets the first empty cell from the bottom of the given column.
+        /// </summary>
+        /// <param name="column"></param>
+        /// <returns>Returns the Y-coord of the empty cell</returns>
+        public static byte getEmptyCell(this Field field, int column)
+        {
+            if (field.Height == 6)
+            {
+                int value = 0;
+
+                if ((column & 1) == 0)    //% 2. Even or odd.
+                {
+                    int startByte = column / 2 * 3;
+                    value = field.Storage[startByte] + 256 * (field.Storage[startByte + 1] & 15); //    We need all cells (4) that are stored in the start byte and the first 2 cells that are stored in the next byte, to get the total column value.
+                }
+                else
+                {
+                    int startByte = column / 2 * 3 + 1;
+                    value = ((field.Storage[startByte] & 240) >> 4) + 16 * (field.Storage[startByte + 1]); // We need the 2 last cells stored in the first byte and all cells that are stored in the next byte, to get the total column value.
+                }
+
+                byte cell = 0;
+                while (value > 0) //    Every iteration in the while loop we shift value with 2 bits. When value is 0, we know that every bit in value is 0 and all remaining cells in the column are empty.
+                {
+                    cell++;      //Every iteration row is increased by 1. Cell represents how many bitshifts were necessary to make value 0. This means that cell is the first empty cell in the given column.
+                    value >>= 2; // column2 /= 4. Each bitshift a cell is wiped, and only the cells above remain.
+                }
+
+                return cell;
+            }
+            throw new NotImplementedException("No support for fields with a heights other than 6");
+        }
+
+        public static byte get_total_empty_columns(this Field field)
+        {
+            byte empty_cols = 0;
+            for (int i = 0; i < field.Width; i++)
+            {
+                if (field.getEmptyCell(i) < field.Height)
+                    empty_cols++;
+            }
+            return empty_cols;
+        }
+        /// <summary>
         /// Returns a valid, random move. (No moves that don't fit the fields height)
         /// </summary>
         /// <param name="field"></param>
@@ -206,11 +250,11 @@ namespace Engine
         /// </summary>
         /// <param name="x">the x-coordinate of the start</param>
         /// <param name="y">the y-cooordinate of the start</param>
-        /// <param name="dx">the direction in x (can only be -1, 0, or -1)</param>
-        /// <param name="dy">the direction in y (can only be -1, 0, or -1)</param>
+        /// <param name="dx">the direction in x (can only be -1, 0 or 1)</param>
+        /// <param name="dy">the direction in y (can only be -1, 0 or 1)</param>
         /// <param name="ab">the player of which the stones should be counted (1 for alice, 2 for bob)</param>
         /// <returns>The amount of stones from player ab found, not counting the starting stone</returns>
-        public static byte count_for_win_direction(this Field field, byte x, byte y, sbyte dx, sbyte dy, players player)
+        public static byte count_stones_direction(this Field field, byte x, byte y, sbyte dx, sbyte dy, players player, bool count_empty)
         {
             byte counter = 0;
             sbyte _x = (sbyte)x;
@@ -223,7 +267,8 @@ namespace Engine
                 {
                     break;
                 }
-                if (field.getCellPlayer(_x, _y) != player)
+                if (field[_x, _y] != (player == players.Alice ? players.Bob : players.Alice) || // If the current cell is occupied by the other player
+                    (!count_empty && field[_x, _y] == players.Empty)) // Or if the occupied cell is empty but we're not counting empty ones
                 {
                     break;
                 }
@@ -236,7 +281,7 @@ namespace Engine
         /// Checks if someone has won
         /// </summary>
         /// <p>
-        /// Checks in each direction from the given stone if it can make a whole row. If so, the variable winning will be changed
+        /// Checks in each direction from the given stone if it can make a whole row.
         /// </p>
         /// <param name="x">The x of the given stone</param>
         /// <param name="y">The y of the given stone</param>
@@ -245,8 +290,8 @@ namespace Engine
         {
             //Checks from botleft to topright
             byte counter = 1;
-            counter += field.count_for_win_direction(x, y, -1, 1, player);
-            counter += field.count_for_win_direction(x, y, 1, -1, player);
+            counter += field.count_stones_direction(x, y, -1, 1, player, false);
+            counter += field.count_stones_direction(x, y, 1, -1, player, false);
             if (counter >= 4)
             {
                 return true;
@@ -254,8 +299,8 @@ namespace Engine
 
             //checks from topleft to botright
             counter = 1;
-            counter += field.count_for_win_direction(x, y, 1, 1, player);
-            counter += field.count_for_win_direction(x, y, -1, -1, player);
+            counter += field.count_stones_direction(x, y, 1, 1, player, false);
+            counter += field.count_stones_direction(x, y, -1, -1, player, false);
             if (counter >= 4)
             {
                 return true;
@@ -263,8 +308,8 @@ namespace Engine
 
             //checks horizontal
             counter = 1;
-            counter += field.count_for_win_direction(x, y, 0, 1, player);
-            counter += field.count_for_win_direction(x, y, 0, -1, player);
+            counter += field.count_stones_direction(x, y, 0, 1, player, false);
+            counter += field.count_stones_direction(x, y, 0, -1, player, false);
             if (counter >= 4)
             {
                 return true;
@@ -272,8 +317,8 @@ namespace Engine
 
             //checks vertical
             counter = 1;
-            counter += field.count_for_win_direction(x, y, -1, 0, player);
-            counter += field.count_for_win_direction(x, y, 1, 0, player);
+            counter += field.count_stones_direction(x, y, -1, 0, player, false);
+            counter += field.count_stones_direction(x, y, 1, 0, player, false);
             if (counter >= 4)
             {
                 return true;
