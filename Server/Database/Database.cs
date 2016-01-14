@@ -155,7 +155,10 @@ namespace Server
         /// <returns>Existance of field</returns>
         public bool fieldExists(Field field)
         {
-            return findField(field).locationExists();
+            byte[] compressed = field.compressField();
+            int fieldLength = compressed.Length;
+            DatabaseLocation dbLocation = findField(field);
+            return Segments[fieldLength - 1].locationExists(dbLocation.Location);
         }
 
         /// <summary>
