@@ -2,12 +2,12 @@
 using System.CodeDom;
 using System.Collections.Generic;
 using System.Net;
-using System.Net.NetworkInformation;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Shapes;
 using Engine;
 using Botclient;
 using Utility;
@@ -24,7 +24,8 @@ namespace connect4
         private IPlayer alice;
         private IPlayer bob;
 
-        private Label[][] labels;
+        private Label[][] bg_labels;
+        private Ellipse[][] stone_elipses;
         private Game game;
         public byte? col_clicked;
         private IPAddress address;
@@ -37,53 +38,80 @@ namespace connect4
             settings_grid.Visibility = Visibility.Visible;
             game_grid.Visibility = Visibility.Collapsed;
 
-            // Create the grid for the game
-            for (int i = 0; i < Width_up_down.Value; i++)
-            {
-                var coldef = new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) };
-                label_grid.ColumnDefinitions.Add(coldef);
-            }
-            for (int i = 0; i < Height_up_down.Value; i++)
-            {
-                var rowdef = new RowDefinition { Height = new GridLength(1, GridUnitType.Star) };
-                label_grid.RowDefinitions.Add(rowdef);
-            }
-            labels = new Label[(uint) Width_up_down.Value][];
-
-            // TODO: add circle labels for the stones
-            // Add some properties to all the labels
-            for (int x = 0; x < Width_up_down.Value; x++)
-            {
-                labels[x] = new Label[(uint)Height_up_down.Value];
-                for (int y = 0; y < Height_up_down.Value; y++)
-                {
-                    Label label = new Label();
-                    label_grid.Children.Add(label);
-
-                    label.MouseEnter += label_enter;
-                    label.MouseRightButtonDown += label_click;
-                    label.MouseLeftButtonDown += label_click;
-                    label.SetValue(Grid.ColumnProperty, x);
-                    label.SetValue(Grid.RowProperty, y);
-                    labels[x][y] = label;
-
-                    // Add a tag so we can retrieve the label later again
-                    label.Tag = new byte[] { (byte)x, (byte)y };
-                }
-            }
         }
 
         private void Start_Click(object sender, RoutedEventArgs e)
         {
+            init_field();
             start_game();
         }
 
+        private void init_field()
+        {
+            // Clear all previous column and row defenitions
+            label_grid.ColumnDefinitions.Clear();
+            label_grid.RowDefinitions.Clear();
+            byte width = (byte)Width_up_down.Value;
+            byte height = (byte)Height_up_down.Value;
+            // Create the new column and row defenitions 
+            for (int i = 0; i < width; i++)
+            {
+                var coldef = new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) };
+                label_grid.ColumnDefinitions.Add(coldef);
+            }
+            for (int i = 0; i < height; i++)
+            {
+                var rowdef = new RowDefinition { Height = new GridLength(1, GridUnitType.Star) };
+                label_grid.RowDefinitions.Add(rowdef);
+            }
+
+            // Initialize the arrays to store the content for the grid in
+            bg_labels = new Label[width][];
+            stone_elipses = new Ellipse[width][];
+            for (int x = 0; x < width; x++)
+            {
+                bg_labels[x] = new Label[height];
+                stone_elipses[x] = new Ellipse[height];
+                for (int y = 0; y < Height_up_down.Value; y++)
+                {
+                    Label bg = new Label();
+                    Ellipse stone = new Ellipse();
+
+                    label_grid.Children.Add(bg);
+                    label_grid.Children.Add(stone);
+
+                    // All the listeners must be set for both the background and the elipses as the elipses cover part of the background but not all of it
+                    bg.MouseEnter += label_enter;
+                    bg.MouseRightButtonDown += label_click;
+                    bg.MouseLeftButtonDown += label_click;
+                    stone.MouseEnter += label_enter;
+                    stone.MouseRightButtonDown += label_click;
+                    stone.MouseLeftButtonDown += label_click;
+
+                    bg.SetValue(Grid.ColumnProperty, x);
+                    bg.SetValue(Grid.RowProperty, y);
+                    stone.SetValue(Grid.ColumnProperty, x);
+                    stone.SetValue(Grid.RowProperty, y);
+
+                    bg_labels[x][y] = bg;
+                    stone_elipses[x][y] = stone;
+
+                    bg.Background = new SolidColorBrush(Colors.empty);
+                    stone.Fill = new SolidColorBrush(Colors.transparent);
+
+                    // Create some tags so we can track them down later
+                    bg.Tag = new[] { x, y };
+                    stone.Tag = new[] { x, y };
+                }
+            }
+        }
         private void start_game()
         {
             game = new Game((byte)Width_up_down.Value, (byte)Height_up_down.Value);
             settings_button.Visibility = Visibility.Hidden;
             rematch_button.Visibility = Visibility.Hidden;
             alice = new GUI_player(this, players.Alice);
+            // Initialize the bot if the player wants one
             if (AI_checkbox.IsChecked.Value)
             {
                 string s;
@@ -91,7 +119,7 @@ namespace connect4
                     return;
                 if (Requester.ping(address, port, out s))
                 {
-                    bob = new Database_bot(players.Bob, (byte) difficulty_slider.Value, address, port, (bool)smart_moves_checkbox.IsChecked);
+                    bob = new Database_bot(players.Bob, (byte)difficulty_slider.Value, address, port, (bool)smart_moves_checkbox.IsChecked);
                 }
                 else
                 {
@@ -130,11 +158,13 @@ namespace connect4
             settings_button.Visibility = Visibility.Visible;
 
         }
+
         private void label_click(object sender, MouseEventArgs e)
         {
-            byte x = ((byte[])((Label)sender).Tag)[0];
-            col_clicked = x;
-            update_field(((byte[])((Label)sender).Tag)[0], ((byte[])((Label)sender).Tag)[1]);
+            int[] coords = (int[])((FrameworkElement)sender).Tag;
+            int x = coords[0];
+            col_clicked = (byte)x;
+            update_field(coords[0], coords[1]);
         }
 
         private void do_turn(IPlayer player)
@@ -155,7 +185,7 @@ namespace connect4
         {
             if (game != null)
             {
-                byte[] coords = (byte[])((Label)sender).Tag;
+                int[] coords = (int[])((FrameworkElement)sender).Tag;
                 update_field(coords[0], coords[1]);
             }
         }
@@ -167,38 +197,41 @@ namespace connect4
             {
                 for (int y = 0; y < field.Height; y++)
                 {
-                    switch (field[x, field.Height - 1 - y])
+                    //if (mousex == x || mousey == y)
+                    //{
+                    //    bg_labels[x][y].Background = new SolidColorBrush((game.next_player == players.Alice) ? Colors.Alice.ghost : Colors.Bob.ghost);
+                    //}
+                    //else
+                    //{
+                    //    bg_labels[x][y].Background = new SolidColorBrush(Colors.empty);
+                    //}
+                    
+                    // Color the fields with stones in them to the according players
+                    if (field[x, y] == players.Alice)
                     {
-                        case players.Alice:
-                            if (mousex == x || mousey == y)
-                            {
-                                labels[x][y].Background = new SolidColorBrush(Colors.Alice.highlight);
-                            }
-                            else
-                            {
-                                labels[x][y].Background = new SolidColorBrush(Colors.Alice.standard);
-                            }
-                            break;
-                        case players.Bob:
-                            if (mousex == x || mousey == y)
-                            {
-                                labels[x][y].Background = new SolidColorBrush(Colors.Bob.highlight);
-                            }
-                            else
-                            {
-                                labels[x][y].Background = new SolidColorBrush(Colors.Bob.standard);
-                            }
-                            break;
-                        default:
-                            if (mousex == x || mousey == y)
-                            {
-                                labels[x][y].Background = new SolidColorBrush((game.next_player == players.Alice) ? Colors.Alice.ghost : Colors.Bob.ghost);
-                            }
-                            else
-                            {
-                                labels[x][y].Background = new SolidColorBrush(Colors.empty);
-                            }
-                            break;
+                        stone_elipses[x][field.Height - y - 1].Fill = new SolidColorBrush(Colors.Alice.standard);
+                    }
+                    else if (field[x, y] == players.Bob)
+                    {
+                        stone_elipses[x][field.Height - y - 1].Fill = new SolidColorBrush(Colors.Bob.standard);
+                    }
+
+                    //Create a ghost image of the stone in the column that the player is hovering in
+                    if (field[x, y] == players.Empty && (y == 0 || field[x, y - 1] != players.Empty))
+                    {
+                        if (mousex == x)
+                        {
+                            stone_elipses[x][field.Height - y - 1].Fill = new SolidColorBrush(
+                                game.next_player == players.Alice
+                                    ? Colors.Alice.ghost
+                                    : Colors.Bob.ghost);
+                        }
+
+                        //Make sure to keep the rest of the stones transparent
+                        else
+                        {
+                            stone_elipses[x][field.Height - y - 1].Fill = new SolidColorBrush(Colors.transparent);
+                        }
                     }
                 }
             }

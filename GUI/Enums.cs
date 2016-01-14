@@ -20,6 +20,7 @@ namespace connect4
         }
 
         public static Color empty = System.Windows.Media.Colors.Black;
+        public static Color transparent = System.Windows.Media.Colors.Transparent;
     }
 
 }

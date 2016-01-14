@@ -29,7 +29,7 @@
             <TextBox Name="port_textbox" IsEnabled="{Binding ElementName=AI_checkbox, Path=IsChecked}" Margin="260,260,136,0" TextWrapping="Wrap" TextChanged="port_textbox_TextChanged" Background="White" VerticalAlignment="Top"/>
         </Grid>
         <Grid Name="game_grid" Visibility="Visible" Margin="0,0,0,30">
-            <Grid Name="label_grid" Margin="0,0,136,0"/>
+            <Grid Name="label_grid" Margin="0,0,136,0"></Grid>
             <Button Name="rematch_button" Content="rematch" HorizontalAlignment="Left" Margin="345,55,0,0" VerticalAlignment="Top" Width="75" Visibility="Visible" Click="rematch_button_Click"/>
             <Button Name="settings_button" Content="settings" HorizontalAlignment="Left" Margin="345,80,0,0" VerticalAlignment="Top" Width="75" Visibility="Visible" Click="settings_button_Click"/>
             <Button Name="rating_button" Content="Rate field" HorizontalAlignment="Left" Margin="345,105,0,0" VerticalAlignment="Top" Width="75" Click="rating_button_Click"/>
