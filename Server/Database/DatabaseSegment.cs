@@ -18,7 +18,7 @@ namespace Server
         private byte[] Fields;
         private MemoryStream FieldsBuffer;
         private BinaryWriter FieldDataBuffer;
-        private const int MaxBufferSize = 2000;
+        private const int MaxBufferSize = 10000;
 
         private FileStream FieldStream;
         private FileStream FieldDataStream;
@@ -323,19 +323,15 @@ namespace Server
 
         public void appendItem(Field field, FieldData fieldData)
         {
-            if (FieldsBuffer.Position < getFieldsSeekPosition(MaxBufferSize))
-            {
-                byte[] fComp = field.compressField();
-                FieldsBuffer.Write(fComp, 0, FieldLength);
+            byte[] fComp = field.compressField();
+            FieldsBuffer.Write(fComp, 0, FieldLength);
 
-                uint[] fdStorage = fieldData.getStorage();
-                foreach (uint u in fdStorage)
-                    FieldDataBuffer.Write(u);
-            }
-            else
-            {
+            uint[] fdStorage = fieldData.getStorage();
+            foreach (uint u in fdStorage)
+                FieldDataBuffer.Write(u);
+
+            if (FieldsBuffer.Position >= getFieldsSeekPosition(MaxBufferSize))
                 writeBuffer();
-            }
         }
 
         public void writeBuffer()

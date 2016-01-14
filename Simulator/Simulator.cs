@@ -114,6 +114,7 @@ namespace Simulator
         }
         private static void Main(string[] args)
         {
+            Console.Clear();
             Simulator sim = new Simulator(args);
             sim.loop_games();
             Console.ReadLine();
