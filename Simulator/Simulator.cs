@@ -15,7 +15,7 @@ namespace Simulator
         private readonly byte width = 7;
         private readonly byte height = 6;
         private readonly uint max_games = 1;
-        private readonly uint cycle_length = 10000;
+        private readonly int cycle_length = 10000;
         private readonly byte random_alice = 0;
         private readonly byte random_bob = 0;
         private readonly DateTime end_time;
@@ -43,7 +43,7 @@ namespace Simulator
             width =        (byte)Args_parser.parse_int_arg(args, "w",  "width",        2, 20, 7);
             height =       (byte)Args_parser.parse_int_arg(args, "h",  "height",       2, 20, 6);
             max_games =          Args_parser.parse_int_arg(args, "g",  "max games",    1, uint.MaxValue, 1);
-            cycle_length =       Args_parser.parse_int_arg(args, "l",  "cycle length", 1, max_games, max_games);
+            cycle_length =  (int)Args_parser.parse_int_arg(args, "l",  "cycle length", 1, max_games, max_games);
             random_alice = (byte)Args_parser.parse_int_arg(args, "ra", "random_alice", 0, 100, 0);
             random_bob =   (byte)Args_parser.parse_int_arg(args, "rb", "random_bob",   0, 100, 0);
             port =       (ushort)Args_parser.parse_int_arg(args, "p",  "port",         0, ushort.MaxValue, 11000);
@@ -80,7 +80,7 @@ namespace Simulator
             Stopwatch sw = new Stopwatch();
             sw.Start();
             bool finished = true;
-            uint cycles = (max_games - (max_games % cycle_length)) / cycle_length;
+            int cycles = (int)(max_games - (max_games % cycle_length)) / cycle_length;
             for (int i = 1; i <= cycles; i++)
             {
                 logger.Info($"Starting {i}/{cycles} cycle");
