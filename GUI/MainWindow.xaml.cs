@@ -193,20 +193,11 @@ namespace connect4
         private void update_field(int? mousex = null, int? mousey = null)
         {
             Field field = game.get_field();
+            field_rating_label.Content = field.rate();
             for (int x = 0; x < field.Width; x++)
             {
                 for (int y = 0; y < field.Height; y++)
                 {
-                    //if (mousex == x || mousey == y)
-                    //{
-                    //    bg_labels[x][y].Background = new SolidColorBrush((game.next_player == players.Alice) ? Colors.Alice.ghost : Colors.Bob.ghost);
-                    //}
-                    //else
-                    //{
-                    //    bg_labels[x][y].Background = new SolidColorBrush(Colors.empty);
-                    //}
-                    
-                    // Color the fields with stones in them to the according players
                     if (field[x, y] == players.Alice)
                     {
                         stone_elipses[x][field.Height - y - 1].Fill = new SolidColorBrush(Colors.Alice.standard);
@@ -240,6 +231,13 @@ namespace connect4
         private void rematch_button_Click(object sender, RoutedEventArgs e)
         {
             message_label.Content = string.Empty;
+            foreach (Ellipse[] elipse in stone_elipses)
+            {
+                for (int y = 0; y < elipse.Length; y++)
+                {
+                    elipse[y].Fill = new SolidColorBrush(Colors.empty);
+                }
+            }
             start_game();
         }
 
@@ -299,9 +297,9 @@ namespace connect4
 
         }
 
-        private void rating_button_Click(object sender, RoutedEventArgs e)
+        private void hint_button_Click(object sender, RoutedEventArgs e)
         {
-            rating_label.Content = game.get_field().rate();
+
         }
     }
     static class ui_codes

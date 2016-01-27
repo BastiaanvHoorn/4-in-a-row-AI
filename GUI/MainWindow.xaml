@@ -30,11 +30,12 @@
         </Grid>
         <Grid Name="game_grid" Visibility="Visible" Margin="0,0,0,30">
             <Grid Name="label_grid" Margin="0,0,136,0"></Grid>
-            <Button Name="rematch_button" Content="rematch" HorizontalAlignment="Left" Margin="345,55,0,0" VerticalAlignment="Top" Width="75" Visibility="Visible" Click="rematch_button_Click"/>
-            <Button Name="settings_button" Content="settings" HorizontalAlignment="Left" Margin="345,80,0,0" VerticalAlignment="Top" Width="75" Visibility="Visible" Click="settings_button_Click"/>
-            <Button Name="rating_button" Content="Rate field" HorizontalAlignment="Left" Margin="345,105,0,0" VerticalAlignment="Top" Width="75" Click="rating_button_Click"/>
-            <Label Name="rating_label" Content="" HorizontalAlignment="Left" Margin="325,155,0,0" VerticalAlignment="Top" Width="121"/>
+            <Button Name="rematch_button" Content="rematch" HorizontalAlignment="Right" Margin="325,43,5,0" VerticalAlignment="Top" Width="121" Visibility="Visible" Click="rematch_button_Click" Height="26"/>
+            <Button Name="settings_button" Content="settings" HorizontalAlignment="Right" Margin="325,74,5,0" VerticalAlignment="Top" Width="121" Visibility="Visible" Click="settings_button_Click" Height="26"/>
+            <Label Content="Field rating" HorizontalAlignment="Right" Margin="325,198,5,0" VerticalAlignment="Top" Width="121"/>
+            <Label Name="field_rating_label" Content="" HorizontalAlignment="Right" Margin="325,229,5,0" VerticalAlignment="Top" Width="121"/>
+            <Button Name="hint_button" IsEnabled="{Binding ElementName=hints_checkbox, Path=IsChecked}" Content="Hint" HorizontalAlignment="Right" Margin="325,105,5,0" VerticalAlignment="Top" Width="121" Visibility="Visible" Click="hint_button_Click" Height="26"/>
         </Grid>
-        <Label Name="message_label" Margin="5,0,5,5" VerticalAlignment="Bottom" Height="20"/>
+        <Label Name="message_label" Margin="0" VerticalAlignment="Bottom" Height="30" FontSize="10.667"/>
     </Grid>
 </Window>

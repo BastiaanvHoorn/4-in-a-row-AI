@@ -20,7 +20,7 @@ namespace Engine
             int location = field.getFieldLocation(s);
             return location >= 0;
         }
-        
+
         /// <summary>
         /// Returns the location (in fields) in the specified stream.
         /// </summary>
@@ -241,7 +241,7 @@ namespace Engine
 
             int random = rnd.Next(columns.Count);
             byte column = columns[random];
-            
+
             return column;
         }
 
@@ -254,7 +254,7 @@ namespace Engine
         /// <param name="dy">the direction in y (can only be -1, 0 or 1)</param>
         /// <param name="ab">the player of which the stones should be counted (1 for alice, 2 for bob)</param>
         /// <returns>The amount of stones from player ab found, not counting the starting stone</returns>
-        public static byte count_stones_direction(this Field field, byte x, byte y, sbyte dx, sbyte dy, players player, bool count_empty)
+        public static byte count_stones_direction(this Field field, byte x, byte y, sbyte dx, sbyte dy, players player, bool count_empty = false)
         {
             byte counter = 0;
             sbyte _x = (sbyte)x;
@@ -290,8 +290,8 @@ namespace Engine
         {
             //Checks from botleft to topright
             byte counter = 1;
-            counter += field.count_stones_direction(x, y, -1, 1, player, false);
-            counter += field.count_stones_direction(x, y, 1, -1, player, false);
+            counter += field.count_stones_direction(x, y, -1, 1, player);
+            counter += field.count_stones_direction(x, y, 1, -1, player);
             if (counter >= 4)
             {
                 return true;
@@ -299,8 +299,8 @@ namespace Engine
 
             //checks from topleft to botright
             counter = 1;
-            counter += field.count_stones_direction(x, y, 1, 1, player, false);
-            counter += field.count_stones_direction(x, y, -1, -1, player, false);
+            counter += field.count_stones_direction(x, y, 1, 1, player);
+            counter += field.count_stones_direction(x, y, -1, -1, player);
             if (counter >= 4)
             {
                 return true;
@@ -308,8 +308,8 @@ namespace Engine
 
             //checks horizontal
             counter = 1;
-            counter += field.count_stones_direction(x, y, 0, 1, player, false);
-            counter += field.count_stones_direction(x, y, 0, -1, player, false);
+            counter += field.count_stones_direction(x, y, 0, 1, player);
+            counter += field.count_stones_direction(x, y, 0, -1, player);
             if (counter >= 4)
             {
                 return true;
@@ -317,8 +317,8 @@ namespace Engine
 
             //checks vertical
             counter = 1;
-            counter += field.count_stones_direction(x, y, -1, 0, player, false);
-            counter += field.count_stones_direction(x, y, 1, 0, player, false);
+            counter += field.count_stones_direction(x, y, -1, 0, player);
+            counter += field.count_stones_direction(x, y, 1, 0, player);
             if (counter >= 4)
             {
                 return true;
@@ -327,30 +327,81 @@ namespace Engine
             return false;
         }
 
+        private static int rate_row(this Field field, players player, int x, int y, int dx, int dy)
+        {
+            int rating = 0;
+            int counter = 0;
+            int empty = 0;
+            while (x >= 0 && x < field.Width && y >= 0 && y < field.Height)
+            {
+                if (field[x, y] == player)
+                {
+                    counter++;
+                }
+                else if (field[x, y] == players.Empty)
+                {
+                    empty++;
+                }
+                else
+                {
+                    if (counter + empty >= 4)
+                    {
+                        rating += counter;
+                    }
+                    counter = 0;
+                    empty = 0;
+                }
+                x += dx;
+                y += dy;
+            }
+            if (counter + empty >= 4)
+            {
+                rating += counter;
+            }
+            return rating;
+        }
+
         public static int rate(this Field field)
         {
             int rating = 0;
-            Func<players, int> rate_vertical = delegate (players player)
+            // Vertical
+            for (int x = 0; x < field.Width; x++)
             {
-                int _rating = 0;
-                byte y = 0;
-                byte x = 0;
-                do
-                {
-                    do
-                    {
-                        byte stones = field.count_stones_direction(x, y, 0, 1, player, true);
-                        y += (byte)(stones + 1);
-                        _rating += stones;
-                        if (field[x, y] == players.Empty)
-                            y = field.Height;
-                    } while (y < field.Height);
-                    x++;
-                } while (x < field.Width);
-                return _rating;
-            };
-            rating += rate_vertical(players.Alice);
-            rating -= rate_vertical(players.Bob);
+                rating += field.rate_row(players.Alice, x, 0, 0, 1);
+                rating -= field.rate_row(players.Bob, x, 0, 0, 1);
+            }
+            // Horizontal
+            for (int y = 0; y < field.Height; y++)
+            {
+                // Left to right
+                rating += field.rate_row(players.Alice, 0, y, 1, 0);
+                rating -= field.rate_row(players.Bob, 0, y, 1, 0);
+                // Right to left
+                //rating += field.rate_row(players.Alice, field.Width - 1, y, -1, 0);
+                //rating -= field.rate_row(players.Bob, field.Width - 1, y, -1, 0);
+            }
+            // Diagonals starting starting at the leftside
+            for (int y = 0; y < field.Height - 3; y++)
+            {
+                // Upwards
+                rating += field.rate_row(players.Alice, 0, y, 1, 1);
+                rating -= field.rate_row(players.Bob, 0, y, 1, 1);
+                // Downwards
+                rating += field.rate_row(players.Alice, 0, field.Height - 1 - y, 1, -1);
+                rating -= field.rate_row(players.Bob, 0, field.Height - 1 - y, 1, -1);
+            }
+            // Diagonals starting from the bottom and from the top
+            for (int x = 1; x < field.Width - 3; x++)
+            {
+                // Upwards
+                rating += field.rate_row(players.Alice, x, 0, 1, 1);
+                rating -= field.rate_row(players.Bob, x, 0, 1, 1);
+                // Downwards
+                rating += field.rate_row(players.Alice, x, field.Height - 1, 1, -1);
+                rating -= field.rate_row(players.Bob, x, field.Height - 1, 1, -1);
+            }
+
+
             return rating;
         }
     }
