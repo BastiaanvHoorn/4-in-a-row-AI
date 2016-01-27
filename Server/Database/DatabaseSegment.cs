@@ -60,7 +60,7 @@ namespace Server
             }
 
             FieldsBuffer = new MemoryStream(getFieldsSeekPosition(MaxBufferSize));
-            MemoryStream fdFileStream = new MemoryStream(getFieldDataSeekPosition(MaxBufferSize));
+            MemoryStream fdFileStream = new MemoryStream((int)getFieldDataSeekPosition(MaxBufferSize));
             FieldDataBuffer = new BinaryWriter(fdFileStream);
 
             setReading(false);
@@ -80,7 +80,7 @@ namespace Server
                 this.Fields = new byte[0];
 
             FieldsBuffer = new MemoryStream(getFieldsSeekPosition(MaxBufferSize));
-            MemoryStream fdFileStream = new MemoryStream(getFieldDataSeekPosition(MaxBufferSize));
+            MemoryStream fdFileStream = new MemoryStream((int)getFieldDataSeekPosition(MaxBufferSize));
             FieldDataBuffer = new BinaryWriter(fdFileStream);
 
             setReading(false);
@@ -218,7 +218,7 @@ namespace Server
             int maxLoc = FieldCount - 1;   // Gets the last possible location to read.
 
             if (beginRange > maxLoc || endRange > maxLoc)
-                throw new DatabaseException("The given range of fields reaches beyond the end of the database.");
+                throw new DatabaseException("The given range of fields reaches beyond the end of the database segment.");
 
             if (beginRange < 0 || endRange < 0)
                 throw new DatabaseException("The given range of fields contains negative locations");
@@ -256,13 +256,16 @@ namespace Server
         /// <param name="fieldLocation">The location of the field</param>
         /// <param name="fieldDataStream">The field data database stream</param>
         /// <returns></returns>
-        public int getFieldDataSeekPosition(int location)
+        public long getFieldDataSeekPosition(int location)
         {
-            return location * getFieldWidth() * 8;
+            return (long)location * getFieldWidth() * 8;
         }
 
         public byte[] readCompressedField(int location)
         {
+            if (!locationExists(location))
+                throw new DatabaseException($"Can't read compressed field from {ToString()}, because the given location ({location}) is out of range.");
+
             int seekPosition = getFieldsSeekPosition(location);
 
             byte[] fCompressed = new byte[FieldLength];
@@ -282,12 +285,18 @@ namespace Server
 
         public Field readField(int location)
         {
+            if (!locationExists(location))
+                throw new DatabaseException($"Can't read field from {ToString()}, because the given location ({location}) is out of range.");
+
             return readCompressedField(location).decompressField();
         }
 
         public FieldData readFieldData(int location)
         {
-            int seekPosition = getFieldDataSeekPosition(location);   // Gets the seekposition for the specified database location.
+            if (!locationExists(location))
+                throw new DatabaseException($"Can't read field data from {ToString()}, because the given location ({location}) is out of range.");
+
+            long seekPosition = getFieldDataSeekPosition(location);   // Gets the seekposition for the specified database location.
 
             uint[] storage = new uint[DbProperties.FieldWidth * 2];
             BinaryReader br = new BinaryReader(FieldDataStream);
@@ -309,7 +318,7 @@ namespace Server
         public void writeFieldData(int location, FieldData fieldData)
         {
             FileStream fieldDataStream = FieldDataStream; // Gets the needed filestream.
-            int seekPosition = getFieldDataSeekPosition(location);   // Gets the seekposition for the specified database location.
+            long seekPosition = getFieldDataSeekPosition(location);   // Gets the seekposition for the specified database location.
 
             BinaryWriter bw = new BinaryWriter(fieldDataStream);
             uint[] storage = fieldData.getStorage();                    // Gets the storage of the specifield field data object to write it to the fieldDataStream.
@@ -363,7 +372,7 @@ namespace Server
             FieldsBuffer = new MemoryStream(getFieldsSeekPosition(MaxBufferSize));
 
             FieldDataBuffer.Dispose();
-            MemoryStream fdStream = new MemoryStream(getFieldDataSeekPosition(MaxBufferSize));
+            MemoryStream fdStream = new MemoryStream((int)getFieldDataSeekPosition(MaxBufferSize));
             FieldDataBuffer = new BinaryWriter(fdStream);
         }
 
@@ -403,6 +412,11 @@ namespace Server
             writeBuffer();
             FieldStream.Dispose();
             FieldDataStream.Dispose();
+        }
+
+        public override string ToString()
+        {
+            return $"Segment Path = {Path}; FieldLength = {FieldLength}; FieldCount = {FieldCount}";
         }
     }
 }
