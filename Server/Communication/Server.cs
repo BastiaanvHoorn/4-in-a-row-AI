@@ -46,7 +46,7 @@ namespace Server
             // running the listener is "host.contoso.com".
             IPHostEntry ip_host_info = Dns.Resolve(Dns.GetHostName());
             IPAddress ip_address = ip_host_info.AddressList[0];
-            IPEndPoint local_end_point = new IPEndPoint(ip_address, port);
+            IPEndPoint local_end_point = new IPEndPoint(IPAddress.Any, port);
             logger.Info($"Starting server at port {ip_address}:{port}");
             // Create a TCP/IP socket.
             Socket listener = new Socket(AddressFamily.InterNetwork,

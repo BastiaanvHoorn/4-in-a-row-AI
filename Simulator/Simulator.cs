@@ -97,6 +97,7 @@ namespace Simulator
             if (finished)
                 logger.Info("Finished simulating all games");
             logger.Info($"Simulation took {sw.Elapsed}");
+            
 
         }
         private void send_history(List<List<byte>> histories)
@@ -116,7 +117,15 @@ namespace Simulator
         {
             Console.Clear();
             Simulator sim = new Simulator(args);
+            string s;
+            if (!Requester.ping(sim.address, sim.port, out s))
+            {
+                Console.WriteLine("Press any key to exit...");
+                Console.Read();
+                return;
+            }
             sim.loop_games();
+            Console.WriteLine("Press any key to exit...");
             Console.ReadLine();
         }
     }

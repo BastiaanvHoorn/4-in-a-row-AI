@@ -66,6 +66,7 @@ namespace Server
         /// <returns>The amount of fields processed</returns>
         public static int preprocess_game_history(this Database db, byte[] rawHistory)
         {
+            logger.Info("Starting preprocessing game history");
             Stopwatch sw = new Stopwatch();
             sw.Start();
 

@@ -99,14 +99,14 @@ namespace Database_manager
                 message_label.Content = "Please fill out all the iput fields";
                 return;
             }
-            if (check_network_input_validity())
+            if (!check_network_input_validity())
                 return;
             string s;
-            if (!Requester.ping(address, port, out s))
-            {
-                message_label.Content = s;
-                return;
-            }
+            //if (!Requester.ping(address, port, out s))
+            //{
+            //    message_label.Content = s;
+            //    return;
+            //}
             //Parse the input to one byte-array
             byte[] data = new byte[12];
             byte[] length = BitConverter.GetBytes((int)length_up_down.Value);
