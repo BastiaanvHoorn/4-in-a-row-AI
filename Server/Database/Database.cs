@@ -25,7 +25,7 @@ namespace Server
         //private FileStream[] FieldStream;
         //private FileStream[] FieldDataStream;
         //private Dictionary<Field, int>[] Fields;    // Used to store database fields in RAM for faster access.
-        private DatabaseSegment[] Segments;
+        internal DatabaseSegment[] Segments;
         
         /// <summary>
         /// Creates a new database instance from the given path.
@@ -130,6 +130,26 @@ namespace Server
         public int getDatabaseLength()
         {
             return Segments.Sum(s => s.FieldCount);
+        }
+        
+        public long getDatabaseSize()
+        {
+            long size = 0;
+
+            int directories = DbProperties.MaxFieldStorageSize;
+
+            for (int i = 1; i <= directories; i++)
+            {
+                string fieldDirPath = DbProperties.getFieldDirPath(i);
+                string[] files = Directory.GetFiles(fieldDirPath);
+
+                foreach (string file in files)
+                {
+                    size += new FileInfo(file).Length;
+                }
+            }
+
+            return size;
         }
 
         public DatabaseLocation findField(Field field)

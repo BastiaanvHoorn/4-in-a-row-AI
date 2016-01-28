@@ -46,15 +46,16 @@ namespace Server
                     }
                 }
 
-                logger.Debug("Returning column based on database");
+                logger.Debug($"Returning column based on database ({bestColumn})");
 
                 return bestColumn;
             }
             else
             {
-                logger.Debug("Returning random column");
+                byte column = field.getRandomColumn();
+                logger.Debug($"Returning random column ({column})");
 
-                return field.getRandomColumn();
+                return column;
             }
         }
 

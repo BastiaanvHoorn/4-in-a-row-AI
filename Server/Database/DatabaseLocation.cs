@@ -82,7 +82,10 @@ namespace Server
         
         public override string ToString()
         {
-            return $"FieldLength = {DbSegment.FieldLength}; Location = {Location}";
+            if (DbSegment != null)
+                return $"FieldLength = {DbSegment.FieldLength}; Location = {Location}";
+            else
+                return $"Location = {Location}";
         }
     }
 }

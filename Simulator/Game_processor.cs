@@ -10,6 +10,7 @@ using Engine;
 using NLog;
 using Utility;
 using Logger = NLog.Logger;
+using System.Globalization;
 
 namespace Simulator
 {
@@ -19,16 +20,16 @@ namespace Simulator
         private static readonly Logger games_logger = LogManager.GetLogger("game_logger");
         private readonly byte width = 7;
         private readonly byte height = 6;
-        public uint games_won_alice;
-        public uint games_won_bob;
+        public int games_won_alice;
+        public int games_won_bob;
         private readonly byte random_alice;
         private readonly byte random_bob;
-        private readonly uint games;
+        private readonly int games;
         private delegate string victory_message(int games_won);
         public IPAddress address { get; }
         public ushort port { get; }
 
-        public Game_processor(byte width, byte height, uint max_games, byte random_alice, byte random_bob, IPAddress address, ushort port)
+        public Game_processor(byte width, byte height, int max_games, byte random_alice, byte random_bob, IPAddress address, ushort port)
         {
             this.width = width;
             this.height = height;
@@ -82,10 +83,34 @@ namespace Simulator
             }
             sw.Stop();
             TimeSpan elapsed = sw.Elapsed;
+
+            NumberFormatInfo nfi = new CultureInfo("en-US", false).NumberFormat;
+            nfi.PercentDecimalDigits = 2;
+
             logger.Info($"Simulation of {games} game(s) finished in {elapsed}");
-            logger.Info(
-                $"Alice won {games_won_alice} games, Bob won {games_won_bob} and {games - games_won_alice - games_won_bob} were a tie;");
+            logger.Info($"Alice won \t{ get_win_percentage(players.Alice).ToString("P", nfi) }\t");
+            logger.Info($"Bob won \t{ get_win_percentage(players.Bob).ToString("P", nfi) }\t");
+            logger.Info($"Tie \t{ get_win_percentage(players.Empty).ToString("P", nfi) }\t");
             return histories;
+        }
+
+        private double get_win_percentage(players player, int digits = 2)
+        {
+            int player_wins = 0;
+
+            switch (player)
+            {
+                case players.Alice:
+                    player_wins = games_won_alice;
+                    break;
+                case players.Bob:
+                    player_wins = games_won_bob;
+                    break;
+                default:
+                    player_wins = games - games_won_alice - games_won_bob;
+                    break;
+            }
+            return (double)player_wins / (double)games;
         }
 
         private players do_game(Game game, ref List<byte> history)
