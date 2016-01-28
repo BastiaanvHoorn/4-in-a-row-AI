@@ -108,8 +108,8 @@ namespace Utility
         {
             Ping ping_sender = new Ping();
             PingReply reply = ping_sender.Send(address);
-            if (reply.Status == IPStatus.Success)
-            {
+            //if (reply.Status == IPStatus.Success)
+            //{
                 try
                 {
                     byte[] data = send(new byte[0], Network_codes.ping, address, port, false);
@@ -138,11 +138,43 @@ namespace Utility
                     logger.Info(s);
                     return false;
                 }
-            }
+            //}
             s = $"Something went wrong. Are you connected to the internet and is the IP correct?";
             logger.Info(s);
             return false;
 
+        }
+        /// <summary>
+        /// Returns the details for a given field
+        /// </summary>
+        /// <param name="field_data"></param>
+        /// <param name="address"></param>
+        /// <param name="port"></param>
+        /// <returns>First half of the array are the total amount of games played per column, the second half of the array are the won games per column</returns>
+        public static int[] get_field_details(byte[] field_data, IPAddress address, ushort port)
+        {
+
+            byte[] data = send(field_data, Network_codes.details_request, address, port);
+            if (data.Length % 4 != 0)
+                throw new FormatException("Byte array not dividable by 4 and thus cannot contain only integers");
+            
+            int[] details = new int[14];
+            // The first 7 integers are the total games played in those columns
+            for (int i = 0; i < data.Length / 8; i++)
+            {
+                byte[] arr = new byte[4];
+                Array.Copy(data, i * 4, arr, 0, 4);
+                details[i] = BitConverter.ToInt32(arr, 0);
+            }
+
+            // The second 7 integers are the winning games in those columns
+            for (int i = 0; i < data.Length / 8; i++)
+            {
+                byte[] arr = new byte[4];
+                Array.Copy(data, (i + 7) * 4, arr, 0, 4);
+                details[i + 7] = BitConverter.ToInt32(arr, 0);
+            }
+            return details;
         }
     }
 }

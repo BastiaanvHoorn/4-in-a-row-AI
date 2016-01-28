@@ -205,28 +205,7 @@ namespace Database_manager
             Field field = fields[index];
             Winning_chances.Children.Clear();
 
-            // Get the data of that field and parse it
-            byte[] data = Requester.send(field.getStorage(), Network_codes.details_request, address, port);
-            if (data.Length % 4 != 0)
-                throw new FormatException("Byte array not dividable by 4 and thus cannot contain only integers");
-
-            //The first 7 integers are the total games played in those columns
-            int[] total = new int[7];
-            for (int i = 0; i < data.Length / 8; i++)
-            {
-                byte[] arr = new byte[4];
-                Array.Copy(data, i * 4, arr, 0, 4);
-                total[i] = BitConverter.ToInt32(arr, 0);
-            }
-
-            //The second 7 integers are the winning games in those columns
-            int[] wins = new int[7];
-            for (int i = 0; i < data.Length / 8; i++)
-            {
-                byte[] arr = new byte[4];
-                Array.Copy(data, (i + 7) * 4, arr, 0, 4);
-                wins[i] = BitConverter.ToInt32(arr, 0);
-            }
+            int[] details = Requester.get_field_details(field.getStorage(), address, port);
 
             //Display the data
             StackPanel panel_title = new StackPanel();
@@ -234,13 +213,13 @@ namespace Database_manager
             panel_title.Children.Add(new Label { Content = " ", FontSize = 9 });
             panel_title.Children.Add(new Label { Content = "wins:" });
             panel_title.Children.Add(new Label { Content = "total:" });
-            for (int i = 0; i < total.Length; i++)
+            for (int i = 0; i < details.Length/2; i++)
             {
                 StackPanel panel = new StackPanel();
                 Winning_chances.Children.Add(panel);
                 panel.Children.Add(new Label { Content = $"Col {i + 1}", FontSize = 9 });
-                panel.Children.Add(new Label { Content = wins[i] });
-                panel.Children.Add(new Label { Content = total[i] });
+                panel.Children.Add(new Label { Content = details[i+details.Length/2] });
+                panel.Children.Add(new Label { Content = details[i] });
             }
         }
 
