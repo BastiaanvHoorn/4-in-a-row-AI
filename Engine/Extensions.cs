@@ -361,7 +361,7 @@ namespace Engine
             return rating;
         }
 
-        public static int rate(this Field field)
+        public static int rate_field(this Field field)
         {
             int rating = 0;
             // Vertical
@@ -373,12 +373,8 @@ namespace Engine
             // Horizontal
             for (int y = 0; y < field.Height; y++)
             {
-                // Left to right
                 rating += field.rate_row(players.Alice, 0, y, 1, 0);
                 rating -= field.rate_row(players.Bob, 0, y, 1, 0);
-                // Right to left
-                //rating += field.rate_row(players.Alice, field.Width - 1, y, -1, 0);
-                //rating -= field.rate_row(players.Bob, field.Width - 1, y, -1, 0);
             }
             // Diagonals starting starting at the leftside
             for (int y = 0; y < field.Height - 3; y++)
@@ -403,6 +399,23 @@ namespace Engine
 
 
             return rating;
+        }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="field"></param>
+        /// <param name="player">The player that will perform the next move</param>
+        /// <returns></returns>
+        public static int[] rate_columns(this Field field, players player)
+        {
+            int[] score = new int[field.get_total_empty_columns()];
+            for(int i = 0; i< field.get_total_empty_columns(); i++)
+            {
+                Field _field = field;
+                _field.doMove(i, player);
+                score[i] = _field.rate_field();
+            }
+            return score;
         }
     }
 }
