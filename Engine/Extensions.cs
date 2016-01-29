@@ -406,14 +406,35 @@ namespace Engine
         /// <param name="field"></param>
         /// <param name="player">The player that will perform the next move</param>
         /// <returns></returns>
-        public static int[] rate_columns(this Field field, players player)
+        public static int[] rate_columns(this Field field, players player, int depth)
         {
             int[] score = new int[field.get_total_empty_columns()];
-            for(int i = 0; i< field.get_total_empty_columns(); i++)
+            for (int i = 0; i < field.get_total_empty_columns(); i++)
             {
-                Field _field = field;
+                Field _field = new Field(field);
                 _field.doMove(i, player);
-                score[i] = _field.rate_field();
+                if (depth > 0)
+                {
+                    // The ratings for the moves that Bob will make in reaction to Alice's move
+                    int[] ratings = _field.rate_columns(player == players.Alice ? players.Bob : players.Alice, depth - 1);
+                    int high_score = ratings[0];
+
+                    // Get the lowest (or the highest in Bob's case) score which will be the move that Bob
+                    for (int j = 1; j < ratings.Length; j++)
+                    {
+                        if (player == players.Alice)
+                            if (ratings[j] < high_score)
+                                high_score = ratings[i];
+                        else if (player == players.Bob)
+                            if (ratings[j] > high_score)
+                                high_score = ratings[i];
+                    }
+                    score[i] = high_score;
+                }
+                else
+                {
+                    score[i] = _field.rate_field();
+                }
             }
             return score;
         }

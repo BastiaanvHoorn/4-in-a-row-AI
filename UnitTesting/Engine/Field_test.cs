@@ -73,6 +73,7 @@ namespace UnitTesting
             int expected = f.Height;
             Assert.AreEqual(expected, actual);
         }
+
         [TestMethod]
         public void TestMethod1_doMove_1()
         {
@@ -137,4 +138,5 @@ namespace UnitTesting
             Assert.AreEqual(-1, f.GetHashCode());
         }
     }
+
 }

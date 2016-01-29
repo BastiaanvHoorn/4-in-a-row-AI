@@ -53,6 +53,7 @@
   </Choose>
   <ItemGroup>
     <Compile Include="Bot_test.cs" />
+    <Compile Include="Engine\Rating_tests.cs" />
     <Compile Include="Networker_test.cs" />
     <Compile Include="Engine\Field_test.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -119,7 +119,7 @@ namespace connect4
                     return;
                 if (Requester.ping(address, port, out s))
                 {
-                    bob = new Database_bot(players.Bob, (byte)difficulty_slider.Value, address, port, (bool)smart_moves_checkbox.IsChecked);
+                    bob = new Database_bot(players.Bob, (byte)random_slider.Value, address, port, (bool)smart_moves_checkbox.IsChecked);
                 }
                 else
                 {
@@ -193,7 +193,7 @@ namespace connect4
         private void update_field(int? mousex = null, int? mousey = null)
         {
             Field field = game.get_field();
-            field_rating_label.Content = field.rate();
+            field_rating_label.Content = field.rate_field();
             for (int x = 0; x < field.Width; x++)
             {
                 for (int y = 0; y < field.Height; y++)

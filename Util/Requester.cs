@@ -108,40 +108,34 @@ namespace Utility
         {
             Ping ping_sender = new Ping();
             PingReply reply = ping_sender.Send(address);
-            //if (reply.Status == IPStatus.Success)
-            //{
-                try
+            try
+            {
+                byte[] data = send(new byte[0], Network_codes.ping, address, port, false);
+                if (data.Length == 0)
                 {
-                    byte[] data = send(new byte[0], Network_codes.ping, address, port, false);
-                    if (data.Length == 0)
-                    {
-                        s = $"The address that was specified is valid but there is no server listening to this port";
-                        logger.Info(s);
-                        return false;
-                    }
-                    byte b = data[0];
-                    if (b == Network_codes.ping_respond)
-                    {
-                        s = $"Server is online. Ping took {reply.RoundtripTime} ms";
-                        logger.Info(s);
-                        return true;
-                    }
-
-                    s = $"Something responded the ping but not with the correct code. Ping took Ping took {reply.RoundtripTime} ms";
-                    logger.Info(s);
-                    return false;
-
-                }
-                catch (SocketException)
-                {
-                    s = $"The address that was specified is valid but the request was rejected at the specified port";
+                    s = $"The address that was specified is valid but there is no server listening to this port";
                     logger.Info(s);
                     return false;
                 }
-            //}
-            s = $"Something went wrong. Are you connected to the internet and is the IP correct?";
-            logger.Info(s);
-            return false;
+                byte b = data[0];
+                if (b == Network_codes.ping_respond)
+                {
+                    s = $"Server is online. Ping took {reply.RoundtripTime} ms";
+                    logger.Info(s);
+                    return true;
+                }
+
+                s = $"Something responded the ping but not with the correct code. Ping took Ping took {reply.RoundtripTime} ms";
+                logger.Info(s);
+                return false;
+
+            }
+            catch (SocketException)
+            {
+                s = $"The address that was specified is valid but the request was rejected at the specified port";
+                logger.Info(s);
+                return false;
+            }
 
         }
         /// <summary>
@@ -157,7 +151,7 @@ namespace Utility
             byte[] data = send(field_data, Network_codes.details_request, address, port);
             if (data.Length % 4 != 0)
                 throw new FormatException("Byte array not dividable by 4 and thus cannot contain only integers");
-            
+
             int[] details = new int[14];
             // The first 7 integers are the total games played in those columns
             for (int i = 0; i < data.Length / 8; i++)
