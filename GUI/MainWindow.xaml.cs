@@ -150,7 +150,6 @@ namespace connect4
                 {
                     await Task.Factory.StartNew(() => do_turn(bob));
                 }
-                col_clicked = null;
                 update_field();
             } while (!(game.has_won(players.Alice) || game.has_won(players.Bob)));
             message_label.Content = game.has_won(players.Alice) ? "Alice" : "Bob" + " has won";
@@ -179,6 +178,7 @@ namespace connect4
                 }
                 column = player.get_turn(game.get_field());
             } while (!game.add_stone(column, player.player, ref s));
+            col_clicked = null;
         }
 
         private void label_enter(object sender, MouseEventArgs e)

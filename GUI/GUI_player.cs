@@ -26,7 +26,7 @@ namespace connect4
                 byte? b = gui.col_clicked;
                 if (b != null)
                 {
-                    return (byte)gui.col_clicked;
+                    return (byte)b;
                 }
                 System.Threading.Thread.Sleep(5);
             }
