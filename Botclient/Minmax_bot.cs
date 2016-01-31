@@ -13,75 +13,39 @@ namespace Botclient
     public class Minmax_bot : IPlayer
     {
         public players player { get; }
-        public uint depth { get; }
-        public bool search2 { get; }
-        public Minmax_bot(players _player, uint _depth, bool _search2)
+        public int depth { get; }
+        public Minmax_bot(players _player, int _depth)
         {
             player = _player;
             depth = _depth;
-            search2 = _search2;
         }
 
         public byte get_turn(Field field)
         {
-            throw new NotImplementedException();
-        }
+            int[] ratings = field.rate_columns(player, depth);
 
-        public byte rate_field(Field field)
-        {
-            throw new NotImplementedException();
-        }
-    }
+            byte high_score_index = 0;
 
-    public class game_state
-    {
-        public game_state[] children { get; }
-        public game_state parent { get; }
-        public Field field;
-        public players player;
-        public int depth;
-        public int rating { get; }
+            for (byte i = 1; i < ratings.Length; i++)
+            {
 
-        public game_state(Field _field, players _player, int _depth, game_state _parent = null)
-        {
-            field = _field;
-            player = _player;
-            depth = _depth;
-            if (_parent != null)
-            {
-                parent = _parent;
-            }
-            if (depth > 0)
-            {
-                children = set_children(field, player);
-            }
-            else
-            {
-                
-            }
-        }
-
-        private game_state[] set_children(Field field, players _player)
-        {
-            byte width = field.Width;
-            game_state[] children = new game_state[field.get_total_empty_columns()];
-            int child_index = 0;
-            if (_player == players.Alice)
-                _player = players.Bob;
-            else
-                _player = players.Alice;
-            for (int i = 0; i < width; i++)
-            {
-                if (field.getEmptyCell(i) < field.Height)
+                if (player == players.Alice)
                 {
-                    Field _field = field;
-                    _field.doMove(i, _player);
-
-                    children[child_index] = new game_state(_field, _player, depth - 1, this);
+                    if (ratings[i] > ratings[high_score_index])
+                    {
+                        high_score_index = i;
+                    }
                 }
-            }
-            return children;
-        }
+                else if (player == players.Bob)
+                {
+                    if (ratings[i] < ratings[high_score_index])
+                    {
+                        high_score_index = i;
+                    }
+                }
 
+            }
+            return high_score_index;
+        }
     }
 }

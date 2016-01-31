@@ -114,16 +114,29 @@ namespace connect4
             // Initialize the bot if the player wants one
             if (AI_checkbox.IsChecked.Value)
             {
-                string s;
-                if (!check_network_input_validity())
-                    return;
-                if (Requester.ping(address, port, out s))
+                if (min_max_radio.IsChecked.Value)
                 {
-                    bob = new Database_bot(players.Bob, (byte)random_slider.Value, address, port, (bool)smart_moves_checkbox.IsChecked);
+                    bob = new Minmax_bot(players.Bob, (byte) depth_slider.Value);
+                }
+                else if (database_radio.IsChecked.Value)
+                {
+
+                    string s;
+                    if (!check_network_input_validity())
+                        return;
+                    if (Requester.ping(address, port, out s))
+                    {
+                        bob = new Database_bot(players.Bob, (byte) random_slider.Value, address, port,
+                            (bool) smart_moves_checkbox.IsChecked);
+                    }
+                    else
+                    {
+                        message_label.Content = "Cannot connect to server and thus cannot use AI";
+                        return;
+                    }
                 }
                 else
                 {
-                    message_label.Content = "Cannot connect to server and thus cannot use AI";
                     return;
                 }
             }

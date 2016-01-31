@@ -224,6 +224,21 @@ namespace Engine
             }
             return empty_cols;
         }
+
+        public static byte[] get_empty_column_indices(this Field field)
+        {
+            byte[] indices = new byte[field.get_total_empty_columns()];
+            int col = 0;
+            for (byte i = 0; i < field.Width; i++)
+            {
+                if (field.getEmptyCell(i) < field.Height)
+                {
+                    indices[col] = i;
+                    col++;
+                }
+            }
+            return indices;
+        }
         /// <summary>
         /// Returns a valid, random move. (No moves that don't fit the fields height)
         /// </summary>
@@ -408,29 +423,71 @@ namespace Engine
         /// <returns></returns>
         public static int[] rate_columns(this Field field, players player, int depth)
         {
-            int[] score = new int[field.get_total_empty_columns()];
-            for (int i = 0; i < field.get_total_empty_columns(); i++)
+            int[] score = new int[field.Width];
+
+            for (int i = 0; i < field.Width; i++)
             {
+
+                // If it is impossible to make a move in this column, set the score to the lowest possible
+                if (field.getEmptyCell(i) >= field.Height)
+                {
+                    if (player == players.Alice)
+                        score[i] = int.MinValue;
+                    else if (player == players.Bob)
+                        score[i] = int.MaxValue;
+                    continue;
+                }
+
                 Field _field = new Field(field);
                 _field.doMove(i, player);
+
+                // Check if the placed stone wins the game, if so, the score is maximum
+                if (_field.check_for_win((byte)i, (byte)(field.getEmptyCell(i)), player))
+                {
+                    if (player == players.Alice)
+                    {
+                        score[i] = int.MaxValue-1;
+                    }
+                    else if (player == players.Bob)
+                    {
+                        score[i] = int.MinValue+1;
+                    }
+                    continue;
+                }
+
+                // If the game is still going on, check if we reached the maximum depth
                 if (depth > 0)
                 {
-                    // The ratings for the moves that Bob will make in reaction to Alice's move
-                    int[] ratings = _field.rate_columns(player == players.Alice ? players.Bob : players.Alice, depth - 1);
+                    // Go deeper to get scores on which we can base the score of this field
+                    int[] ratings = _field.rate_columns(player == players.Alice ? players.Bob : players.Alice,
+                        depth - 1);
+
                     int high_score = ratings[0];
 
-                    // Get the lowest (or the highest in Bob's case) score which will be the move that Bob
+                    // Get the lowest (or the highest in Bob's case) score of the score array
+                    // That move will probably be the move that our oponent will make in reaction to our move
                     for (int j = 1; j < ratings.Length; j++)
                     {
+
                         if (player == players.Alice)
+                        {
                             if (ratings[j] < high_score)
-                                high_score = ratings[i];
+                            {
+                                high_score = ratings[j];
+                            }
+                        }
                         else if (player == players.Bob)
+                        {
                             if (ratings[j] > high_score)
-                                high_score = ratings[i];
+                            {
+                                high_score = ratings[j];
+                            }
+                        }
+
                     }
                     score[i] = high_score;
                 }
+                // if we reached the maximum depth, rate the field
                 else
                 {
                     score[i] = _field.rate_field();
