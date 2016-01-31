@@ -38,22 +38,6 @@ namespace Database_manager
             InitializeComponent();
         }
 
-        private void address_textbox_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            IPAddress _address;
-            if (IPAddress.TryParse(address_textbox.Text, out _address))
-            {
-                address_textbox.Background = Brushes.White;
-                address = _address;
-                address_textbox.Tag = ui_codes.valid;
-            }
-            else
-            {
-                address_textbox.Background = new SolidColorBrush(Color.FromRgb(225, 110, 110));
-                address_textbox.Tag = ui_codes.invalid;
-            }
-        }
-
         private void port_textbox_TextChanged(object sender, TextChangedEventArgs e)
         {
             ushort s;
@@ -73,23 +57,34 @@ namespace Database_manager
                 port_textbox.Tag = ui_codes.invalid;
             }
         }
-
         private bool check_network_input_validity()
         {
-            if ((string)port_textbox.Tag == ui_codes.invalid)
+            if ((string)port_textbox.Tag != ui_codes.valid)
             {
                 message_label.Content = "The entered port is invalid";
                 port_textbox.Background = new SolidColorBrush(Color.FromRgb(225, 110, 110));
                 return false;
             }
-            if ((string)address_textbox.Tag == ui_codes.invalid)
+
+            IPAddress _address;
+            if (IPAddress.TryParse(address_textbox.Text, out _address))
+            {
+                address_textbox.Background = Brushes.White;
+                address = _address;
+                return true;
+            }
+
+            try
+            {
+                address = Dns.GetHostAddresses(address_textbox.Text)[0];
+                return true;
+            }
+            catch
             {
                 message_label.Content = "The entered address is invalid";
                 address_textbox.Background = new SolidColorBrush(Color.FromRgb(225, 110, 110));
                 return false;
             }
-            return true;
-
         }
         private void retrieve_clicked(object sender, RoutedEventArgs e)
         {
@@ -213,12 +208,12 @@ namespace Database_manager
             panel_title.Children.Add(new Label { Content = " ", FontSize = 9 });
             panel_title.Children.Add(new Label { Content = "wins:" });
             panel_title.Children.Add(new Label { Content = "total:" });
-            for (int i = 0; i < details.Length/2; i++)
+            for (int i = 0; i < details.Length / 2; i++)
             {
                 StackPanel panel = new StackPanel();
                 Winning_chances.Children.Add(panel);
                 panel.Children.Add(new Label { Content = $"Col {i + 1}", FontSize = 9 });
-                panel.Children.Add(new Label { Content = details[i+details.Length/2] });
+                panel.Children.Add(new Label { Content = details[i + details.Length / 2] });
                 panel.Children.Add(new Label { Content = details[i] });
             }
         }

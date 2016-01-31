@@ -67,13 +67,13 @@ namespace Utility
                 }
                 catch (SocketException se)
                 {
-                    if (!catch_socket_exc)
+                    if (catch_socket_exc)
                     {
-                        throw se;
+                        logger.Error($"SocketException : {se}");
                     }
                     else
                     {
-                        logger.Error($"SocketException : {se}");
+                        throw se;
                     }
                 }
                 catch (Exception e)
@@ -106,6 +106,7 @@ namespace Utility
 
         public static bool ping(IPAddress address, ushort port, out string s)
         {
+
             Ping ping_sender = new Ping();
             PingReply reply = ping_sender.Send(address);
             try

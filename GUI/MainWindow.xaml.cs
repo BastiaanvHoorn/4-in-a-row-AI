@@ -42,6 +42,7 @@ namespace connect4
 
         private void Start_Click(object sender, RoutedEventArgs e)
         {
+
             init_field();
             start_game();
         }
@@ -116,7 +117,7 @@ namespace connect4
             {
                 if (min_max_radio.IsChecked.Value)
                 {
-                    bob = new Minmax_bot(players.Bob, (byte) depth_slider.Value);
+                    bob = new Minmax_bot(players.Bob, (byte)depth_slider.Value);
                 }
                 else if (database_radio.IsChecked.Value)
                 {
@@ -126,8 +127,8 @@ namespace connect4
                         return;
                     if (Requester.ping(address, port, out s))
                     {
-                        bob = new Database_bot(players.Bob, (byte) random_slider.Value, address, port,
-                            (bool) smart_moves_checkbox.IsChecked);
+                        bob = new Database_bot(players.Bob, (byte)random_slider.Value, address, port,
+                            (bool)smart_moves_checkbox.IsChecked);
                     }
                     else
                     {
@@ -261,22 +262,6 @@ namespace connect4
             settings_grid.Visibility = Visibility.Visible;
         }
 
-        private void address_textbox_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            IPAddress _address;
-            if (IPAddress.TryParse(address_textbox.Text, out _address))
-            {
-                address_textbox.Background = Brushes.White;
-                address = _address;
-                address_textbox.Tag = ui_codes.valid;
-            }
-            else
-            {
-                address_textbox.Background = new SolidColorBrush(Color.FromRgb(225, 110, 110));
-                address_textbox.Tag = ui_codes.invalid;
-            }
-        }
-
         private void port_textbox_TextChanged(object sender, TextChangedEventArgs e)
         {
             ushort s;
@@ -296,20 +281,33 @@ namespace connect4
 
         private bool check_network_input_validity()
         {
-            if ((string)port_textbox.Tag == ui_codes.invalid)
+            if ((string)port_textbox.Tag != ui_codes.valid)
             {
+                message_label.Content = "The entered port is invalid";
                 port_textbox.Background = new SolidColorBrush(Color.FromRgb(225, 110, 110));
                 return false;
             }
-            if ((string)address_textbox.Tag == ui_codes.invalid)
+
+            IPAddress _address;
+            if (IPAddress.TryParse(address_textbox.Text, out _address))
             {
+                address_textbox.Background = Brushes.White;
+                address = _address;
+                return true;
+            }
+
+            try
+            {
+                address = Dns.GetHostAddresses(address_textbox.Text)[0];
+                return true;
+            }
+            catch
+            {
+                message_label.Content = "The entered address is invalid";
                 address_textbox.Background = new SolidColorBrush(Color.FromRgb(225, 110, 110));
                 return false;
             }
-            return true;
-
         }
-
         private void hint_button_Click(object sender, RoutedEventArgs e)
         {
 

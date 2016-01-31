@@ -32,7 +32,7 @@
             <Slider Name="random_slider" IsEnabled="{Binding ElementName=database_radio, Path=IsChecked}" HorizontalAlignment="Left" Margin="115,247,0,0" VerticalAlignment="Top" Width="125" Maximum="100" TickFrequency="10"/>
             <xctk:ByteUpDown Value="{Binding ElementName=random_slider, Path=Value}" IsEnabled="{Binding ElementName=database_radio, Path=IsChecked}" HorizontalAlignment="Left" Margin="260,247,0,0" VerticalAlignment="Top" Width="60"/>
             <CheckBox Name="smart_moves_checkbox" IsEnabled="{Binding ElementName=database_radio, Path=IsChecked}" Content="CheckBox" HorizontalAlignment="Left" Margin="225,278,0,0" VerticalAlignment="Top" Width="15" />
-            <TextBox Name="address_textbox" IsEnabled="{Binding ElementName=database_radio, Path=IsChecked}" Margin="115,307,0,0" TextWrapping="Wrap" TextChanged="address_textbox_TextChanged" VerticalAlignment="Top" HorizontalAlignment="Left" Width="125" Height="18"/>
+            <TextBox Name="address_textbox" IsEnabled="{Binding ElementName=database_radio, Path=IsChecked}" Margin="115,307,0,0" TextWrapping="Wrap" VerticalAlignment="Top" HorizontalAlignment="Left" Width="125" Height="18"/>
             <TextBox Name="port_textbox" IsEnabled="{Binding ElementName=database_radio, Path=IsChecked}" Margin="260,307,136,0" TextWrapping="Wrap" TextChanged="port_textbox_TextChanged" Background="White" VerticalAlignment="Top"/>
             <Button Name="Start" Content="Start" HorizontalAlignment="Left" Margin="310,10,0,0" VerticalAlignment="Top" Width="75" Click="Start_Click"/>
 

@@ -22,7 +22,7 @@
                     <ColumnDefinition Width="295*"/>
                     <ColumnDefinition Width="149*"/>
                 </Grid.ColumnDefinitions>
-                <TextBox x:Name="address_textbox" Margin="5" TextWrapping="Wrap" Grid.Column="0" TextChanged="address_textbox_TextChanged" Tag="0"/>
+                <TextBox x:Name="address_textbox" Margin="5" TextWrapping="Wrap" Grid.Column="0" Tag="0"/>
                 <TextBox x:Name="port_textbox" Margin="5" TextWrapping="Wrap" Grid.Column="1" TextChanged="port_textbox_TextChanged" Tag="0"/>
             </Grid>
         </DockPanel>
