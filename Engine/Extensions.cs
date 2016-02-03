@@ -421,7 +421,7 @@ namespace Engine
         /// <param name="field"></param>
         /// <param name="player">The player that will perform the next move</param>
         /// <returns></returns>
-        public static int[] rate_columns(this Field field, players player, int depth)
+        public static int[] rate_columns(this Field field, players player, int depth, bool rate_winning_state = false)
         {
             int[] score = new int[field.Width];
 
@@ -442,17 +442,20 @@ namespace Engine
                 _field.doMove(i, player);
 
                 // Check if the placed stone wins the game, if so, the score is maximum
-                if (_field.check_for_win((byte)i, (byte)(field.getEmptyCell(i)), player))
+                if (rate_winning_state)
                 {
-                    if (player == players.Alice)
+                    if (_field.check_for_win((byte)i, (byte)(field.getEmptyCell(i)), player))
                     {
-                        score[i] = int.MaxValue-1;
+                        if (player == players.Alice)
+                        {
+                            score[i] = int.MaxValue - 1;
+                        }
+                        else if (player == players.Bob)
+                        {
+                            score[i] = int.MinValue + 1;
+                        }
+                        continue;
                     }
-                    else if (player == players.Bob)
-                    {
-                        score[i] = int.MinValue+1;
-                    }
-                    continue;
                 }
 
                 // If the game is still going on, check if we reached the maximum depth
