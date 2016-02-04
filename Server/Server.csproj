@@ -70,8 +70,11 @@
     <Compile Include="Database\DatabaseLocation.cs" />
     <Compile Include="Database\DatabaseProperties.cs" />
     <Compile Include="Database\DatabaseSegment.cs" />
+    <Compile Include="Database\DatabaseStats.cs" />
     <Compile Include="Database\SegmentMerger.cs" />
     <Compile Include="Database\Indexer.cs" />
+    <Compile Include="Database\Stats.cs" />
+    <Compile Include="Database\StatsManager.cs" />
     <Compile Include="Exceptions.cs" />
     <Compile Include="Database\FieldData.cs" />
     <Compile Include="Properties\Settings.Designer.cs">
@@ -97,6 +100,10 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Botclient\Botclient.csproj">
+      <Project>{fc36aaeb-b455-4fc4-ae1d-fdd8ff873f3a}</Project>
+      <Name>Botclient</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Engine\Engine.csproj">
       <Project>{f1bb086d-8959-4826-a336-5fb2fd7c9ced}</Project>
       <Name>Engine</Name>

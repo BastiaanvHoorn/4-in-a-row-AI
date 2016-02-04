@@ -12,6 +12,9 @@ namespace Server
         public readonly byte MaxFieldStorageSize;
         public readonly char PathSeparator;
 
+        private int Cycles;
+        private int Games;
+
         /// <summary>
         /// Reading constructor for DatabaseProperties. Reads the properties file of an existing database.
         /// </summary>
@@ -31,6 +34,8 @@ namespace Server
                 {
                     FieldWidth = br.ReadByte();
                     FieldHeight = br.ReadByte();
+                    Cycles = br.ReadInt32();
+                    Games = br.ReadInt32();
                     MaxFieldStorageSize = calculateMaxFieldStorageSize();
                 }
             }
@@ -51,6 +56,8 @@ namespace Server
             this.Path = path;
             this.FieldWidth = fieldWidth;
             this.FieldHeight = fieldHeight;
+            this.Cycles = 0;
+            this.Games = 0;
             this.MaxFieldStorageSize = calculateMaxFieldStorageSize();
         }
 
@@ -65,6 +72,8 @@ namespace Server
                 {
                     br.Write(this.FieldWidth);
                     br.Write(this.FieldHeight);
+                    br.Write(this.Cycles);
+                    br.Write(this.Games);
                 }
             }
         }
@@ -98,6 +107,26 @@ namespace Server
         public string getFieldDirPath(byte[] fieldStorage)
         {
             return getFieldDirPath(fieldStorage.Length);
+        }
+
+        public int getCycles()
+        {
+            return Cycles;
+        }
+
+        public int getGames()
+        {
+            return Games;
+        }
+
+        public void increaseCycles()
+        {
+            Cycles++;
+        }
+
+        public void increaseGames(int i)
+        {
+            Games += i;
         }
     }
 }

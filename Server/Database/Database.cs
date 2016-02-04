@@ -21,10 +21,7 @@ namespace Server
 
         public DatabaseProperties DbProperties;
         public BufferManager BufferMgr;
-        //public StatsManager StatsMgr;
-        //private FileStream[] FieldStream;
-        //private FileStream[] FieldDataStream;
-        //private Dictionary<Field, int>[] Fields;    // Used to store database fields in RAM for faster access.
+        public Stats Stats;
         internal DatabaseSegment[] Segments;
         
         /// <summary>
@@ -51,7 +48,7 @@ namespace Server
             loadStreams();
 
             BufferMgr = new BufferManager(this);
-            //StatsMgr = new StatsManager(this);
+            Stats = new Stats(this);
         }
 
         /// <summary>

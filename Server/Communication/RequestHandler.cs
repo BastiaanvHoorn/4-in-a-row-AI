@@ -123,6 +123,11 @@ namespace Server
             sw.Stop();
 
             string deltaTime = sw.Elapsed.Minutes + "m and " + sw.Elapsed.Seconds + "s";
+
+            db.DbProperties.increaseCycles();
+            db.DbProperties.increaseGames(gameHistories.Length);
+            db.DbProperties.writeProperties();
+
             int fieldCount = history.Sum(h => h.Count);
             logger.Info($"Preprocessed \t{gameHistories.Length} games \t{fieldCount} fields \t in {deltaTime}");
 
