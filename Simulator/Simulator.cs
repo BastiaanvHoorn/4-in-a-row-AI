@@ -26,7 +26,6 @@ namespace Simulator
         /// Initializes the simulator
         /// </summary>
         /// <param name="_args">The command-line arguments
-        /// -l  [0-5]                   log _modes (default 2) <see cref="log_modes"/>
         /// -w  [byte >0]               width  of the playing field (default 7)
         /// -h  [byte >0]               height of the playing field (default 6)
         /// -g  [int >0]                amount of games to simulate (default 1)
@@ -109,7 +108,6 @@ namespace Simulator
                 data.AddRange(history);
             }
             Stopwatch sw = new Stopwatch();
-            //logger.log($"Created game_history in {sw.ElapsedMilliseconds}ms. Starting to send now", log_modes.essential);
             Requester.send(data.ToArray(), Network_codes.game_history_array, address, port);
 
         }

@@ -4,6 +4,7 @@ Visual Studio
 ExportedObj/
 obj/
 bin/
+Deploy/
 packages/
 *.svd
 *.userprefs
@@ -11,6 +12,7 @@ packages/
 *.suo
 *.user
 *.booproj
+*.pfx
 
 ============
 OS generated

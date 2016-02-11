@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:Database_manager"
         xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit" x:Class="Database_manager.MainWindow"
         mc:Ignorable="d"
-        Title="MainWindow" Height="542" Width="609">
+        Title="Database explorer" Height="542" Width="609">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="40"/>
@@ -73,9 +73,6 @@
                         </Grid>
                     </Border>
                 </Grid>
-            </TabItem>
-            <TabItem Header="Analyzer" HorizontalAlignment="Right" Width="61">
-                <Grid x:Name="Analyzer"  Background="#FFE5E5E5"/>
             </TabItem>
         </TabControl>
         <Label Name="message_label" Content="Hello world" Grid.Row="2" Margin="10,0,10,10" Background="#FFE5E5E5" FontSize="10.667"/>

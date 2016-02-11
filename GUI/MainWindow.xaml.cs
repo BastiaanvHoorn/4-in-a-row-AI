@@ -30,6 +30,8 @@ namespace connect4
         public byte? col_clicked;
         private IPAddress address;
         private ushort port;
+        private byte height = 6;
+        private byte width = 7;
         public MainWindow()
         {
             InitializeComponent();
@@ -52,8 +54,6 @@ namespace connect4
             // Clear all previous column and row defenitions
             label_grid.ColumnDefinitions.Clear();
             label_grid.RowDefinitions.Clear();
-            byte width = (byte)Width_up_down.Value;
-            byte height = (byte)Height_up_down.Value;
             // Create the new column and row defenitions 
             for (int i = 0; i < width; i++)
             {
@@ -73,7 +73,7 @@ namespace connect4
             {
                 bg_labels[x] = new Label[height];
                 stone_elipses[x] = new Ellipse[height];
-                for (int y = 0; y < Height_up_down.Value; y++)
+                for (int y = 0; y < height; y++)
                 {
                     Label bg = new Label();
                     Ellipse stone = new Ellipse();
@@ -108,7 +108,7 @@ namespace connect4
         }
         private void start_game()
         {
-            game = new Game((byte)Width_up_down.Value, (byte)Height_up_down.Value);
+            game = new Game(width, height);
             settings_button.Visibility = Visibility.Hidden;
             rematch_button.Visibility = Visibility.Hidden;
             alice = new GUI_player(this, players.Alice);
@@ -207,7 +207,6 @@ namespace connect4
         private void update_field(int? mousex = null, int? mousey = null)
         {
             Field field = game.get_field();
-            field_rating_label.Content = field.rate_field();
             for (int x = 0; x < field.Width; x++)
             {
                 for (int y = 0; y < field.Height; y++)

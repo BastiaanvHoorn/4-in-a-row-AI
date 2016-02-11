@@ -155,7 +155,7 @@ namespace Utility
 
             int[] details = new int[14];
             // The first 7 integers are the total games played in those columns
-            for (int i = 0; i < data.Length / 8; i++)
+            for (int i = 0; i < details.Length / 8; i++)
             {
                 byte[] arr = new byte[4];
                 Array.Copy(data, i * 4, arr, 0, 4);
@@ -163,7 +163,7 @@ namespace Utility
             }
 
             // The second 7 integers are the winning games in those columns
-            for (int i = 0; i < data.Length / 8; i++)
+            for (int i = 0; i < details.Length / 8; i++)
             {
                 byte[] arr = new byte[4];
                 Array.Copy(data, (i + 7) * 4, arr, 0, 4);

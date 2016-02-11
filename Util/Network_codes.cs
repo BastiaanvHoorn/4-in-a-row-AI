@@ -4,6 +4,7 @@
     {
         public static byte ping_respond = 42;
         public static byte end_of_stream = 255;        //The last byte of a sent message
+        public static byte error = 254;
         public static byte ping = 200;                 //The first (and only) sent when pinging the server
         public static byte column_request = 201;       //The first (and only) byte when the bot wants to recieve a column from the server
         public static byte game_history_array = 210;   //The first byte when the bot sends an array of game_history

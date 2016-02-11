@@ -96,12 +96,7 @@ namespace Database_manager
             }
             if (!check_network_input_validity())
                 return;
-            string s;
-            //if (!Requester.ping(address, port, out s))
-            //{
-            //    message_label.Content = s;
-            //    return;
-            //}
+
             //Parse the input to one byte-array
             byte[] data = new byte[12];
             byte[] length = BitConverter.GetBytes((int)length_up_down.Value);
@@ -112,7 +107,15 @@ namespace Database_manager
             amount.CopyTo(data, 8);
 
             //Get the fields
-            byte[] field_data = Requester.send(data, Network_codes.range_request, address, port);
+            byte[] field_data;
+
+            field_data = Requester.send(data, Network_codes.range_request, address, port);
+            if (field_data[0] == Network_codes.error)
+            {
+                message_label.Content = "The server responded with an error while retrieving the data";
+                return;
+            }
+
 
             //The amount of bytes one field takes up (required for parsing the fields
             int field_length = (int)length_up_down.Value;
@@ -145,7 +148,7 @@ namespace Database_manager
                 // Scale the field to the same size as the other field_grids
                 grid.Width = size;
                 grid.Height = size;
-
+                grids.Add(grid);
                 #endregion
                 // Get the right bytes for the current field and parse that array to a field
                 byte[] field_bytes = new byte[field_length];
@@ -201,9 +204,13 @@ namespace Database_manager
             Winning_chances.Children.Clear();
 
             int[] details = Requester.get_field_details(field.getStorage(), address, port);
-
+            if(details[0] == Network_codes.error)
+            {
+                message_label.Content = "The server responded with an error while retrieving the data";
+                return;
+            }
             //Display the data
-            StackPanel panel_title = new StackPanel();
+                StackPanel panel_title = new StackPanel();
             Winning_chances.Children.Add(panel_title);
             panel_title.Children.Add(new Label { Content = " ", FontSize = 9 });
             panel_title.Children.Add(new Label { Content = "wins:" });
