@@ -54,13 +54,18 @@ namespace Server
             return chances.Average();
         }
 
+        public uint getOccuranceCount(byte column)
+        {
+            return TotalCounts[column];
+        }
+
         /// <summary>
         /// Returns how many times the field has occured.
         /// </summary>
         /// <returns></returns>
-        public long getOccuranceCount()
+        public uint getTotalOccuranceCount()
         {
-            long occurances = 0;
+            uint occurances = 0;
 
             foreach (uint count in TotalCounts)
             {
