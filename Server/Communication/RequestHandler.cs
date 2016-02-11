@@ -17,36 +17,62 @@ namespace Server
     {
         static Random rnd = new Random();
         private static Logger logger = LogManager.GetCurrentClassLogger();
+        private static int dynamLearningComplete = 10;
 
         /// <summary>
         /// Returns the move (column) that suits best with the given field (given situation). If the field is not included in the database a random column is returned.
         /// </summary>
         /// <param name="field">Current field</param>
         /// <returns>The best move (column) to perform</returns>
-        public static byte get_column(this Database db, Field field)
+        public static byte get_column(this Database db, Field field, bool dynamLearning = false)
         {
             DatabaseLocation location;
             if (db.fieldExists(field, out location))
             {
                 FieldData fieldData = db.readFieldData(location);
-
-                float bestChance = -1;
                 byte bestColumn = 0;
+                bool executeDynam = false;
 
-                for (byte i = 0; i < field.Width; i++)
+                if (dynamLearning)
                 {
-                    if (field.getEmptyCell(i) < field.Height)
+                    double reliability = 0;
+
+                    for (byte i = 0; i < field.Width; i++)
                     {
-                        float chance = fieldData.getWinningChance(i);
-                        if (chance > bestChance)
-                        {
-                            bestChance = chance;
-                            bestColumn = i;
-                        }
+                        reliability += fieldData.getOccuranceCount(i);
                     }
+
+                    reliability /= field.Width * dynamLearningComplete;
+
+                    if (rnd.NextDouble() > reliability)
+                        executeDynam = true;
                 }
 
-                logger.Debug($"Returning column based on database ({bestColumn})");
+                if (!executeDynam)
+                {
+                    float bestChance = -1;
+
+                    for (byte i = 0; i < field.Width; i++)
+                    {
+                        if (field.getEmptyCell(i) < field.Height)
+                        {
+                            float chance = fieldData.getWinningChance(i);
+                            if (chance > bestChance)
+                            {
+                                bestChance = chance;
+                                bestColumn = i;
+                            }
+                        }
+                    }
+                    
+                    logger.Debug($"Returning column based on database ({bestColumn})");
+                }
+                else
+                {
+                    bestColumn = field.getRandomColumn();
+
+                    logger.Debug($"Returning column based on dynamic learning ({bestColumn})");
+                }
 
                 return bestColumn;
             }

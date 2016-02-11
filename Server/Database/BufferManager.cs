@@ -24,7 +24,7 @@ namespace Server
         private Timer Timer;            // Timer to check if the database is in idle mode (and is able to start processing spare buffers if present).
         private DateTime LastRequest;   // Holds the last time at which the server (database) received a request.
 
-        private const int IdleTimeout = 30000;     // 2 minutes
+        private const int IdleTimeout = 120000;     // 2 minutes
         private const int UpdateInterval = 30000;   // The interval to check for database idle mode.
         private const int MaxBufferCount = 220;     // Maximum amount of buffer directories in the Buffer directory. (If amount passes this constant the DatabaseManager will force the database to process the buffers)
         
@@ -133,14 +133,12 @@ namespace Server
                 Directory.CreateDirectory(TempBufferPath);
             }
 
-            sw.Stop();
+            Db.Stats.addCurrentMeasurement(sw.ElapsedTicks);
+            logger.Info("New data logged to stats file");
+            
+            Processing = false;
 
             logger.Info($"Processing done in {sw.Elapsed.Minutes}m and {sw.Elapsed.Seconds}s");
-
-            logger.Info("Logging data to stats file");
-            Db.Stats.addCurrentMeasurement(sw.ElapsedTicks);
-
-            Processing = false;
         }
 
         /*private void processBuffer(string bufferName)

@@ -31,13 +31,15 @@ namespace Server
         private static readonly Logger logger = LogManager.GetCurrentClassLogger();
         private readonly Database db;
         public ushort port;
+        private readonly bool dl;
         // Thread signal.
         public static ManualResetEvent allDone = new ManualResetEvent(false);
 
-        public AsynchronousSocketListener(Database db, ushort port)
+        public AsynchronousSocketListener(Database db, ushort port, bool dl)
         {
             this.db = db;
             this.port = port;
+            this.dl = dl;
         }
         public void start_listening()
         {
@@ -131,6 +133,12 @@ namespace Server
         {
             try
             {
+                // Waits for access, in case the database is busy with processing gamehistories.
+                while (db.BufferMgr.isProcessing())
+                {
+                    Thread.Sleep(100);
+                }
+
                 db.BufferMgr.justRequested();
                 // Echo the data back to the client.
                 // If the array is marked as a column_request, respond with a column
@@ -241,6 +249,7 @@ namespace Server
 
             string dbDir = Args_parser.parse_arg(args, "db", "Database path", Properties.Settings.Default.DbPath);
             ushort port = (ushort)Args_parser.parse_int_arg(args, "p", "port", 0, ushort.MaxValue, 11000);
+            bool dynamicLearning = bool.Parse(Args_parser.parse_arg(args, "dl", "Dynamic learning", "false"));
             if (!System.IO.Directory.Exists(dbDir))    // Checks if the database already exists
             {
                 logger.Info($"No database found in {dbDir}!");
@@ -264,7 +273,7 @@ namespace Server
 
             using (Database db = new Database(dbDir))
             {
-                AsynchronousSocketListener listener = new AsynchronousSocketListener(db, port);
+                AsynchronousSocketListener listener = new AsynchronousSocketListener(db, port, dynamicLearning);
                 listener.start_listening();
             }
         }

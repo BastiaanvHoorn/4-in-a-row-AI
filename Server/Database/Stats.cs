@@ -21,34 +21,38 @@ namespace Server
             Database = db;
             StatsPath = db.DbProperties.Path + db.DbProperties.PathSeparator + "Stats.csv";
 
-            string[] statContent = new string[]
-            {
-                "Timestamp",
-                "Cycles processed",
-                "Games processed",
-                "Database size",
-                "Database length",
-                "Search speed",
-                "Processing time",
-
-                "Intelligence Alice vs random Regular",
-                "Intelligence Bob vs random Regular",
-                "Intelligence Alice vs min-max Regular",
-                "Intelligence Bob vs min-max Regular",
-
-                "Intelligence Alice vs random Ranked",
-                "Intelligence Bob vs random Ranked",
-                "Intelligence Alice vs min-max Ranked",
-                "Intelligence Bob vs min-max Ranked",
-
-                "Win percentage Alice vs random",
-                "Win percentage Bob vs random",
-                "Win percentage Alice vs min-max",
-                "Win percentage Bob vs min-max",
-            };
-
             if (!File.Exists(StatsPath))
+            {
+                string[] statContent = new string[]
+                {
+                    "Timestamp",
+                    "Cycles processed",
+                    "Games processed",
+                    "Database size",
+                    "Database length",
+                    "Search speed",
+                    "Processing time",
+
+                    "Intelligence Alice vs random Regular",
+                    "Intelligence Bob vs random Regular",
+                    "Intelligence Alice vs min-max Regular",
+                    "Intelligence Bob vs min-max Regular",
+
+                    "Intelligence Alice vs random Ranked",
+                    "Intelligence Bob vs random Ranked",
+                    "Intelligence Alice vs min-max Ranked",
+                    "Intelligence Bob vs min-max Ranked",
+
+                    "Win percentage Alice vs random",
+                    "Win percentage Bob vs random",
+                    "Win percentage Alice vs min-max",
+                    "Win percentage Bob vs min-max",
+                };
+
                 File.WriteAllText(StatsPath, string.Join(",", statContent));
+
+                addCurrentMeasurement(0);
+            }
         }
 
         public void addCurrentMeasurement(long processingTime)
@@ -93,15 +97,21 @@ namespace Server
                 minMaxAliceIntelligenceReR.ToString(nfi),
                 minMaxBobIntelligenceReR.ToString(nfi),
 
-                rndAliceIntelligenceRaR.ToString(nfi),
+                /*rndAliceIntelligenceRaR.ToString(nfi),
                 rndBobIntelligenceRaR.ToString(nfi),
                 minMaxAliceIntelligenceRaR.ToString(nfi),
-                minMaxBobIntelligenceRaR.ToString(nfi),
+                minMaxBobIntelligenceRaR.ToString(nfi),*/
+                string.Empty,
+                string.Empty,
+                string.Empty,
+                string.Empty,
 
                 rndAliceWinPerc.ToString(nfi),
                 rndBobWinPerc.ToString(nfi),
-                minMaxAliceWinPerc.ToString(nfi),
-                minMaxBobWinPerc.ToString(nfi),
+                //minMaxAliceWinPerc.ToString(nfi),
+                //minMaxBobWinPerc.ToString(nfi),
+                string.Empty,
+                string.Empty,
             };
 
             string content = string.Join(",", newData);
@@ -150,7 +160,7 @@ namespace Server
             double intelligence = 0;
             double totalMoves = 0;
 
-            for (int i = 0; i < 20; i++)
+            while (totalMoves < 180)
             {
                 Game g = new Game(Database.DbProperties.FieldWidth, Database.DbProperties.FieldHeight);
 
@@ -180,7 +190,7 @@ namespace Server
                                 
                         }
 
-                        if (moveIntel != double.NaN)
+                        if (!double.IsNaN(moveIntel))
                         {
                             intelligence += moveIntel;
                             totalMoves++;
@@ -200,8 +210,7 @@ namespace Server
         private double regularRate(int[] inputRatings, byte column)
         {
             int[] ratings = inputRatings.
-                Select(r => r == int.MinValue || r == int.MaxValue ? 0 : r).
-                Select(r => Math.Abs(r)).ToArray();
+                Select(r => r == int.MinValue || r == int.MaxValue ? 0 : Math.Abs(r)).ToArray();
 
             int scoreShift = -ratings.Min();
             int maxRating = ratings.Max() + scoreShift;
@@ -213,8 +222,7 @@ namespace Server
         private double rankedRating(int[] inputRatings, byte column)
         {
             int[] ratings = inputRatings.
-                Select(r => r == int.MinValue || r == int.MaxValue ? 0 : r).
-                Select(r => Math.Abs(r)).ToArray();
+                Select(r => r == int.MinValue || r == int.MaxValue ? 0 : Math.Abs(r)).ToArray();
 
             int[] existingRatings = ratings.Distinct().OrderBy(r => r).ToArray();
 
@@ -249,18 +257,21 @@ namespace Server
                 int fieldCount = dbSeg.FieldCount;
                 for (int i = 0; i < searchLocations; i++)
                 {
-                    int checkPosition = rnd.Next(fieldCount);
-                    Field f = dbSeg.readField(checkPosition);
-
-                    Stopwatch sw = new Stopwatch();
-                    sw.Start();
-                    for (int j = 0; j < tries; j++)
+                    if (dbSeg.FieldCount > 0)
                     {
-                        dbSeg.findField(f);
-                    }
-                    sw.Stop();
+                        int checkPosition = rnd.Next(fieldCount);
+                        Field f = dbSeg.readField(checkPosition);
 
-                    time += sw.Elapsed.TotalSeconds;
+                        Stopwatch sw = new Stopwatch();
+                        sw.Start();
+                        for (int j = 0; j < tries; j++)
+                        {
+                            dbSeg.findField(f);
+                        }
+                        sw.Stop();
+
+                        time += sw.Elapsed.TotalSeconds;
+                    }
                 }
             }
 
