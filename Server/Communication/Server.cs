@@ -150,7 +150,7 @@ namespace Server
                 {
                     byte[] _field = data.Skip(1).TakeWhile(b => b != Network_codes.end_of_stream).ToArray();
                     Field field = new Field(_field);
-                    byte[] send_data = new[] { db.get_column(field) };
+                    byte[] send_data = new[] { db.get_column(field, dl) };
                     send(handler, send_data);
                 }
                 //If the array is marked as a game-history-array, reply with nothing and process the array.
@@ -269,6 +269,7 @@ namespace Server
                 logger.Info("Succesfully created a new database");
             }
 
+            logger.Info("Dynamic learning\t" + (dynamicLearning ? "ON" : "OFF"));
             logger.Info($"Initializing database at => {dbDir}");
 
             using (Database db = new Database(dbDir))
