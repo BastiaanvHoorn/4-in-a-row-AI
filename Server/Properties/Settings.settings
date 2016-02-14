@@ -3,7 +3,7 @@
   <Profiles />
   <Settings>
     <Setting Name="DbPath" Type="System.String" Scope="User">
-      <Value Profile="(Default)">/home/bastiaan/connect-four/Database</Value>
+      <Value Profile="(Default)">./Database</Value>
     </Setting>
     <Setting Name="DbMaxFileSize" Type="System.Int64" Scope="User">
       <Value Profile="(Default)">134217728</Value>

@@ -19,7 +19,13 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Util", "Util\Util.csproj", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Database manager", "Database manager\Database manager.csproj", "{E19FE85E-2109-4554-9863-329B0D34A1AB}"
 EndProject
-Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "Setup", "Setup\Setup.vdproj", "{A14E558E-702B-4843-8598-E75B53E8D2C2}"
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "Connect4 setup", "Connect4 setup\Connect4 setup.vdproj", "{29046D64-F989-46C7-93E8-AE07A9CE54C5}"
+EndProject
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "Server setup", "Server setup\Server setup.vdproj", "{8E1505A3-A562-49E6-836A-BA6E67081B2C}"
+EndProject
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "Database manager setup", "Database manager setup\Database manager setup.vdproj", "{EBCEC3AF-E629-4CDD-A01E-407FECBFE3D0}"
+EndProject
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "Simulator setup", "Simulator setup\Simulator setup.vdproj", "{19DF5407-3FAE-4E02-B476-467700F008BC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -59,8 +65,14 @@ Global
 		{E19FE85E-2109-4554-9863-329B0D34A1AB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E19FE85E-2109-4554-9863-329B0D34A1AB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E19FE85E-2109-4554-9863-329B0D34A1AB}.Release|Any CPU.Build.0 = Release|Any CPU
-		{A14E558E-702B-4843-8598-E75B53E8D2C2}.Debug|Any CPU.ActiveCfg = Debug
-		{A14E558E-702B-4843-8598-E75B53E8D2C2}.Release|Any CPU.ActiveCfg = Release
+		{29046D64-F989-46C7-93E8-AE07A9CE54C5}.Debug|Any CPU.ActiveCfg = Debug
+		{29046D64-F989-46C7-93E8-AE07A9CE54C5}.Release|Any CPU.ActiveCfg = Release
+		{8E1505A3-A562-49E6-836A-BA6E67081B2C}.Debug|Any CPU.ActiveCfg = Debug
+		{8E1505A3-A562-49E6-836A-BA6E67081B2C}.Release|Any CPU.ActiveCfg = Release
+		{EBCEC3AF-E629-4CDD-A01E-407FECBFE3D0}.Debug|Any CPU.ActiveCfg = Debug
+		{EBCEC3AF-E629-4CDD-A01E-407FECBFE3D0}.Release|Any CPU.ActiveCfg = Release
+		{19DF5407-3FAE-4E02-B476-467700F008BC}.Debug|Any CPU.ActiveCfg = Debug
+		{19DF5407-3FAE-4E02-B476-467700F008BC}.Release|Any CPU.ActiveCfg = Release
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
