@@ -19,7 +19,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Util", "Util\Util.csproj", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Database manager", "Database manager\Database manager.csproj", "{E19FE85E-2109-4554-9863-329B0D34A1AB}"
 EndProject
-Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "Setup", "Setup\Setup.vdproj", "{A969F756-79F6-4E78-A30A-9FF01CBB1A68}"
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "Setup", "Setup\Setup.vdproj", "{A14E558E-702B-4843-8598-E75B53E8D2C2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -59,8 +59,8 @@ Global
 		{E19FE85E-2109-4554-9863-329B0D34A1AB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E19FE85E-2109-4554-9863-329B0D34A1AB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E19FE85E-2109-4554-9863-329B0D34A1AB}.Release|Any CPU.Build.0 = Release|Any CPU
-		{A969F756-79F6-4E78-A30A-9FF01CBB1A68}.Debug|Any CPU.ActiveCfg = Debug
-		{A969F756-79F6-4E78-A30A-9FF01CBB1A68}.Release|Any CPU.ActiveCfg = Release
+		{A14E558E-702B-4843-8598-E75B53E8D2C2}.Debug|Any CPU.ActiveCfg = Debug
+		{A14E558E-702B-4843-8598-E75B53E8D2C2}.Release|Any CPU.ActiveCfg = Release
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
