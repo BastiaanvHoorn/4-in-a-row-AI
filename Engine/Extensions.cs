@@ -214,6 +214,11 @@ namespace Engine
             throw new NotImplementedException("No support for fields with a heights other than 6");
         }
 
+        /// <summary>
+        /// Get the total amount of empty columns
+        /// </summary>
+        /// <param name="field"></param>
+        /// <returns></returns>
         public static byte get_total_empty_columns(this Field field)
         {
             byte empty_cols = 0;
@@ -225,6 +230,11 @@ namespace Engine
             return empty_cols;
         }
 
+        /// <summary>
+        /// Returns an array of the columns that are not full
+        /// </summary>
+        /// <param name="field"></param>
+        /// <returns></returns>
         public static byte[] get_empty_column_indices(this Field field)
         {
             byte[] indices = new byte[field.get_total_empty_columns()];
@@ -341,7 +351,17 @@ namespace Engine
 
             return false;
         }
-
+        
+        /// <summary>
+        /// Rate one given row in a for a given player. 1 point is awarded for each stone that can contribute to a connect-4 in the given direction;
+        /// </summary>
+        /// <param name="field"></param>
+        /// <param name="player">The player that the row is rated for</param>
+        /// <param name="x">The x-coordinate of the start of the row</param>
+        /// <param name="y">The y-coordinate of the start of the row</param>
+        /// <param name="dx">The x component of the direction of the row</param>
+        /// <param name="dy">The y component of the direction of the row</param>
+        /// <returns></returns>
         private static int rate_row(this Field field, players player, int x, int y, int dx, int dy)
         {
             int rating = 0;
@@ -376,6 +396,11 @@ namespace Engine
             return rating;
         }
 
+        /// <summary>
+        /// Rates the given field
+        /// </summary>
+        /// <param name="field"></param>
+        /// <returns></returns>
         public static int rate_field(this Field field)
         {
             int rating = 0;
@@ -415,8 +440,9 @@ namespace Engine
 
             return rating;
         }
+       
         /// <summary>
-        /// 
+        /// Gives the rating of each column in an array using a min-max algorithm (buggs inbound)
         /// </summary>
         /// <param name="field"></param>
         /// <param name="player">The player that will perform the next move</param>

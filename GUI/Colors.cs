@@ -3,6 +3,7 @@ using System.Windows.Media;
 
 namespace connect4
 {
+    // Some colors that are used in the UI
     public static class Colors
     {
         public static class Alice

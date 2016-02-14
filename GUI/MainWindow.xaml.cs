@@ -32,6 +32,7 @@ namespace connect4
         private ushort port;
         private byte height = 6;
         private byte width = 7;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -44,11 +45,14 @@ namespace connect4
 
         private void Start_Click(object sender, RoutedEventArgs e)
         {
-
             init_field();
             start_game();
         }
 
+        /// <summary>
+        /// Initialize all the stones and spaces on the field
+        /// This needs to be called only 1 time
+        /// </summary>
         private void init_field()
         {
             // Clear all previous column and row defenitions
@@ -106,6 +110,10 @@ namespace connect4
                 }
             }
         }
+        /// <summary>
+        /// Clear the whole field and initialize the game with the players.
+        /// This needs to be called each time a new game starts.
+        /// </summary>
         private void start_game()
         {
             game = new Game(width, height);
@@ -152,6 +160,10 @@ namespace connect4
             loop();
         }
 
+        /// <summary>
+        /// This method takes care of the whole game processing.
+        /// When someone has won, a message and a rematch and settings button will be shown.
+        /// </summary>
         private async void loop()
         {
             do
@@ -171,15 +183,10 @@ namespace connect4
             settings_button.Visibility = Visibility.Visible;
 
         }
-
-        private void label_click(object sender, MouseEventArgs e)
-        {
-            int[] coords = (int[])((FrameworkElement)sender).Tag;
-            int x = coords[0];
-            col_clicked = (byte)x;
-            update_field(coords[0], coords[1]);
-        }
-
+        /// <summary>
+        /// Executes a turn for 1 player
+        /// </summary>
+        /// <param name="player">The player instance the turn needs to be executed or awaited for</param>
         private void do_turn(IPlayer player)
         {
             string s = "";
@@ -195,6 +202,24 @@ namespace connect4
             col_clicked = null;
         }
 
+        /// <summary>
+        /// The rmb and lmb click listener all for the stones and backgrounds of these stones
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void label_click(object sender, MouseEventArgs e)
+        {
+            int[] coords = (int[])((FrameworkElement)sender).Tag;
+            int x = coords[0];
+            col_clicked = (byte)x;
+            update_field(coords[0], coords[1]);
+        }
+        
+        /// <summary>
+        /// The hover listener for all the stones and backgrounds of these stones
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void label_enter(object sender, MouseEventArgs e)
         {
             if (game != null)
@@ -204,6 +229,11 @@ namespace connect4
             }
         }
 
+        /// <summary>
+        /// Updates the field according to where the mouse is and whose turn it is
+        /// </summary>
+        /// <param name="mousex"></param>
+        /// <param name="mousey"></param>
         private void update_field(int? mousex = null, int? mousey = null)
         {
             Field field = game.get_field();
@@ -241,6 +271,7 @@ namespace connect4
             }
         }
 
+        
         private void rematch_button_Click(object sender, RoutedEventArgs e)
         {
             message_label.Content = string.Empty;
@@ -306,10 +337,6 @@ namespace connect4
                 address_textbox.Background = new SolidColorBrush(Color.FromRgb(225, 110, 110));
                 return false;
             }
-        }
-        private void hint_button_Click(object sender, RoutedEventArgs e)
-        {
-
         }
     }
     static class ui_codes

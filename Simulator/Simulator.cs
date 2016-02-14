@@ -38,6 +38,7 @@ namespace Simulator
         /// </param>
         public Simulator(string[] _args)
         {
+            // Parse all the arguments
             List<string> args = _args.ToList();
             width =        (byte)Args_parser.parse_int_arg(args, "w",  "width",        2, 20, 7);
             height =       (byte)Args_parser.parse_int_arg(args, "h",  "height",       2, 20, 6);
@@ -76,9 +77,11 @@ namespace Simulator
         }
         public void loop_games()
         {
+            // A stopwatch to measure the time that is spent simulating
             Stopwatch sw = new Stopwatch();
             sw.Start();
             bool finished = true;
+            // Calculate the total amount of cycles so we can loop through it
             int cycles = (int)(max_games - (max_games % cycle_length)) / cycle_length;
             for (int i = 1; i <= cycles; i++)
             {

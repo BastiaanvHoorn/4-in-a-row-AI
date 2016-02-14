@@ -22,29 +22,40 @@ namespace Botclient
 
         public byte get_turn(Field field)
         {
+            // Get the array of column ratings
             int[] ratings = field.rate_columns(player, depth);
 
             byte high_score_index = 0;
 
-            for (byte i = 1; i < ratings.Length; i++)
+            // Get maximum value in case of Alice
+            if (player == players.Alice)
             {
-
-                if (player == players.Alice)
+                for (byte i = 1; i < ratings.Length; i++)
                 {
+
                     if (ratings[i] > ratings[high_score_index])
                     {
                         high_score_index = i;
                     }
+
                 }
-                else if (player == players.Bob)
+            }
+            // Get the minimum value in the case of Bob
+            else if (player == players.Bob)
+            {
+                for (byte i = 1; i < ratings.Length; i++)
                 {
+
                     if (ratings[i] < ratings[high_score_index])
                     {
                         high_score_index = i;
                     }
-                }
 
+
+                }
             }
+
+
             return high_score_index;
         }
     }

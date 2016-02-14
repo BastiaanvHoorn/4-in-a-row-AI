@@ -34,22 +34,30 @@ namespace Botclient
 
         public byte get_turn(Field field)
         {
+            // First of all, check if we'll maybe perform a random move.
             if (r.Next(100) < random_chance)
-                return field.getRandomColumn();
+            {
+                byte x = field.getRandomColumn();
+                logger.Debug($"Placing a stone in column {x} because this turn was randomized (random chance is {random_chance}%");
+                return x;
+            }
 
+            // If smart-moves is enabled, check if we can perform a 'smart move'.
             if (smart_moves)
             {
+                // Check if we can win by placing 1 stone in a certain column.
                 for (byte x = 0; x < field.Width; x++)
                 {
                     byte y = field.getEmptyCell(x);
 
                     if (field.check_for_win(x, y, player))
                     {
-                        logger.Debug($"Placing a stone in column {x} because this turn was randomized (random chance is {random_chance}%");
+                        logger.Debug($"Placing a stone in column {x} because smart-moves is turned on");
                         return x;
                     }
                 }
 
+                // Check if we the opponent can win by placing 1 stone in a column. If so, prevent it.
                 players opponent = player == players.Alice ? players.Bob : players.Alice;
                 for (byte x = 0; x < field.Width; x++)
                 {
@@ -63,6 +71,7 @@ namespace Botclient
                 }
             }
 
+            // Get the first byte from the response from the server.
             var column = Requester.send(field.getStorage(), Network_codes.column_request, address, port)[0];
             logger.Debug($"Placing a stone in column {column} because of a response from the server");
             return column;
