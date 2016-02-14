@@ -6,6 +6,8 @@ obj/
 bin/
 Deploy/
 packages/
+debug/
+release/
 *.svd
 *.userprefs
 *.pidb
