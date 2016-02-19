@@ -74,7 +74,7 @@ namespace Server
         }
 
         /// <summary>
-        /// Adds the given dictionary of fields to the buffer of database for the specified fieldlength.
+        /// Adds the given dictionary of fields to the database buffer for the specified fieldlength.
         /// </summary>
         /// <param name="fieldLength"></param>
         /// <param name="bufferContent">Dictionary of fields to add</param>
@@ -94,6 +94,9 @@ namespace Server
             return bufferName;
         }
 
+        /// <summary>
+        /// Processes all stored buffers, by merging them into the existing database segments.
+        /// </summary>
         private void processAllBuffers()
         {
             Processing = true;
@@ -106,12 +109,14 @@ namespace Server
             Stopwatch sw = new Stopwatch();
             sw.Start();
 
+            // Opens all buffer segments.
             foreach (string path in dirPaths)
             {
                 DatabaseSegment dbSeg = new DatabaseSegment(path, Db.DbProperties, true);
                 bufferSegs.Add(dbSeg);
             }
 
+            // Merges all buffers with the right database segments. (Multi-threaded)
             Parallel.For(1, Db.DbProperties.MaxFieldStorageSize + 1, new ParallelOptions() { MaxDegreeOfParallelism = 3 }, i =>
             {
                 DatabaseSegment[] toMerge = bufferSegs.Where(s => s.FieldLength == i).ToArray();
@@ -133,6 +138,7 @@ namespace Server
                 Directory.CreateDirectory(TempBufferPath);
             }
 
+            // Adds new data to stats.
             Db.Stats.addCurrentMeasurement(sw.ElapsedTicks);
             logger.Info("New data logged to stats file");
             
@@ -140,101 +146,7 @@ namespace Server
 
             logger.Info($"Processing done in {sw.Elapsed.Minutes}m and {sw.Elapsed.Seconds}s");
         }
-
-        /*private void processBuffer(string bufferName)
-        {
-            string bufferDir = BufferPath + Db.DbProperties.PathSeparator + bufferName;
-
-            
-        }*/
-        /*/// <summary>
-        /// Adds a game history (packet) to the buffer folder, and starts processing the buffers if MaxBufferCount is passed.
-        /// </summary>
-        /// <param name="gameHistory">The gamehistory to store in the buffer</param>
-        /// <returns>The filepath of the new buffer</returns>
-        public string addToBuffer(byte[] gameHistory)
-        {
-            string bufferPath = Processing ? TempBufferPath : BufferPath;
-
-            string fileName = DateTime.Now.ToFileTime().ToString();
-            string filePath = bufferPath + Db.DbProperties.PathSeparator + fileName;
-
-            File.WriteAllBytes(filePath, gameHistory);
-
-            if (!Processing)
-            {
-                logger.Info($"Added game history to buffer ({getBufferCount()} items)");
-                int bufferCount = Directory.GetFiles(BufferPath).Length;
-
-                if (bufferCount >= MaxBufferCount)
-                    processBuffers();
-            }
-            else
-            {
-                logger.Info("New game history added to temporary buffer (Database is processing)");
-            }
-
-            return filePath;
-        }
-
-        /// <summary>
-        /// Returns the content of the buffer (The game history stored in the buffer file).
-        /// </summary>
-        /// <param name="bufferPath"></param>
-        /// <returns>A game history array</returns>
-        public byte[] getBufferContent(string bufferPath)
-        {
-            using (FileStream fs = new FileStream(bufferPath, FileMode.Open, FileAccess.Read))
-            {
-                byte[] bytes = new byte[fs.Length];
-                fs.Read(bytes, 0, (int)fs.Length);
-                return bytes;
-            }
-        }
-
-        /// <summary>
-        /// Commands the database to process all buffers in the Buffer folder.
-        /// </summary>
-        /// <returns>A bool indicating whether the task succeeded</returns>
-        public bool processBuffers()
-        {
-            if (Processing)
-                return false;
-
-            Processing = true;
-            
-            string[] queueMembers = Directory.GetFiles(BufferPath);
-
-            logger.Info($"Starting processing of {queueMembers.Length} buffer items...");
-
-            foreach (string member in queueMembers)
-            {
-                Db.process_game_history(member);
-
-                File.Delete(member);
-            }
-
-            Processing = false;
-
-            logger.Info($"Buffer is empty");
-
-            string[] tempBuffers = Directory.GetFiles(TempBufferPath);
-
-            if (tempBuffers.Length > 0)
-            {
-                logger.Info($"Moving {tempBuffers.Length} buffers from temporary folder to buffer folder");
-
-                foreach (string file in tempBuffers)
-                {
-                    string newFileName = Path.GetFileName(file);
-                    string newPath = BufferPath + Db.DbProperties.PathSeparator + newFileName;
-                    File.Move(file, newPath);
-                }
-            }
-
-            return true;
-        }*/
-
+        
         /// <summary>
         /// Returns the amount of buffers stored in the Buffer folder
         /// </summary>

@@ -11,10 +11,13 @@ using System.Globalization;
 
 namespace Server
 {
+    /// <summary>
+    /// This class manages the statistics for a database. The statistics can be used for research.
+    /// </summary>
     public class Stats
     {
-        Database Database;
-        string StatsPath;
+        Database Database;  // The database the stats belong to.
+        string StatsPath;   // Path where all stats are saved (in .csv format).
 
         public Stats(Database db)
         {
@@ -23,7 +26,8 @@ namespace Server
 
             if (!File.Exists(StatsPath))
             {
-                string[] statContent = new string[]
+                // Creates a new stats file, if it doesn't exist already.
+                string[] statContent = new string[] // This array is the standard
                 {
                     "Timestamp",
                     "Cycles processed",
@@ -38,15 +42,8 @@ namespace Server
                     "Intelligence Alice vs min-max Regular",
                     "Intelligence Bob vs min-max Regular",
 
-                    "Intelligence Alice vs random Ranked",
-                    "Intelligence Bob vs random Ranked",
-                    "Intelligence Alice vs min-max Ranked",
-                    "Intelligence Bob vs min-max Ranked",
-
                     "Win percentage Alice vs random",
                     "Win percentage Bob vs random",
-                    "Win percentage Alice vs min-max",
-                    "Win percentage Bob vs min-max",
                 };
 
                 File.WriteAllText(StatsPath, string.Join(",", statContent));
@@ -55,6 +52,10 @@ namespace Server
             }
         }
 
+        /// <summary>
+        /// Adds a new point in the stats file, with all current info about the database and its learning progression.
+        /// </summary>
+        /// <param name="processingTime">The time it took to process the data from the games of the last cycles.</param>
         public void addCurrentMeasurement(long processingTime)
         {
             DateTime timeStamp = DateTime.Now;
@@ -65,20 +66,13 @@ namespace Server
 
             double searchSpeed = calculateSearchSpeed();
 
-            double rndAliceIntelligenceReR = calculateIntelligence(new Random_bot(players.Bob), RateMethod.RegularRating);
-            double rndBobIntelligenceReR = calculateIntelligence(new Random_bot(players.Alice), RateMethod.RegularRating);
-            double minMaxAliceIntelligenceReR = calculateIntelligence(new Minmax_bot(players.Bob, 2), RateMethod.RegularRating);
-            double minMaxBobIntelligenceReR = calculateIntelligence(new Minmax_bot(players.Alice, 2), RateMethod.RegularRating);
-
-            double rndAliceIntelligenceRaR = calculateIntelligence(new Random_bot(players.Bob), RateMethod.RankRating);
-            double rndBobIntelligenceRaR = calculateIntelligence(new Random_bot(players.Alice), RateMethod.RankRating);
-            double minMaxAliceIntelligenceRaR = calculateIntelligence(new Minmax_bot(players.Bob, 2), RateMethod.RankRating);
-            double minMaxBobIntelligenceRaR = calculateIntelligence(new Minmax_bot(players.Alice, 2), RateMethod.RankRating);
-
+            double rndAliceIntelligence = calculateIntelligence(new Random_bot(players.Bob), RateMethod.RegularRating);
+            double rndBobIntelligence = calculateIntelligence(new Random_bot(players.Alice), RateMethod.RegularRating);
+            double minMaxAliceIntelligence = calculateIntelligence(new Minmax_bot(players.Bob, 2), RateMethod.RegularRating, 1);
+            double minMaxBobIntelligence = calculateIntelligence(new Minmax_bot(players.Alice, 2), RateMethod.RegularRating, 1);
+            
             double rndAliceWinPerc = getWinPercentage(new Random_bot(players.Bob));
             double rndBobWinPerc = getWinPercentage(new Random_bot(players.Alice));
-            double minMaxAliceWinPerc = getWinPercentage(new Minmax_bot(players.Bob, 2));
-            double minMaxBobWinPerc = getWinPercentage(new Minmax_bot(players.Alice, 2));
 
             NumberFormatInfo nfi = new CultureInfo("en-US", false).NumberFormat;
 
@@ -92,26 +86,13 @@ namespace Server
                 searchSpeed.ToString(nfi),
                 processingTime.ToString(),
 
-                rndAliceIntelligenceReR.ToString(nfi),
-                rndBobIntelligenceReR.ToString(nfi),
-                minMaxAliceIntelligenceReR.ToString(nfi),
-                minMaxBobIntelligenceReR.ToString(nfi),
-
-                /*rndAliceIntelligenceRaR.ToString(nfi),
-                rndBobIntelligenceRaR.ToString(nfi),
-                minMaxAliceIntelligenceRaR.ToString(nfi),
-                minMaxBobIntelligenceRaR.ToString(nfi),*/
-                string.Empty,
-                string.Empty,
-                string.Empty,
-                string.Empty,
-
+                rndAliceIntelligence.ToString(nfi),
+                rndBobIntelligence.ToString(nfi),
+                minMaxAliceIntelligence.ToString(nfi),
+                minMaxBobIntelligence.ToString(nfi),
+                
                 rndAliceWinPerc.ToString(nfi),
                 rndBobWinPerc.ToString(nfi),
-                //minMaxAliceWinPerc.ToString(nfi),
-                //minMaxBobWinPerc.ToString(nfi),
-                string.Empty,
-                string.Empty,
             };
 
             string content = string.Join(",", newData);
@@ -119,9 +100,14 @@ namespace Server
             File.AppendAllText(StatsPath, "\n" + content);
         }
 
+        /// <summary>
+        /// Returns the win percentage of the database bot against the given opponent.
+        /// </summary>
+        /// <param name="opponent"></param>
+        /// <returns></returns>
         internal double getWinPercentage(IPlayer opponent)
         {
-            int totalGames = 100;
+            int totalGames = 1000;
             int wonGames = 0;
 
             for (int i = 0; i < totalGames; i++)
@@ -155,13 +141,22 @@ namespace Server
             return (double)wonGames / (double)totalGames;
         }
 
-        internal double calculateIntelligence(IPlayer opponent, RateMethod rm)
+        /// <summary>
+        /// Calculates the intelligence based on our own rating method, based on playing games against the given opponent. (Optional argument is the amount of games to play)
+        /// </summary>
+        /// <param name="opponent"></param>
+        /// <param name="rm"></param>
+        /// <param name="maxGames"></param>
+        /// <returns>Intelligence percentage (as a double)</returns>
+        internal double calculateIntelligence(IPlayer opponent, RateMethod rm, int maxGames = -1)
         {
             double intelligence = 0;
             double totalMoves = 0;
+            int games = 0;
 
-            while (totalMoves < 180)
+            while (totalMoves < 180 && (maxGames == -1 || games < maxGames))
             {
+                games++;
                 Game g = new Game(Database.DbProperties.FieldWidth, Database.DbProperties.FieldHeight);
 
                 while (g.has_won(players.Empty) && g.stones_count != g.width * g.height)
@@ -207,6 +202,12 @@ namespace Server
             return intelligence;
         }
 
+        /// <summary>
+        /// Rates the decision made by the database, based on the inputratings (generated by the min-max algorithm).
+        /// </summary>
+        /// <param name="inputRatings">Ratings generated by min-max algorithm</param>
+        /// <param name="column">Chosen column</param>
+        /// <returns>Rating percentage (as a double)</returns>
         private double regularRate(int[] inputRatings, byte column)
         {
             int[] ratings = inputRatings.
@@ -219,6 +220,13 @@ namespace Server
             return chosenRating / maxRating;
         }
 
+        /// <summary>
+        /// Rates the decision made by the database by using a ranking system, based on the inputratings (generated by the min-max algorithm).
+        /// </summary>
+        /// <param name="inputRatings">Ratings generated by min-max algorithm</param>
+        /// <param name="column">Chosen column</param>
+        /// <returns>Rating percentage (as a double)</returns>
+        [Obsolete]
         private double rankedRating(int[] inputRatings, byte column)
         {
             int[] ratings = inputRatings.
@@ -244,6 +252,10 @@ namespace Server
             }
         }
 
+        /// <summary>
+        /// Calculates the search speed, based on an average of search speeds in different database segments and different items within these segments.
+        /// </summary>
+        /// <returns>The search speed in items per second.</returns>
         private double calculateSearchSpeed()
         {
             double time = 0;
@@ -283,7 +295,7 @@ namespace Server
         internal enum RateMethod
         {
             RegularRating,
-            RankRating
+            RankRating  // Obsolete
         }
     }
 }

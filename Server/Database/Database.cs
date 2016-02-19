@@ -45,7 +45,7 @@ namespace Server
                 throw new DatabaseException($"Database incomplete. Properties file not found in: {path}");
             
             DbProperties = new DatabaseProperties(path);
-            loadStreams();
+            loadSegments();
 
             BufferMgr = new BufferManager(this);
             Stats = new Stats(this);
@@ -89,46 +89,46 @@ namespace Server
         }
 
         /// <summary>
-        /// Opens all database files to access them later on. Als loads all fields from the database into memory.
+        /// Opens all database segments 
         /// </summary>
-        private void loadStreams()
+        private void loadSegments()
         {
             int maxStorageSize = DbProperties.MaxFieldStorageSize;
-            //FieldStream = new FileStream[maxStorageSize];     // Creates an array of lists of filestreams in which all fields are stored.
-            //FieldDataStream = new FileStream[maxStorageSize]; // Creates an array of lists of filestreams in which all field data is stored.
-            //Fields = new Dictionary<Field, int>[maxStorageSize];    // Creates an array of dictionaries in which all fields are stored.
-            Segments = new DatabaseSegment[maxStorageSize];
+            Segments = new DatabaseSegment[maxStorageSize]; // The amount of segments is equal to the maximum storage size of a compressed field.
 
             for (byte i = 1; i <= DbProperties.MaxFieldStorageSize; i++)
             {
                 string dirPath = DbProperties.getFieldDirPath(i);
                 if (!Directory.Exists(dirPath)) // We can only proceed if the directories for all fieldlengths exist.
                     throw new DatabaseException($"Database incomplete. Directory {DbProperties.getFieldDirPath(i)} doesn't exist.");
-
-                //Fields[i - 1] = new Dictionary<Field, int>(DbProperties.getLength(i));
-                Segments[i - 1] = new DatabaseSegment(dirPath, DbProperties, true);
-                //for (int k = 0; k < bytes.Length / i; k++)
-                //{
-                //Field f = fStorage.decompressField();           // Decompresses the byte array into a field.
-                //DatabaseLocation dbLoc = new DatabaseLocation(DbProperties, i, j, k);
-                //Fields[i - 1].Add(f, dbLoc.GlobalLocation);     // Adds the field with its corresponding global location to the dictionary that represents the fields fieldlength.
-                //}
-
-                //FieldStream[i - 1] = fStream;        // Adds the filestream to the list (and array) of the right fieldlength.
-                //FieldDataStream[i - 1] = fdStream;   // Adds the filestream to the list (and array) of the right fieldlength.
+                
+                Segments[i - 1] = new DatabaseSegment(dirPath, DbProperties, true); // All segments are put into memory, to improve the performance.
             }
         }
 
+        /// <summary>
+        /// Returns the amount of fields stored in the segment with the given field length.
+        /// </summary>
+        /// <param name="fieldLength"></param>
+        /// <returns></returns>
         public int getSegmentLength(int fieldLength)
         {
             return Segments[fieldLength - 1].FieldCount;
         }
 
+        /// <summary>
+        /// Returns the amount of fields stored in the database. (Of all segments together)
+        /// </summary>
+        /// <returns></returns>
         public int getDatabaseLength()
         {
             return Segments.Sum(s => s.FieldCount);
         }
         
+        /// <summary>
+        /// Returns the size of the database in bytes.
+        /// </summary>
+        /// <returns></returns>
         public long getDatabaseSize()
         {
             long size = 0;
@@ -149,6 +149,11 @@ namespace Server
             return size;
         }
 
+        /// <summary>
+        /// Returns where the given field is located in the database.
+        /// </summary>
+        /// <param name="field">The wanted field</param>
+        /// <returns>A database location</returns>
         public DatabaseLocation findField(Field field)
         {
             byte[] compressed = field.compressField();
@@ -261,61 +266,22 @@ namespace Server
 
             return fd;
         }
-        /*
-        /// <summary>
-        /// Writes the given field data to the database for the specified field.
-        /// </summary>
-        /// <param name="field">The field to save the data for</param>
-        /// <param name="fieldData">The field data to write</param>
-        public void writeFieldData(Field field, FieldData fieldData)
-        {
-            DatabaseLocation location;
-            if (fieldExists(field, out location))       // Checks whether the field is included in the database.
-                writeFieldData(location, fieldData);    // If so, returns the field data belonging to the given field.
-            else
-                throw new DatabaseException($"Can't write field data, because the given field doesn't exist.");
-        }
-
-        public void writeFieldData(DatabaseLocation dbLocation, FieldData fieldData)
-        {
-            DatabaseSegment dbSeg = dbLocation.getDatabaseSegment();
-            dbSeg.writeFieldData(dbLocation.Location, fieldData);
-        }*/
         
         /// <summary>
-        /// Adds the given field to the database with empty field data.
+        /// Merges the given buffers into the right database segment
         /// </summary>
-        /// <param name="field">field to be added</param>
-        /// <returns>The DatabaseLocation of the new field</returns>
-        public DatabaseLocation addDatabaseItem(Field field)
-        {
-            return addDatabaseItem(field, new FieldData());
-        }
-
-        /// <summary>
-        /// Adds the given field and its corresponding field data to the database.
-        /// </summary>
-        /// <param name="field">Field to be added</param>
-        /// <param name="fieldData">Field data corresponding to the field</param>
-        /// <returns>The DatabaseLocation of the new field</returns>
-        public DatabaseLocation addDatabaseItem(Field field, FieldData fieldData)
-        {
-            throw new NotImplementedException();
-            /*byte[] compressed = field.compressField();  // Gets the compressed field.
-            int fieldLength = compressed.Length;
-            return Segments[fieldLength - 1].addItem(field, fieldData);*/
-        }
-        
+        /// <param name="bufferSegs"></param>
         public void mergeWithBuffers(params DatabaseSegment[] bufferSegs)
         {
-            int fieldLength = bufferSegs[0].FieldLength;
+            int fieldLength = bufferSegs[0].FieldLength;    // Gets the field length of the given buffers.
             DatabaseSegment oldSegment = Segments[fieldLength - 1];
 
-            waitForProcessing(fieldLength);
+            waitForProcessing(fieldLength); // If the database segment is processing we have to wait for it, to start a processing again.
             oldSegment.setProcessing(true);
 
             waitForAccess(fieldLength);
             
+            // All segments (buffers and the old database segment) are put together in one array.
             int bufferCount = bufferSegs.Length;
 
             DatabaseSegment[] allSegs = new DatabaseSegment[bufferCount + 1];
@@ -325,12 +291,14 @@ namespace Server
             
             allSegs[bufferCount] = oldSegment;
 
+            // The new merged segment is stored temporarily at a different path.
             string resultPath = DbProperties.getFieldDirPath(fieldLength) + "-new";
             DatabaseSegment resultSeg = new DatabaseSegment(resultPath, DbProperties, fieldLength, false);
             DatabaseSegment.prepareNew(resultSeg);
 
-            SegmentMerger.merge(resultSeg, allSegs);
+            SegmentMerger.merge(resultSeg, allSegs);    // The actual merging algorithm.
 
+            // The old segment is replaced by the new merged segment.
             string newPath = DbProperties.getFieldDirPath(fieldLength);
 
             oldSegment.Dispose();
@@ -339,30 +307,55 @@ namespace Server
             Directory.Delete(newPath, true);
             Directory.Move(resultPath, newPath);
 
+            // The new segment is loaded into memory again. (Just like the old segment)
             DatabaseSegment newSeg = new DatabaseSegment(newPath, DbProperties, true);
             Segments[fieldLength - 1] = newSeg;
         }
 
+        /// <summary>
+        /// Returns whether the segment with the specified field length is in reading mode.
+        /// </summary>
+        /// <param name="fieldLength"></param>
+        /// <returns></returns>
         public bool isReading(int fieldLength)
         {
             return Segments[fieldLength - 1].isReading();
         }
 
+        /// <summary>
+        /// Returns whether the segment with the specified field length is in processing mode.
+        /// </summary>
+        /// <param name="fieldLength"></param>
+        /// <returns></returns>
         public bool isProcessing(int fieldLength)
         {
             return Segments[fieldLength - 1].isProcessing();
         }
 
+        /// <summary>
+        /// Sets the reading marker of the segment with the specified field length to the given status.
+        /// </summary>
+        /// <param name="fieldLength"></param>
+        /// <param name="status">A boolean that indicates the reading state</param>
         public void setReading(int fieldLength, bool status)
         {
             Segments[fieldLength - 1].setReading(status);
         }
 
+        /// <summary>
+        /// Sets the reading marker of the segment with the specified field length to the given status.
+        /// </summary>
+        /// <param name="fieldLength"></param>
+        /// <param name="status">A boolean that indicates the processing state</param>
         public void setProcessing(int fieldLength, bool status)
         {
             Segments[fieldLength - 1].setProcessing(status);
         }
 
+        /// <summary>
+        /// Waits till the reading state of the segment with the given field length is set to false.
+        /// </summary>
+        /// <param name="fieldLength"></param>
         public void waitForAccess(int fieldLength)
         {
             if (Segments[fieldLength - 1].isReading())
@@ -373,6 +366,10 @@ namespace Server
             }
         }
 
+        /// <summary>
+        /// Waits till the processing state of the segment with the given field length is set to false.
+        /// </summary>
+        /// <param name="fieldLength"></param>
         public void waitForProcessing(int fieldLength)
         {
             if (Segments[fieldLength - 1].isProcessing())
@@ -384,7 +381,7 @@ namespace Server
         }
 
         /// <summary>
-        /// Disposes all filestreams that have been opened by the server.
+        /// Disposes all segments that have been opened by the database.
         /// </summary>
         public void Dispose()
         {

@@ -17,38 +17,31 @@ namespace Server
     {
         static Random rnd = new Random();
         private static Logger logger = LogManager.GetCurrentClassLogger();
-        private static int dynamLearningComplete = 10;
 
         /// <summary>
-        /// Returns the move (column) that suits best with the given field (given situation). If the field is not included in the database a random column is returned.
+        /// Returns the move (column) that suits best with the given field (given situation) and supports dynamic learning. If the field is not included in the database a random column is returned.
         /// </summary>
         /// <param name="field">Current field</param>
         /// <returns>The best move (column) to perform</returns>
-        public static byte get_column(this Database db, Field field, bool dynamLearning = false)
+        public static byte get_column(this Database db, Field field, uint dynamLearning = 0)
         {
             DatabaseLocation location;
-            if (db.fieldExists(field, out location))
+            if (db.fieldExists(field, out location))    // Checks if the given field exists in the database.
             {
-                FieldData fieldData = db.readFieldData(location);
+                FieldData fieldData = db.readFieldData(location);   // Gets the field data from the database.
                 byte bestColumn = 0;
-                bool executeDynam = false;
+                bool executeDynam = false;  // A boolean that indicates whether a random column needs to be returned in order to use dynamic learning or a column based on the database.
 
-                if (dynamLearning)
+                if (dynamLearning != 0)
                 {
-                    double reliability = 0;
+                    // Calculates the reliability of the given field.
+                    double reliability = fieldData.getReliability(dynamLearning);
 
-                    for (byte i = 0; i < field.Width; i++)
-                    {
-                        reliability += fieldData.getOccuranceCount(i);
-                    }
-
-                    reliability /= field.Width * dynamLearningComplete;
-
-                    if (rnd.NextDouble() > reliability)
+                    if (rnd.NextDouble() > reliability) // The reliability represents the chance that a random column is chosen, instead of a 'smart' column according to the database.
                         executeDynam = true;
                 }
 
-                if (!executeDynam)
+                if (!executeDynam)  // Not dynamic means based on database.
                 {
                     float bestChance = -1;
 
@@ -67,7 +60,7 @@ namespace Server
                     
                     logger.Debug($"Returning column based on database ({bestColumn})");
                 }
-                else
+                else    // Dynamic means random.
                 {
                     bestColumn = field.getRandomColumn();
 
@@ -86,7 +79,26 @@ namespace Server
         }
 
         /// <summary>
-        /// Processes the gamehistory of the buffer file at the specified path.
+        /// Returns the reliablitiy of the fielddata, based on the given 'completeness' constant.
+        /// </summary>
+        /// <param name="fd"></param>
+        /// <param name="completenessConst">This constant defines the occurancecount that we call reliable.</param>
+        /// <returns></returns>
+        public static double getReliability(this FieldData fd, uint completenessConst)
+        {
+            uint reliability = 0;
+            int fieldWidth = fd.TotalCounts.Length;
+
+            for (byte i = 0; i < fieldWidth; i++)
+            {
+                reliability += fd.getOccuranceCount(i);
+            }
+
+            return (double)reliability / (double)(fieldWidth * completenessConst);
+        }
+
+        /// <summary>
+        /// Processes the given gamehistory into a buffer item and adds it to the Buffer folder.
         /// </summary>
         /// <param name="db"></param>
         /// <param name="bufferPath"></param>
@@ -162,7 +174,5 @@ namespace Server
 
             return fieldCount;
         }
-
-
     }
 }

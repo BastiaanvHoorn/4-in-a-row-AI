@@ -31,11 +31,11 @@ namespace Server
         private static readonly Logger logger = LogManager.GetCurrentClassLogger();
         private readonly Database db;
         public ushort port;
-        private readonly bool dl;
+        private readonly uint dl;
         // Thread signal.
         public static ManualResetEvent allDone = new ManualResetEvent(false);
 
-        public AsynchronousSocketListener(Database db, ushort port, bool dl)
+        public AsynchronousSocketListener(Database db, ushort port, uint dl)
         {
             this.db = db;
             this.port = port;
@@ -249,7 +249,7 @@ namespace Server
 
             string dbDir = Args_parser.parse_arg(args, "db", "Database path", Properties.Settings.Default.DbPath);
             ushort port = (ushort)Args_parser.parse_int_arg(args, "p", "port", 0, ushort.MaxValue, 11000);
-            bool dynamicLearning = bool.Parse(Args_parser.parse_arg(args, "dl", "Dynamic learning", "false"));
+            uint dynamicLearning = Args_parser.parse_int_arg(args, "dl", "Dynamic learning", 0, uint.MaxValue, 10);
             if (!System.IO.Directory.Exists(dbDir))    // Checks if the database already exists
             {
                 logger.Info($"No database found in {dbDir}!");
@@ -269,7 +269,7 @@ namespace Server
                 logger.Info("Succesfully created a new database");
             }
 
-            logger.Info("Dynamic learning\t" + (dynamicLearning ? "ON" : "OFF"));
+            logger.Info("Dynamic learning\t" + (dynamicLearning != 0 ? "ON" : "OFF"));
             logger.Info($"Initializing database at => {dbDir}");
 
             using (Database db = new Database(dbDir))
