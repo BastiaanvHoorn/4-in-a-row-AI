@@ -3,8 +3,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:Database_manager"
         xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit" x:Class="connect4.MainWindow"
+        xmlns:System="clr-namespace:System;assembly=mscorlib"
         mc:Ignorable="d"
         Title="Connect 4" Height="377" Width="474" ResizeMode="NoResize">
     <Grid>
@@ -29,10 +29,17 @@
             <Button Name="Start" Content="Start" HorizontalAlignment="Left" Margin="310,10,0,0" VerticalAlignment="Top" Width="75" Click="Start_Click"/>
 
         </Grid>
-        <Grid Name="game_grid" Visibility="Visible" Margin="0,0,0,30">
+        <Grid Name="game_grid" Visibility="Visible" Margin="0,0,0,30" HorizontalAlignment="Right" VerticalAlignment="Bottom" Height="318">
             <Grid Name="label_grid" Margin="0,0,136,0"></Grid>
             <Button Name="rematch_button" Content="rematch" HorizontalAlignment="Right" Margin="325,43,5,0" VerticalAlignment="Top" Width="121" Visibility="Visible" Click="rematch_button_Click" Height="26"/>
             <Button Name="settings_button" Content="settings" HorizontalAlignment="Right" Margin="325,74,5,0" VerticalAlignment="Top" Width="121" Visibility="Visible" Click="settings_button_Click" Height="26"/>
+            <Label x:Name="label1" Content="Field_Rating:" HorizontalAlignment="Right" Height="30" Margin="0,190,48,0" VerticalAlignment="Top" Width="78"/>
+            <Label x:Name="field_rating_label" Content="" HorizontalAlignment="Right" Height="30" Margin="0,190,5,0" VerticalAlignment="Top" Width="38"/>
+            <Label x:Name="label2" Content="MoveRating:" HorizontalAlignment="Right" Height="30" Margin="0,225,48,0" VerticalAlignment="Top" Width="78"/>
+            <Label x:Name="move_rating_label" Content="" HorizontalAlignment="Right" Height="30" Margin="0,225,5,0" VerticalAlignment="Top" Width="38"/>
+            <Label x:Name="label3" Content="Depth" HorizontalAlignment="Right" Height="30" Margin="0,255,48,0" VerticalAlignment="Top" Width="78"/>
+
+            <xctk:ByteUpDown Name="depth_up_down" Value="1" Margin="0,255,5,0" HorizontalAlignment="Right" VerticalAlignment="Top" Width="73" Height="30"/>
         </Grid>
         <Label Name="message_label" Margin="0" VerticalAlignment="Bottom" Height="30" FontSize="10.667"/>
     </Grid>

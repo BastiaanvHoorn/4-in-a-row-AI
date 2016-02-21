@@ -6,7 +6,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace UnitTesting
 {
     [TestClass]
-    public class Rating_tests
+    public class Rate_columns_tests
     {
         [TestMethod]
         public void test_no_depth()
@@ -27,11 +27,19 @@ namespace UnitTesting
         }
 
         [TestMethod]
-        public void depth_6()
+        public void depth_2()
         {
             Field field = new Field();
-            int[] actual = field.rate_columns(players.Alice, 6);
-            int[] expected = { 3, 4, 3, 3, 3, 4, 3 };
+            int[] actual = field.rate_columns(players.Alice, 2);
+            int[] expected = {3,3,3,4,3,3,3};
+            CollectionAssert.AreEqual(expected, actual);
+        }
+        [TestMethod]
+        public void depth_5()
+        {
+            Field field = new Field();
+            int[] actual = field.rate_columns(players.Alice, 5);
+            int[] expected = { -2,-2,-3,0,-3,-2,-2 };
             CollectionAssert.AreEqual(expected, actual);
         }
 
@@ -40,19 +48,19 @@ namespace UnitTesting
         {
             Field field = new Field();
             int[] actual = field.rate_columns(players.Alice, 7);
-            int[] expected = { -1, -1, -2, -1, -2, -1, -1 };
+            int[] expected = { -1, -2, -2, -1, -2, -2, -1 };
             CollectionAssert.AreEqual(expected, actual);
         }
 
         [TestMethod]
-        public void speed_depth_1()
+        public void speed_test()
         {
             Field field = new Field();
             Stopwatch sw = new Stopwatch();
             sw.Start();
             for (int i = 0; i < 100; i++)
             {
-                field.rate_columns(players.Alice, 1);
+                field.rate_columns(players.Alice, 7);
             }
             sw.Stop();
         }

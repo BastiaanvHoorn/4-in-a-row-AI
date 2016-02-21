@@ -170,7 +170,7 @@ namespace Server
                     else
                     {
                         column = Database.get_column(g.get_field());
-                        int[] inputRatings = g.get_field().rate_columns(g.next_player, 2, true);
+                        int[] inputRatings = g.get_field().rate_columns(g.next_player, 2);
 
                         double moveIntel = 0;
 

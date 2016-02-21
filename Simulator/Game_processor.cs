@@ -22,22 +22,26 @@ namespace Simulator
         private readonly byte height = 6;
         public int games_won_alice;
         public int games_won_bob;
-        private readonly byte random_alice;
-        private readonly byte random_bob;
+        private readonly byte stat_alice;
+        private readonly byte stat_bob;
+        private readonly bool minmax_alice = false;
+        private readonly bool minmax_bob = false;
         private readonly int games;
         private delegate string victory_message(int games_won);
         public IPAddress address { get; }
         public ushort port { get; }
 
-        public Game_processor(byte width, byte height, int max_games, byte random_alice, byte random_bob, IPAddress address, ushort port)
+        public Game_processor(byte width, byte height, int max_games, byte stat_alice, byte stat_bob, IPAddress address, ushort port, bool minmax_alice, bool minmax_bob)
         {
             this.width = width;
             this.height = height;
-            this.random_alice = random_alice;
-            this.random_bob = random_bob;
+            this.stat_alice = stat_alice;
+            this.stat_bob = stat_bob;
             this.games = max_games;
             this.address = address;
             this.port = port;
+            this.minmax_alice = minmax_alice;
+            this.minmax_bob = minmax_bob;
         }
         /// <summary>
         /// Loop through the given amount of games, and log some stuff in the meantime
@@ -57,7 +61,7 @@ namespace Simulator
 
                 //The amount of turns this game lasted. 1 is subtracted for the winner indication at the start.
                 int turns = history.Count - 1;
-                
+
                 //Log a nice message for the winner
                 victory_message victory_message =
                     games_won => $"\t\t{games_won}th game after \t{(games_won < 10 ? "\t" : "")}{turns} turns";
@@ -67,8 +71,8 @@ namespace Simulator
                     case players.Alice:
                         games_won_alice++;
                         histories.Add(history);
-                        logger.Debug($"Alice won her {victory_message((int) games_won_alice)}{games_left_message}");
-                        games_logger.Debug("A {1}",turns);
+                        logger.Debug($"Alice won her {victory_message((int)games_won_alice)}{games_left_message}");
+                        games_logger.Debug("A {1}", turns);
                         break;
                     case players.Bob:
                         games_won_bob++;
@@ -117,11 +121,18 @@ namespace Simulator
         {
             game = new Game(width, height);
             //logger.log($"Created new game of {game.get_field().Width} by {game.get_field().Height}", log_modes.per_game);
-            var _players = new List<IPlayer>() //A fancy list to prevent the use of if-statements
-            {
-                new Database_bot(players.Alice, random_alice, address, port, false),
-                new Database_bot(players.Bob, random_bob, address, port, false)
-            };
+            var _players = new List<IPlayer>(); //A fancy list to prevent the use of if-statements
+
+            if (minmax_alice)
+                _players.Add(new Minmax_bot(players.Alice, stat_alice));
+            else
+                _players.Add(new Database_bot(players.Alice, stat_alice, address, port, false));
+
+            if (minmax_bob)
+                _players.Add(new Minmax_bot(players.Bob, stat_bob));
+            else
+                _players.Add(new Database_bot(players.Bob, stat_bob, address, port, false));
+
 
             while (true)
             {

@@ -16,8 +16,10 @@ namespace Simulator
         private readonly byte height = 6;
         private readonly uint max_games = 1;
         private readonly int cycle_length = 10000;
-        private readonly byte random_alice = 0;
-        private readonly byte random_bob = 0;
+        private readonly byte? alice_stat = 0;
+        private readonly byte? bob_stat = 0;
+        private readonly bool minmax_alice = false;
+        private readonly bool minmax_bob = false;
         private readonly DateTime end_time;
         private static readonly Logger logger = LogManager.GetCurrentClassLogger();
         private IPAddress address;
@@ -33,6 +35,8 @@ namespace Simulator
         /// -l  [0-g]                   Length of a sub-simulation of games
         /// -ra [0-100]                 The chance for alice to random a turn
         /// -rb [0-100]                 The chance for bob to random a turn
+        /// -ma [byte >0]               Replaces the database-bot with min-max bot for Alice with the given depth, don't pass this together with -ra
+        /// -mb [byte >0]               Replaces the database-bot with min-max bot for Bob with the given depth, don't pass this together with -rb
         /// -ip [ip-address]            The ip-address of the server
         /// -p  [ushort >0]              The port the server should be listening to
         /// </param>
@@ -40,18 +44,31 @@ namespace Simulator
         {
             // Parse all the arguments
             List<string> args = _args.ToList();
-            width =        (byte)Args_parser.parse_int_arg(args, "w",  "width",        2, 20, 7);
-            height =       (byte)Args_parser.parse_int_arg(args, "h",  "height",       2, 20, 6);
-            max_games =          Args_parser.parse_int_arg(args, "g",  "max games",    1, uint.MaxValue, 1);
-            cycle_length =  (int)Args_parser.parse_int_arg(args, "l",  "cycle length", 1, max_games, max_games);
-            random_alice = (byte)Args_parser.parse_int_arg(args, "ra", "random_alice", 0, 100, 0);
-            random_bob =   (byte)Args_parser.parse_int_arg(args, "rb", "random_bob",   0, 100, 0);
-            port =       (ushort)Args_parser.parse_int_arg(args, "p",  "port",         0, ushort.MaxValue, 11000);
-            if (DateTime.TryParse(
-                Args_parser.parse_arg(args, "e", "end time",
-                    DateTime.MaxValue.ToString()), out end_time))
+            width =                  (byte)Args_parser.parse_int_arg(args, "w",  "width",        2, 20, 7);
+            height =                 (byte)Args_parser.parse_int_arg(args, "h",  "height",       2, 20, 6);
+            max_games =              (uint)Args_parser.parse_int_arg(args, "g",  "max games",    1, uint.MaxValue, 1);
+            cycle_length =            (int)Args_parser.parse_int_arg(args, "l",  "cycle length", 1, max_games, max_games);
+            alice_stat =            (byte?)Args_parser.parse_int_arg(args, "ra", "random alice", 0, 100, null);
+            bob_stat =              (byte?)Args_parser.parse_int_arg(args, "rb", "random bob",   0, 100, null);
+            if (alice_stat == null)
             {
-
+                alice_stat =         (byte)Args_parser.parse_int_arg(args, "ma", "depth alice",  0, 100, null);
+                if (alice_stat != null)
+                    minmax_alice = true;
+                else
+                    alice_stat = 0;
+            }
+            if (bob_stat == null)
+            {
+                bob_stat =           (byte)Args_parser.parse_int_arg(args, "mb", "depth bob",    0, 100, null);
+                if (bob_stat != null)
+                    minmax_bob = true;
+                else
+                    alice_stat = 0;
+            }
+            port =                 (ushort)Args_parser.parse_int_arg(args, "p",  "port",         0, ushort.MaxValue, 11000);
+            if (DateTime.TryParse(         Args_parser.parse_arg(    args, "e",  "end time",     DateTime.MaxValue.ToString()), out end_time))
+            {
                 if (end_time < DateTime.Now)
                     end_time = DateTime.MaxValue;
             }
@@ -60,9 +77,8 @@ namespace Simulator
                 end_time = DateTime.MaxValue;
             }
 
-            if (!IPAddress.TryParse(
-                Args_parser.parse_arg(args, "ip", "ip-address",
-                    Dns.Resolve(Dns.GetHostName()).AddressList[0].ToString()), out address))
+            if (!IPAddress.TryParse(       Args_parser.parse_arg(    args, "ip", "ip-address",   Dns.Resolve(Dns.GetHostName()).AddressList[0].ToString()),
+                                                                                                                out address))
             {
                 address = Dns.GetHostEntry(Dns.GetHostName()).AddressList[1];
             }
@@ -72,8 +88,23 @@ namespace Simulator
             logger.Info($"Cycle length is set to {cycle_length}");
             logger.Info($"Ending time set to {end_time}");
             logger.Info($"The ip-address is set to {address}:{port}");
-            Console.WriteLine("Press any key to start the simulation");
-            Console.ReadLine();
+            if (minmax_alice)
+                logger.Info($"Alice set to min-max bot with depth {alice_stat}");
+            else
+                logger.Info($"Alice set to database bot with random chance {alice_stat}");
+
+            if (minmax_bob)
+                logger.Info($"Bob set to min-max bot with depth {bob_stat}");
+            else
+                logger.Info($"Bob set to database bot with depth {bob_stat}");
+            if (minmax_alice && minmax_bob)
+            {
+                
+                Console.WriteLine(
+                    "Are you sure you want to let 2 minmax bot compete with eachother? The results will probably be pretty boring.");
+
+            }
+            Console.WriteLine("press any key to start the simulation");
         }
         public void loop_games()
         {
@@ -86,7 +117,7 @@ namespace Simulator
             for (int i = 1; i <= cycles; i++)
             {
                 logger.Info($"Starting {i}/{cycles} cycle");
-                Game_processor gp = new Game_processor(width, height, cycle_length, random_alice, random_bob, address, port);
+                Game_processor gp = new Game_processor(width, height, cycle_length, (byte)alice_stat, (byte)bob_stat, address, port, minmax_alice, minmax_bob);
                 List<List<byte>> history = gp.loop_games();
                 send_history(history);
                 if (end_time < DateTime.Now)

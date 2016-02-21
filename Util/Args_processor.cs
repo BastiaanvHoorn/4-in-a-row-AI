@@ -18,7 +18,7 @@ namespace Utility
         /// <param name="max">The maximum value of the argument</param>
         /// <param name="default_value">The default value of the argument. This value will be returned if the argument was invalid</param>
         /// <returns></returns>
-        public static uint parse_int_arg(List<string> args, string cmd_char, string arg_name, uint min, uint max, uint default_value)
+        public static uint? parse_int_arg(List<string> args, string cmd_char, string arg_name, uint min, uint max, uint? default_value)
         {
             try
             {

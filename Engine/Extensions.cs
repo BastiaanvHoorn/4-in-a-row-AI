@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Threading.Tasks;
 
@@ -351,7 +352,7 @@ namespace Engine
 
             return false;
         }
-        
+
         /// <summary>
         /// Rate one given row in a for a given player. 1 point is awarded for each stone that can contribute to a connect-4 in the given direction;
         /// </summary>
@@ -440,89 +441,95 @@ namespace Engine
 
             return rating;
         }
-       
+
         /// <summary>
         /// Gives the rating of each column in an array using a min-max algorithm (buggs inbound)
         /// </summary>
         /// <param name="field"></param>
         /// <param name="player">The player that will perform the next move</param>
         /// <returns></returns>
-        public static int[] rate_columns(this Field field, players player, int depth, bool rate_winning_state = false)
+        public static int[] rate_columns(this Field field, players player, int depth)
         {
-            int[] score = new int[field.Width];
+            int[] ratings = new int[field.Width];
 
             for (int i = 0; i < field.Width; i++)
             {
-
-                // If it is impossible to make a move in this column, set the score to the lowest possible
-                if (field.getEmptyCell(i) >= field.Height)
-                {
-                    if (player == players.Alice)
-                        score[i] = int.MinValue;
-                    else if (player == players.Bob)
-                        score[i] = int.MaxValue;
-                    continue;
-                }
-
-                Field _field = new Field(field);
-                _field.doMove(i, player);
-
-                // Check if the placed stone wins the game, if so, the score is maximum
-                if (rate_winning_state)
-                {
-                    if (_field.check_for_win((byte)i, (byte)(field.getEmptyCell(i)), player))
-                    {
-                        if (player == players.Alice)
-                        {
-                            score[i] = int.MaxValue - 1;
-                        }
-                        else if (player == players.Bob)
-                        {
-                            score[i] = int.MinValue + 1;
-                        }
-                        continue;
-                    }
-                }
-
-                // If the game is still going on, check if we reached the maximum depth
-                if (depth > 0)
-                {
-                    // Go deeper to get scores on which we can base the score of this field
-                    int[] ratings = _field.rate_columns(player == players.Alice ? players.Bob : players.Alice,
-                        depth - 1);
-
-                    int high_score = ratings[0];
-
-                    // Get the lowest (or the highest in Bob's case) score of the score array
-                    // That move will probably be the move that our oponent will make in reaction to our move
-                    for (int j = 1; j < ratings.Length; j++)
-                    {
-
-                        if (player == players.Alice)
-                        {
-                            if (ratings[j] < high_score)
-                            {
-                                high_score = ratings[j];
-                            }
-                        }
-                        else if (player == players.Bob)
-                        {
-                            if (ratings[j] > high_score)
-                            {
-                                high_score = ratings[j];
-                            }
-                        }
-
-                    }
-                    score[i] = high_score;
-                }
-                // if we reached the maximum depth, rate the field
-                else
-                {
-                    score[i] = _field.rate_field();
-                }
+                ratings[i] = field.rate_move(i, player, depth);
             }
-            return score;
+            return ratings;
+        }
+
+        [SuppressMessage("ReSharper", "LoopCanBeConvertedToQuery")]
+        public static int rate_move(this Field f, int col, players player, int depth, int min = int.MinValue, int max = int.MaxValue)
+        {
+            if (player == players.Empty) throw new Exception("Can't rate the move of empty player");
+
+            // Make sure the algorithm will never choose a full column
+            if (f.getEmptyCell(col) >= f.Height)
+                return player == players.Alice ? int.MinValue : int.MaxValue;
+
+            Field field = new Field(f);
+            field.doMove(col, player);
+
+            // Make sure the algorithm always chooses a winning move
+            if (field.check_for_win((byte)col, field.getEmptyCell(col - 1), player))
+            {
+                return player == players.Alice ? int.MaxValue - 1 : int.MinValue + 1;
+            }
+            if (depth > 0)
+            {
+                int score = new int();
+                List<int> ratings = new List<int>(); // The ratings of the fields at the end of next opposing turn
+                for (int i = 0; i < field.Width; i++)
+                {
+                    ratings.Add(field.rate_move(i, player == players.Alice ? players.Bob : players.Alice, depth - 1, min, max));
+
+                    if (player == players.Alice)
+                        if (min > ratings[i])
+                            min = ratings[i];
+
+                    if (player == players.Bob)
+                        if (max < ratings[i])
+                            max = ratings[i];
+
+                    if (min >= max)
+                    {
+                        break;
+                    }
+                }
+
+                // Get minimum from ratings if Alice is the caller
+                // Get maximum from ratings if Bob is the caller
+                #region
+                if (player == players.Alice)
+                {
+                    #region
+                    score = int.MaxValue;
+                    foreach (int rating in ratings)
+                    {
+                        if (rating < score)
+                            score = rating;
+                    }
+                    #endregion
+                }
+                else if (player == players.Bob)
+                {
+                    #region
+                    score = int.MinValue;
+                    foreach (int rating in ratings)
+                    {
+                        if (rating > score)
+                            score = rating;
+                    }
+                    #endregion
+                }
+                #endregion
+                return score;
+            }
+            else
+            {
+                return field.rate_field();
+            }
         }
     }
 }

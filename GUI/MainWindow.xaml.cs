@@ -176,6 +176,7 @@ namespace connect4
                 {
                     await Task.Factory.StartNew(() => do_turn(bob));
                 }
+                field_rating_label.Content = game.get_field().rate_field();
                 update_field();
             } while (!(game.has_won(players.Alice) || game.has_won(players.Bob)));
             message_label.Content = game.has_won(players.Alice) ? "Alice" : "Bob" + " has won";
@@ -255,6 +256,7 @@ namespace connect4
                     {
                         if (mousex == x)
                         {
+                            move_rating_label.Content = game.get_field().rate_move(x, game.next_player, (int)depth_up_down.Value);
                             stone_elipses[x][field.Height - y - 1].Fill = new SolidColorBrush(
                                 game.next_player == players.Alice
                                     ? Colors.Alice.ghost

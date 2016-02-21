@@ -249,7 +249,7 @@ namespace Server
 
             string dbDir = Args_parser.parse_arg(args, "db", "Database path", Properties.Settings.Default.DbPath);
             ushort port = (ushort)Args_parser.parse_int_arg(args, "p", "port", 0, ushort.MaxValue, 11000);
-            uint dynamicLearning = Args_parser.parse_int_arg(args, "dl", "Dynamic learning", 0, uint.MaxValue, 10);
+            uint dynamicLearning = (uint)Args_parser.parse_int_arg(args, "dl", "Dynamic learning", 0, uint.MaxValue, 10);
             if (!System.IO.Directory.Exists(dbDir))    // Checks if the database already exists
             {
                 logger.Info($"No database found in {dbDir}!");
