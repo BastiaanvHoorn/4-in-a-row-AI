@@ -157,7 +157,16 @@ namespace Server
                 else if (data[0] == Network_codes.game_history_array)
                 {
                     send(handler, new[] { (byte)0 });
-                    db.preprocess_game_history(data.ToArray());
+
+                    players player_processing = players.Empty;
+                    if (data[1] == Network_codes.game_history_process_alice)
+                        player_processing = players.Alice;
+                    else if (data[1] == Network_codes.game_history_process_bob)
+                        player_processing = players.Bob;
+                    else if (data[1] == Network_codes.game_history_process_both)
+                        player_processing = players.Empty;
+                    
+                    db.preprocess_game_history(data, player_processing);
                 }
                 //If the array is marked as a request for a range of games, get the range of games and return them
                 else if (data[0] == Network_codes.range_request)

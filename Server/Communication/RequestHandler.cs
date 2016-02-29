@@ -103,13 +103,13 @@ namespace Server
         /// <param name="db"></param>
         /// <param name="bufferPath"></param>
         /// <returns>The amount of fields processed</returns>
-        public static int preprocess_game_history(this Database db, byte[] rawHistory)
+        public static int preprocess_game_history(this Database db, List<byte> rawHistory, players player_processing)
         {
             logger.Info("Starting preprocessing game history");
             Stopwatch sw = new Stopwatch();
             sw.Start();
 
-            byte[][] gameHistories = Game_history.linear_to_parrallel_game_history(rawHistory.ToList());
+            byte[][] gameHistories = Game_history.linear_to_parrallel_game_history(rawHistory);
 
             byte maxFS = db.DbProperties.MaxFieldStorageSize;
             Dictionary<Field, FieldData>[] history = new Dictionary<Field, FieldData>[maxFS];
@@ -134,23 +134,26 @@ namespace Server
                 {
                     byte column = h[j];
 
-                    int fieldLength = f.compressField().Length;
-
-                    FieldData fd = null;
-
-                    if (!history[fieldLength - 1].ContainsKey(f))
+                    if (turn == player_processing || player_processing == players.Empty)
                     {
-                        fd = new FieldData();
-                        history[fieldLength - 1].Add(new Field(f), fd);
-                    }
-                    else
-                    {
-                        fd = history[fieldLength - 1][f];
-                    }
+                        int fieldLength = f.compressField().Length;
 
-                    fd.TotalCounts[column]++;
-                    if (turn == winner)
-                        fd.WinningCounts[column]++;
+                        FieldData fd = null;
+
+                        if (!history[fieldLength - 1].ContainsKey(f))
+                        {
+                            fd = new FieldData();
+                            history[fieldLength - 1].Add(new Field(f), fd);
+                        }
+                        else
+                        {
+                            fd = history[fieldLength - 1][f];
+                        }
+
+                        fd.TotalCounts[column]++;
+                        if (turn == winner)
+                            fd.WinningCounts[column]++;
+                    }
 
                     f.doMove(column, turn);
 

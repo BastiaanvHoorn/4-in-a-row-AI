@@ -10,6 +10,10 @@
         public static byte game_history_array = 210;   //The first byte when the bot sends an array of game_history
         public static byte game_history_alice = 211;   //The first byte of the history of a game which Alice has won
         public static byte game_history_bob = 212;     //The first byte of the history of a game which Bob has won
+        public static byte game_history_process_alice = 213;    //The first byte of the game history that indicates to only process Alice's moves
+        public static byte game_history_process_bob = 214;      //The first byte of the game history that indicates to only process Bob's moves
+        public static byte game_history_process_both = 215;     //The first byte of the game history that indicates to process both players' moves
+
         public static byte range_request = 220;        //The first byte when a range of fields is requested from the server
 
         public static byte details_request = 221;      //The first byte when details of a further specified field is requested from the server
