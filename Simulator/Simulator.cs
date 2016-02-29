@@ -35,8 +35,8 @@ namespace Simulator
         /// -l  [0-g]                   Length of a sub-simulation of games
         /// -ra [0-100]                 The chance for alice to random a turn
         /// -rb [0-100]                 The chance for bob to random a turn
-        /// -ma [byte >0]               Replaces the database-bot with min-max bot for Alice with the given depth, don't pass this together with -ra
-        /// -mb [byte >0]               Replaces the database-bot with min-max bot for Bob with the given depth, don't pass this together with -rb
+        /// -ma [byte >0]               Replaces the database-bot with min-max bot for Alice with the given depth, this won't be parsed if -ra is given as an argument
+        /// -mb [byte >0]               Replaces the database-bot with min-max bot for Bob with the given depth, this won't be parsed if -rb is given as an argument
         /// -ip [ip-address]            The ip-address of the server
         /// -p  [ushort >0]              The port the server should be listening to
         /// </param>
@@ -48,20 +48,21 @@ namespace Simulator
             height =                 (byte)Args_parser.parse_int_arg(args, "h",  "height",       2, 20, 6);
             max_games =              (uint)Args_parser.parse_int_arg(args, "g",  "max games",    1, uint.MaxValue, 1);
             cycle_length =            (int)Args_parser.parse_int_arg(args, "l",  "cycle length", 1, max_games, max_games);
-            alice_stat =            (byte?)Args_parser.parse_int_arg(args, "ra", "random alice", 0, 100, null);
-            bob_stat =              (byte?)Args_parser.parse_int_arg(args, "rb", "random bob",   0, 100, null);
-            if (alice_stat == null)
+            alice_stat =            (byte?)Args_parser.parse_int_arg(args, "ra", "random alice", 0, 100, 101);
+            if (alice_stat == 101)
             {
-                alice_stat =         (byte)Args_parser.parse_int_arg(args, "ma", "depth alice",  0, 100, null);
-                if (alice_stat != null)
+                alice_stat =         (byte)Args_parser.parse_int_arg(args, "ma", "depth alice",  0, 100, 101);
+                if (alice_stat != 101)
                     minmax_alice = true;
                 else
                     alice_stat = 0;
             }
-            if (bob_stat == null)
+
+            bob_stat =              (byte?)Args_parser.parse_int_arg(args, "rb", "random bob",   0, 100, 101);
+            if (bob_stat == 101)
             {
-                bob_stat =           (byte)Args_parser.parse_int_arg(args, "mb", "depth bob",    0, 100, null);
-                if (bob_stat != null)
+                bob_stat =           (byte)Args_parser.parse_int_arg(args, "mb", "depth bob",    0, 100, 101);
+                if (bob_stat != 101)
                     minmax_bob = true;
                 else
                     alice_stat = 0;
@@ -97,14 +98,14 @@ namespace Simulator
                 logger.Info($"Bob set to min-max bot with depth {bob_stat}");
             else
                 logger.Info($"Bob set to database bot with depth {bob_stat}");
+
             if (minmax_alice && minmax_bob)
             {
-                
                 Console.WriteLine(
                     "Are you sure you want to let 2 minmax bot compete with eachother? The results will probably be pretty boring.");
-
             }
             Console.WriteLine("press any key to start the simulation");
+            Console.Read();
         }
         public void loop_games()
         {
@@ -136,6 +137,18 @@ namespace Simulator
         private void send_history(List<List<byte>> histories)
         {
             var data = new List<byte>();
+            if (minmax_alice)
+            {
+                data.Add(Network_codes.game_history_process_alice);
+            }
+            else if (minmax_bob)
+            {
+                data.Add(Network_codes.game_history_process_bob);
+            }
+            else
+            {
+                data.Add(Network_codes.game_history_process_both);
+            }
             //Concatenate all the game-histories into one byte-array;
             foreach (var history in histories)
             {

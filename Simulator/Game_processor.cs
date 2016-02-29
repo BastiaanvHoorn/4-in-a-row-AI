@@ -57,7 +57,6 @@ namespace Simulator
             {
                 var game = new Game(width, height);
                 var history = new List<byte>();
-                history.Add(Network_codes.game_history_process_both);   // Indicates that we want to process both Alice's and Bob's moves.
                 players victourious_player = do_game(game, ref history);
 
                 //The amount of turns this game lasted. 1 is subtracted for the winner indication at the start.
